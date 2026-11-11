@@ -19,6 +19,7 @@ Everything here is fictional. Lessons read these files through `lantern.case`. F
 | `ledger/halcyon-to-northwind.csv` | The 31 payments from Halcyon to Northwind of Case File 02, as five fields a row | 05 | written |
 | `rebuilt/` | What the audit proposes in place of parts of LANTERN's state. Not evidence | 04 | written |
 | `pages/related/`, `pages/unrelated/` | Twelve true pages about Pellmar and its accounts that answer no signed question, and twelve about two suppliers closed in April | 07 | written |
+| `bank/` | The nine statements of the trail, 1 January to 31 March 2026, as Case File 02 held them, and `accounts.csv` | 08 | written |
 | `memory-log/` | The access and write log of the memory store, with the session records behind each write | 12 | planned |
 | `custody/` | DS Iyer's suspension and badge records, consistent with Case File 03 | 20 | planned |
 | `review/` | The case review of chapter 22 | 22 | planned |

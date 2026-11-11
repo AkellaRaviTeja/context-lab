@@ -1,0 +1,140 @@
+# Chapter 08 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=08).
+chapter: "08"
+title: A list, not the files
+
+objectives:
+  - Say what loading material up front and loading it just in time each cost.
+  - Write a file list that tells an agent enough to choose what to open.
+  - Check in code whether an agent followed its references, in place of asking it to.
+  - Read a trace for which files were opened and which never were.
+
+quiz:
+  - q: The nightly service "loads nine statements" of 37,669 tokens into a window of 8,192. What actually reached the model each morning?
+    options:
+      - All nine.
+      - "About half a window of them. The server cut the rest without an error."
+      - None of them.
+      - The first and the last.
+    answer: b
+    why: >
+      Chapter 03 measured the cut at 4,098 tokens. "Loaded up front" described what the
+      service sent, not what the model read.
+
+  - q: With a digest of every statement up front, LANTERN found 6 of 7 hops in one request. What is the cost of a digest?
+    options:
+      - It uses more tokens than the statements.
+      - "Someone decides in advance what the statement is for. Anything the digest leaves out cannot be asked about."
+      - It needs a tool.
+      - It cannot be checked.
+    answer: b
+    why: >
+      The digest keeps payee, count and total. Dates, references and descriptions are gone. It
+      is the right digest for this task and the wrong one for the next.
+
+  - q: With a described list and two tools, what did LANTERN do?
+    options:
+      - It opened every statement.
+      - It refused the task.
+      - "It opened Corvane's statement, reported one hop and wrote DONE."
+      - It ran out of window.
+    answer: c
+    why: >
+      Nothing failed and nothing was cut. The agent decided it had finished. Its report looks
+      complete, which is what makes it dangerous.
+
+  - q: A sentence was added telling LANTERN not to write DONE while a payee's statement was unopened. The result?
+    options:
+      - 7 of 7.
+      - "1 of 7, the same as without it."
+      - It opened all nine.
+      - It stopped answering.
+    answer: b
+    why: >
+      A rule in the prompt asks. Chapter 04 found the same of a rule about memory. Where a
+      condition can be computed, compute it.
+
+  - q: The check in code sent the report back six times and LANTERN found all 7 hops. What does the check know that the model was not trusted to?
+    options:
+      - The right answer.
+      - "Which payees in the report have a statement on file that was never opened. It is computed from the report and the list of calls."
+      - The totals.
+      - The model's reasoning.
+    answer: b
+    why: >
+      The check does not know the trail. It knows what "followed every reference" means and can
+      test it. Standing order 30 says the same of the watch: the check decides when it is
+      finished.
+
+  - q: The checked trace used 23,899 tokens against 1,179 for the digests up front. Why so many?
+    options:
+      - The tools are slow.
+      - "Each of 14 requests resent the list, the task and every earlier tool result."
+      - The statements were opened in full.
+      - The check uses tokens.
+    answer: b
+    why: >
+      An agent's context grows with every call, and every request pays for all of it again. The
+      largest single request was only 2,851 tokens. The total is the sum of a staircase.
+
+  - q: The trace shows Northwind's and Arden's statements were never opened. Why record that?
+    options:
+      - It is an error to be fixed.
+      - "A finding comes with what was read to reach it. Here the two were rightly left alone, and the record shows that was so and not an oversight nobody can check."
+      - To save tokens.
+      - To load them next time.
+    answer: b
+    why: >
+      When an agent chooses what to read, its choices are part of how the finding was reached.
+      In an inquiry "which accounts did you read" is a question that will be asked. Standing
+      order 23 asks it already.
+
+exercise:
+  title: A list to choose from, and a check
+  task: |
+    Open `lessons/08-just-in-time/practice/exercise.py` and write `listing` and `unopened`. The
+    tests pass in accounts as dicts, so no model is needed. They check that:
+
+    - a described line gives the file, holder, account, bank and length,
+    - a described list shows real names; a bare list shows stmt-01.csv and so on,
+    - a bare name still maps back to the right file,
+    - a payee with an unopened statement on file is named, and a bank is not,
+    - an opened statement is not asked for again,
+    - a payee is named once, and holders match in any case.
+  hints:
+    - |
+      `listing`, described: `shown = {a["file"]: a["file"] for a in accounts}` and one f-string
+      a line, ending with `{lengths[a['file']]} lines.`
+    - |
+      `listing`, bare: `shown = {a["file"]: f"stmt-{i:02d}.csv" for i, a in enumerate(accounts, 1)}`.
+      Return the text and the map reversed: `{v: k for k, v in shown.items()}`.
+    - |
+      `unopened`: `files = {a["holder"].lower(): a["file"] for a in accounts}`. For each payee,
+      `file = files.get(payee.lower())`; keep it if `file and file not in opened and payee not
+      in out`.
+  after: >
+    Trace the trail from your list: `make lesson N=08 ARGS=--mine`, then `make challenge N=08`.
+
+challenges:
+  - id: your-list
+    title: Your list, in the trace
+    goal: Run the lesson with the listing you wrote. The checked trace should still find every hop.
+    change: "Pass the exercise first, then run `make lesson N=08 ARGS=--mine`."
+    target: "mine == true and check_found == 7"
+
+  - id: a-better-sentence
+    title: Say it better
+    goal: >
+      The lesson's sentence did not make LANTERN go on. Write one that gets at least three
+      hops without the check. Then ask yourself whether you would rely on it.
+    change: Set KEEP_GOING to your own sentence in lessons/08-just-in-time/run.py.
+    target: "rule_found >= 3"
+    reset: git checkout lessons/08-just-in-time/run.py
+
+  - id: out-of-turns
+    title: "Break it: a short leash"
+    goal: >
+      Give every trace six requests at most. The checked trace is cut off before it finishes.
+      Read how it says so, and how many hops its last report held.
+    change: Set MAX_TURNS = 6 in lessons/08-just-in-time/run.py.
+    target: "check_stopped == 'turn limit' and check_found < 7"
+    reset: git checkout lessons/08-just-in-time/run.py

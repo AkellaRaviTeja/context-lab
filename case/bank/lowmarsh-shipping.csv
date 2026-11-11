@@ -1,0 +1,21 @@
+date,description,counterparty,counterparty_account,reference,debit,credit,balance
+2026-01-15,Port services agreement,Corvane Trading Ltd,SC-0071-5530,CVT-LMS-0001,,241000.00,244100.00
+2026-01-21,Port services agreement,Calder Reach Holdings Ltd,MTB-30-77104,LOW-0001,239000.00,,5100.00
+2026-01-22,Port services agreement,Corvane Trading Ltd,SC-0071-5530,CVT-LMS-0002,,151000.00,156100.00
+2026-01-28,Port services agreement,Calder Reach Holdings Ltd,MTB-30-77104,LOW-0002,152000.00,,4100.00
+2026-01-29,Port services agreement,Corvane Trading Ltd,SC-0071-5530,CVT-LMS-0003,,125000.00,129100.00
+2026-01-30,Monthly account fee,Sabran Mercantile Bank,,FEE-2026-01,45.00,,129055.00
+2026-02-04,Port services agreement,Calder Reach Holdings Ltd,MTB-30-77104,LOW-0003,125000.00,,4055.00
+2026-02-05,Port services agreement,Corvane Trading Ltd,SC-0071-5530,CVT-LMS-0004,,370000.00,374055.00
+2026-02-11,Port services agreement,Calder Reach Holdings Ltd,MTB-30-77104,LOW-0004,368000.00,,6055.00
+2026-02-12,Port services agreement,Corvane Trading Ltd,SC-0071-5530,CVT-LMS-0005,,156000.00,162055.00
+2026-02-18,Port services agreement,Calder Reach Holdings Ltd,MTB-30-77104,LOW-0005,158000.00,,4055.00
+2026-02-19,Port services agreement,Corvane Trading Ltd,SC-0071-5530,CVT-LMS-0006,,69000.00,73055.00
+2026-02-25,Port services agreement,Calder Reach Holdings Ltd,MTB-30-77104,LOW-0006,70000.00,,3055.00
+2026-02-26,Port services agreement,Corvane Trading Ltd,SC-0071-5530,CVT-LMS-0007,,470000.00,473055.00
+2026-02-27,Monthly account fee,Sabran Mercantile Bank,,FEE-2026-02,45.00,,473010.00
+2026-03-04,Port services agreement,Calder Reach Holdings Ltd,MTB-30-77104,LOW-0007,466000.00,,7010.00
+2026-03-12,Port services agreement,Corvane Trading Ltd,SC-0071-5530,CVT-LMS-0008,,293000.00,300010.00
+2026-03-18,Port services agreement,Calder Reach Holdings Ltd,MTB-30-77104,LOW-0008,295000.00,,5010.00
+2026-03-26,Port services agreement,Corvane Trading Ltd,SC-0071-5530,CVT-LMS-0009,,387000.00,392010.00
+2026-03-31,Monthly account fee,Sabran Mercantile Bank,,FEE-2026-03,45.00,,391965.00

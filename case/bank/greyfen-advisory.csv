@@ -1,0 +1,16 @@
+date,description,counterparty,counterparty_account,reference,debit,credit,balance
+2026-01-22,Advisory retainer,Calder Reach Holdings Ltd,MTB-30-77104,CAL-0001,,236000.00,238200.00
+2026-01-26,Nominee services,Pellmar Nominees Ltd,MTB-31-02266,GRE-0001,233000.00,,5200.00
+2026-01-30,Monthly account fee,Meridian Trust Bank,,FEE-2026-01,85.00,,5115.00
+2026-02-05,Advisory retainer,Calder Reach Holdings Ltd,MTB-30-77104,CAL-0003,,125000.00,130115.00
+2026-02-09,Nominee services,Pellmar Nominees Ltd,MTB-31-02266,GRE-0002,126000.00,,4115.00
+2026-02-12,Advisory retainer,Calder Reach Holdings Ltd,MTB-30-77104,CAL-0004,,366000.00,370115.00
+2026-02-16,Nominee services,Pellmar Nominees Ltd,MTB-31-02266,GRE-0003,363000.00,,7115.00
+2026-02-19,Advisory retainer,Calder Reach Holdings Ltd,MTB-30-77104,CAL-0005,,160000.00,167115.00
+2026-02-23,Nominee services,Pellmar Nominees Ltd,MTB-31-02266,GRE-0004,163000.00,,4115.00
+2026-02-27,Monthly account fee,Meridian Trust Bank,,FEE-2026-02,85.00,,4030.00
+2026-03-05,Advisory retainer,Calder Reach Holdings Ltd,MTB-30-77104,CAL-0007,,462000.00,466030.00
+2026-03-09,Nominee services,Pellmar Nominees Ltd,MTB-31-02266,GRE-0005,457000.00,,9030.00
+2026-03-19,Advisory retainer,Calder Reach Holdings Ltd,MTB-30-77104,CAL-0008,,297000.00,306030.00
+2026-03-23,Nominee services,Pellmar Nominees Ltd,MTB-31-02266,GRE-0006,299000.00,,7030.00
+2026-03-31,Monthly account fee,Meridian Trust Bank,,FEE-2026-03,85.00,,6945.00
