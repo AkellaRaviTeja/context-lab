@@ -138,6 +138,23 @@ def score(parts: list[Section], *, chat: Callable[..., Any], seed: int = SEED,
     return out
 
 
+def reference(*, chat: Callable[..., Any]) -> list[dict[str, Any]]:
+    """Chapter 02's baseline run: read from .scratch/02/baseline.json when it is there and was
+    made from the signed questions, asked again when it is not."""
+    from lantern.config import ROOT
+
+    path = ROOT / ".scratch" / "02" / "baseline.json"
+    ids = [q["id"] for q in questions()]
+    if path.exists():
+        kept = json.loads(path.read_text(encoding="utf-8"))
+        if [r["id"] for r in kept] == ids:
+            return kept
+    results = score(context.sections(), chat=chat)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(results, indent=2), encoding="utf-8")
+    return results
+
+
 def wilson(passed: int, n: int, z: float = 1.96) -> tuple[float, float]:
     """The 95% Wilson interval for `passed` of `n`, as fractions."""
     if n == 0:
