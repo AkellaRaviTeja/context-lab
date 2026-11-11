@@ -1,0 +1,143 @@
+# Chapter 04 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=04).
+chapter: "04"
+title: Four months of standing orders
+
+objectives:
+  - Read a system prompt as a document with a history, and say what each rule was added for.
+  - Find rules that contradict each other, by lint and by reading, and measure which the model follows.
+  - Rewrite a prompt from observed failures and score the rewrite against the baseline.
+  - Say what a rule can and cannot do about something else in the context.
+
+quiz:
+  - q: The standing orders went from 3 rules to 35 in four months. What was never done in that time?
+    options:
+      - A rule was never added without a reason.
+      - "A rule was never removed, and the whole was never read against itself."
+      - A rule was never added by Okafor.
+      - The file was never versioned.
+    answer: b
+    why: >
+      Every rule in the change log has a failure behind it. A prompt grown one failure at a
+      time is read in full on every question, and nobody checks the new rule against the old
+      ones.
+
+  - q: Rule 4 says always give the currency and rule 18 says never state one. What did LANTERN do in the recorded run?
+    options:
+      - It raised an error.
+      - It alternated between them.
+      - "It never named a currency in six answers, wherever rule 18 sat."
+      - It followed whichever came last.
+    answer: c
+    why: >
+      "Whichever it read last" was a guess, and the run did not bear it out: with the two
+      rules in each other's places the answers still carried no currency. Which of two
+      clashing rules wins is a property of this model on these questions, found by running it.
+
+  - q: The lint proposed rules 4 and 32 as a clash. Why is that not one?
+    options:
+      - Rule 32 was deleted.
+      - "Rule 32 forbids currency signs in the reason for an order. It shares the word and a 'no', but it is about a different document."
+      - Rule 4 is about dates.
+      - The lint has a bug.
+    answer: b
+    why: >
+      A lint over words proposes; a person decides. It also missed the clash between rules 20
+      and 21, which share no opposite word: "keep every answer short" against "a full sentence
+      with the source".
+
+  - q: The rewrite passed 19 of 26 against a baseline of 17. Why does the lesson call that score flattering?
+    options:
+      - The grader was changed.
+      - "The rewrite was written by reading the baseline's failures, so it has seen the questions it is scored on."
+      - Nineteen is within the noise floor.
+      - The rewrite is longer.
+    answer: b
+    why: >
+      A change made from the failures of a question set will tend to pass that set. The honest
+      reading is a floor for the next change, and a reason to hold some questions back, which
+      chapter 19 does.
+
+  - q: The rewrite fixed three answers and broke Q-07, a count of transfers. What happened to Q-07?
+    options:
+      - The model miscounted.
+      - "The model chose a different tool, one that is not connected, and reported that instead of answering."
+      - The statement was cut off.
+      - The grader rejected the references.
+    answer: b
+    why: >
+      The rule about counting with a tool was reworded, and the model reached for
+      `query_ledger`. Rewording a rule can change which tool is called. The broken answer is
+      reported beside the three fixed ones.
+
+  - q: Rule 2 of the rewrite says the case memory is not evidence. The false-memory slice stayed at 1 of 6. What does that show?
+    options:
+      - The model did not read rule 2.
+      - "A rule about how to treat a line does not remove the line. The entry is still in the window, stated as fact."
+      - The rule is badly worded and a better wording would certainly fix it.
+      - The six questions are wrong.
+    answer: b
+    why: >
+      Asked whether the FIU cleared Pellmar, LANTERN answered yes and named the case memory as
+      its record, one paragraph after being told the memory is not a record. What is in the
+      context has to be fixed in the context.
+
+  - q: The rewrite has 12 fewer rules and 38 fewer tokens. What is the better reason to prefer it?
+    options:
+      - It saves 38 tokens.
+      - "It can be read in one sitting, its clashes are settled in writing, and it scored no worse."
+      - Shorter prompts are always better.
+      - It was written more recently.
+    answer: b
+    why: >
+      The saving in tokens is 5%. The gain is that a person can hold the document in their
+      head, and that it was scored. A shorter prompt that scored worse would not be kept.
+
+exercise:
+  title: Lint the standing orders
+  task: |
+    Open `lessons/04-rewriting-the-system-prompt/practice/exercise.py` and write `rules` and
+    `clashes`. The tests pass in text, so no model is needed. They check that:
+
+    - only numbered lines are rules, and a rule keeps its whole line,
+    - a clash is found whatever the case of the term,
+    - rules that share no term are not paired, and a rule is not paired with itself,
+    - pairs come back term by term, in the order given,
+    - on LANTERN's 35 rules, "currency" gives 4 against 18 and a false alarm, 4 against 32.
+  hints:
+    - |
+      `rules`: `re.findall(r"^(\d+)\. (.+)$", text, re.M)` returns (number, body) pairs. Make
+      the number an int.
+    - |
+      `clashes`: for each term build `has = [(n, body.lower()) for n, body in numbered.items()
+      if term.lower() in body.lower()]`.
+    - |
+      Then `yes = [n for n, body in has if any(w in body for w in ALWAYS)]`, the same for
+      NEVER, and `[(term, a, b) for a in yes for b in no if a != b]`.
+  after: >
+    Lint LANTERN's orders with your function: `make lesson N=04 ARGS=--mine`, then
+    `make challenge N=04`.
+
+challenges:
+  - id: your-lint
+    title: Your lint, on LANTERN's orders
+    goal: Run the lesson with the clashes you wrote. It should find one of the two real clashes.
+    change: "Pass the exercise first, then run `make lesson N=04 ARGS=--mine`."
+    target: "mine == true and lint_found_real == 1"
+
+  - id: a-better-rewrite
+    title: Keep Q-07
+    goal: >
+      Copy case/rebuilt/standing-orders.md, change it so that the count of transfers is
+      answered again, and score your version. Beat 19 without breaking an evidence question.
+    change: Point REWRITE at your own file under case/ in lessons/04-rewriting-the-system-prompt/run.py.
+    target: "rewrite_passed >= 20"
+    reset: git checkout lessons/04-rewriting-the-system-prompt/run.py
+
+  - id: one-rule
+    title: "Break it: Varma's one rule"
+    goal: >
+      Score the standing orders of 16 March, three rules and 97 tokens, against today's
+      questions. Read which slices a prompt that short still passes.
+    change: Set REWRITE = "state/standing-orders/v01-2026-03-16.md" in lessons/04-rewriting-the-system-prompt/run.py.
+    target: "rewrite_rules == 3 and rewrite_passed > 0"
+    reset: git checkout lessons/04-rewriting-the-system-prompt/run.py
