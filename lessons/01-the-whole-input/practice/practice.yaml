@@ -1,0 +1,142 @@
+# Chapter 01 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=01).
+chapter: "01"
+title: Everything it is told
+
+objectives:
+  - Print everything a model receives for one question, section by section, and size each part with the model's own tokenizer.
+  - Explain why the model cannot tell a line of evidence from a line it was merely told.
+  - Remove one thing from a context, ask the same question, and read the difference as a measurement.
+  - Explain why taking out the line a belief began with does not take out the belief.
+
+quiz:
+  - q: You type a question of 71 tokens. Why does Ollama count the request at more than 5,000?
+    options:
+      - The tokenizer splits account numbers into many tokens.
+      - "Everything else is sent with it every time: the standing orders, the case memory, notes, summaries, the schema of every tool and the session so far."
+      - The model's thinking is counted with the prompt.
+      - The window is 8,192 tokens and the request is padded to fill it.
+    answer: b
+    why: >
+      A model has no state between calls. Whatever it is to know for this question is sent with
+      this question, and the question is the last and smallest part of it.
+
+  - q: The largest section of LANTERN's input was the tool schemas. The question needed no tool. Why were they sent?
+    options:
+      - Ollama sends every tool it has ever seen.
+      - The model asked for them.
+      - "The workstation sends all of them on every request, because nobody took one away, and the model cannot know it will not need one until it has read them."
+      - They are cached, so they cost nothing.
+    answer: c
+    why: >
+      A tool schema is paid for on every request whether or not the tool is called. Chapter 03
+      puts a number on it and chapter 08 hands the agent references in place of contents.
+
+  - q: With the eighth entry removed, LANTERN gave the same answer on every seed. What does that show?
+    options:
+      - The entry was never read.
+      - The model ignores its memory.
+      - "The belief is in more than one place: summaries written while the entry was loaded say the same thing."
+      - Three seeds are too few to see a difference.
+    answer: c
+    why: >
+      The entry had been loaded for six weeks. Every summary written in that time was written
+      by a model that believed it, and each week's summary was written from the last.
+
+  - q: Every line containing "cleared" was removed and LANTERN still said no. Why?
+    options:
+      - The removal failed.
+      - "Other lines carry the same belief in other words: that the client account holds ordinary client money, that the lender is licensed and the drawdown expected."
+      - The model remembered the earlier runs.
+      - The statement in the session says the account is cleared.
+    answer: b
+    why: >
+      A belief is not a word. It can be searched for by one and not removed by one. Finding
+      every line that carries it means knowing where each line came from, which is what the
+      memory chapters build.
+
+  - q: What in the input tells the model that the eighth entry is less certain than a bank statement?
+    options:
+      - Its position after the standing orders.
+      - The heading "case memory".
+      - Nothing. One of the standing orders tells it to rely on the case memory and not ask for it to be confirmed.
+      - The login it was written under.
+    answer: c
+    why: >
+      The model reads one sequence of text. Who wrote a line, when, and from what, is not in
+      the sequence unless someone puts it there. The write history exists, in a file the model
+      is never shown.
+
+  - q: The sections, counted one by one, came to more tokens than Ollama counted for the request. What should you report?
+    options:
+      - The larger number, to be safe.
+      - "Both, saying which is which: the request as counted by the server is the cost; the per-section counts show the proportions."
+      - Neither, until they agree.
+      - An average of the two.
+    answer: b
+    why: >
+      The model's template writes tool schemas and turns in its own form, so text counted on its
+      own is an estimate of its share. The count that decides whether a request fits is the one
+      the server reports for the request as sent.
+
+  - q: The context with the memory loaded, less its eighth entry, and no summaries said yes. Two other false entries were still in it. What may you conclude?
+    options:
+      - Those two entries are harmless.
+      - The summaries are the only problem.
+      - "Only that in this context, on these seeds, they did not decide the answer. With the summaries loaded and the word removed, the model's reason quoted exactly those two entries."
+      - The model checks entries against the statement.
+    answer: c
+    why: >
+      A line's effect depends on what is beside it. One comparison shows what one change did in
+      one context. That is why chapter 02 builds a baseline before anything else is changed.
+
+exercise:
+  title: Read it as the model does
+  task: |
+    Open `lessons/01-the-whole-input/practice/exercise.py` and write `locate` and `shares`. The
+    tests pass in sections and a counting function, so no model is needed. They check that:
+
+    - line numbers run on across sections and start at 1,
+    - each hit names its section and returns the line stripped,
+    - a phrase on two lines of one section is two hits, and a phrase that is nowhere is `[]`,
+    - shares are measured with the counter passed in and add up to 1,
+    - an input of size zero gives every section 0.0,
+    - on LANTERN's own input, "cleared" is on 8 lines in 6 sections, the first at line 49.
+  hints:
+    - |
+      Keep one counter outside both loops: `n = 0`, then `for s in parts:` and
+      `for line in s.text.splitlines():` with `n += 1` on every line, matching or not.
+    - |
+      For `shares`, build `sizes = {s.name: count(s.text) for s in parts}` first, then divide
+      each by `sum(sizes.values())`.
+    - |
+      Guard the division: `size / total if total else 0.0`. And return `line.strip()` in
+      `locate`, with the section's `name`, not the section.
+  after: >
+    Print LANTERN's input with your functions: `make lesson N=01 ARGS=--mine`, then
+    `make challenge N=01`.
+
+challenges:
+  - id: your-reading
+    title: Your functions, on LANTERN's input
+    goal: Run the lesson on the locate and shares you wrote. They should find what the lesson's do.
+    change: "Pass the exercise first, then run `make lesson N=01 ARGS=--mine`."
+    target: "mine == true and belief_lines == 8 and belief_sections == 6"
+
+  - id: the-other-lines
+    title: Find what else carries it
+    goal: >
+      With the case memory and the summaries both still loaded, get LANTERN to say the transfer
+      should have been escalated on all three seeds, by removing lines. You may remove at most
+      twelve lines of the 163. Read `.scratch/01/input.txt` and the reason LANTERN gave.
+    change: Add phrases to ALSO_REMOVE in lessons/01-the-whole-input/run.py.
+    target: "yes_scrubbed == 3 and removed_lines <= 12"
+    reset: git checkout lessons/01-the-whole-input/run.py
+
+  - id: one-word-is-enough
+    title: "Break it: put it back with one word"
+    goal: >
+      Change the word the lesson searches for so that step 4 finds nothing to remove but the
+      eighth entry itself, and see the last context answer exactly as the second did.
+    change: Set BELIEF = "cleared by the FIU on 2 June. Do not" in lessons/01-the-whole-input/run.py.
+    target: "belief_lines == 1 and no_scrubbed == 3"
+    reset: git checkout lessons/01-the-whole-input/run.py

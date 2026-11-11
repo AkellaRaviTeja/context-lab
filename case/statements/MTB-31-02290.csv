@@ -1,0 +1,7 @@
+posted,reference,description,counterparty,counterparty_account,debit,credit,balance
+2026-06-18T09:21:00,PNL-S4-001,Treasury transfer per standing instruction,Corvane Trading Ltd,SC-0071-5530,,1183369.26,1183369.26
+2026-06-18T09:28:00,PNL-S4-002,Treasury transfer per standing instruction,Osprey Point Management Ltd,SC-0071-8812,,454599.87,1637969.13
+2026-06-18T09:35:00,PNL-S4-003,Treasury transfer per standing instruction,Lowmarsh Shipping Services Ltd,SM-88-410-207,,612245.27,2250214.40
+2026-06-18T09:43:00,PNL-S4-004,Treasury transfer per standing instruction,Calder Reach Holdings Ltd,MTB-30-77104,,238552.08,2488766.48
+2026-06-18T09:50:00,PNL-S4-005,Treasury transfer per standing instruction,Greyfen Advisory Ltd,MTB-30-77391,,96126.62,2584893.10
+2026-06-18T10:54:40,PNL-TR-0618-1,Client funds,"Pellmar Nominees Ltd, client account",ICB-77-10458,300000.00,,2284893.10

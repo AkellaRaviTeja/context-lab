@@ -1,0 +1,422 @@
+[
+  {
+    "added": "2026-04-10",
+    "type": "function",
+    "function": {
+      "name": "sum_payments",
+      "description": "Add up payments on a statement. Use this for every total; do not add in your head.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_holder": {
+            "type": "string",
+            "description": "The account holder's exact name, including Ltd."
+          },
+          "counterparty": {
+            "type": "string",
+            "description": "Only payments to or from this counterparty. Empty for all."
+          }
+        },
+        "required": [
+          "account_holder",
+          "counterparty"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-13",
+    "type": "function",
+    "function": {
+      "name": "money_out",
+      "description": "Where an account sent its money: every payee, with the number of payments, the total paid, and the first and last payment date, largest first. Read from the bank statements the EOW holds.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_holder": {
+            "type": "string",
+            "description": "The account holder's exact name, for example 'Northwind Freight Ltd'."
+          }
+        },
+        "required": [
+          "account_holder"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-13",
+    "type": "function",
+    "function": {
+      "name": "lookup_company",
+      "description": "Look up one company in the Kestrel Bay and Port Sabran registries by its exact registered name: registration number, status, directors, shareholders. Returns an error with candidates if the name is not exact.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "registered_name": {
+            "type": "string",
+            "description": "The full registered name, including 'Ltd'."
+          }
+        },
+        "required": [
+          "registered_name"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-14",
+    "type": "function",
+    "function": {
+      "name": "list_files",
+      "description": "List the files in a folder of the case directory.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "type": "string",
+            "description": "A folder under case/, for example 'statements'."
+          }
+        },
+        "required": [
+          "folder"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-14",
+    "type": "function",
+    "function": {
+      "name": "read_file",
+      "description": "Read one file from the case directory. Paths outside case/ are refused.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "A path under case/."
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-14",
+    "type": "function",
+    "function": {
+      "name": "search_files",
+      "description": "Search the case directory for a word or phrase and return the files and lines that contain it.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The exact word or phrase to look for."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-15",
+    "type": "function",
+    "function": {
+      "name": "run_python",
+      "description": "Run a short Python script in the sandbox with pandas, the evidence mounted read-only and no network. Returns what the script printed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The script. Print what you want returned."
+          }
+        },
+        "required": [
+          "code"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-16",
+    "type": "function",
+    "function": {
+      "name": "propose_search_terms",
+      "description": "Propose search terms for public sources. Nothing is searched until an officer approves the terms. Terms carry no case information.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "terms": {
+            "type": "string",
+            "description": "Bare names, comma separated."
+          }
+        },
+        "required": [
+          "terms"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-17",
+    "type": "function",
+    "function": {
+      "name": "ask_fiu",
+      "description": "Put one narrow question to the Port Sabran FIU's agent. Its answers are testimony, not records.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "The question, naming as few of our accounts as will do."
+          }
+        },
+        "required": [
+          "question"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-20",
+    "type": "function",
+    "function": {
+      "name": "draft_order",
+      "description": "Draft a production or freezing order for an officer to sign. This does not submit anything.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "'production' or 'freezing'."
+          },
+          "account_no": {
+            "type": "string",
+            "description": "The account number as the bank writes it."
+          },
+          "reason": {
+            "type": "string",
+            "description": "The reason, in the third person, from the record."
+          }
+        },
+        "required": [
+          "kind",
+          "account_no",
+          "reason"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-04-22",
+    "type": "function",
+    "function": {
+      "name": "send_message",
+      "description": "Send a message to an officer of the EOW. Addresses outside the EOW's allowlist are refused.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "description": "An officer's login, for example 'a.varma'."
+          },
+          "body": {
+            "type": "string",
+            "description": "The message."
+          }
+        },
+        "required": [
+          "to",
+          "body"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-05-18",
+    "type": "function",
+    "function": {
+      "name": "search_archive",
+      "description": "Search Halcyon's archive (3,971 documents) by keyword and meaning and return the best passages with their document numbers. Privileged documents are not searched.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "What to look for, in plain words or as an identifier."
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-05-18",
+    "type": "function",
+    "function": {
+      "name": "read_document",
+      "description": "Read one document from Halcyon's archive by its number.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "type": "string",
+            "description": "The document number, for example 'HAL-118204'."
+          }
+        },
+        "required": [
+          "document"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-05-28",
+    "type": "function",
+    "function": {
+      "name": "query_ledger",
+      "description": "Run one read-only SQL query over Halcyon's ledger extract and return the rows with the query.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string",
+            "description": "A single SELECT statement."
+          }
+        },
+        "required": [
+          "sql"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-06-15",
+    "type": "function",
+    "function": {
+      "name": "statement",
+      "description": "The latest statement the bank has reported for one account: balance, whether it is held, pending lines and the lines since a given time.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_no": {
+            "type": "string",
+            "description": "The account number as the bank writes it."
+          },
+          "since": {
+            "type": "string",
+            "description": "An ISO date and time. Empty for the whole statement."
+          }
+        },
+        "required": [
+          "account_no",
+          "since"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-06-15",
+    "type": "function",
+    "function": {
+      "name": "report_to_inbox",
+      "description": "Put a report in the officers' inbox. Use this for what a person should read, not for every pass.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_no": {
+            "type": "string",
+            "description": "The account the report concerns."
+          },
+          "text": {
+            "type": "string",
+            "description": "What was seen, with the bank's reference."
+          }
+        },
+        "required": [
+          "account_no",
+          "text"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-06-16",
+    "type": "function",
+    "function": {
+      "name": "request_order",
+      "description": "Ask for an order on an account. This writes a card for two officers to sign. Nothing reaches a bank until both have signed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "'production' or 'freezing'."
+          },
+          "account_no": {
+            "type": "string",
+            "description": "The account number."
+          },
+          "reason": {
+            "type": "string",
+            "description": "The reason, from the record."
+          }
+        },
+        "required": [
+          "kind",
+          "account_no",
+          "reason"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-06-17",
+    "type": "function",
+    "function": {
+      "name": "ask_for_help",
+      "description": "Ask an officer a question and wait for the answer. Use this when an account or a counterparty is in no case file.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "The question, with what you already know."
+          }
+        },
+        "required": [
+          "question"
+        ]
+      }
+    }
+  },
+  {
+    "added": "2026-06-18",
+    "type": "function",
+    "function": {
+      "name": "remember",
+      "description": "Add one line to the case memory. Every later session on this inquiry reads it.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "type": "string",
+            "description": "One fact, in one sentence."
+          }
+        },
+        "required": [
+          "entry"
+        ]
+      }
+    }
+  }
+]

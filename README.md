@@ -22,8 +22,9 @@ just-in-time loading, tool results, compaction, notes, memory with provenance, i
 layout, retraction and an audit. By chapter 23 you can say what LANTERN believes, where each
 belief came from, and who wrote the ones that came from nowhere.
 
-> **Status: scaffold.** All 23 chapters are drafts: each has its scene and its plan, and none has
-> its lesson yet. `make check` passes; `make release-check` fails until no draft remains.
+> **Status: in progress.** Chapter 01 is built from its recorded run. Chapters 02 to 23 are
+> drafts: each has its scene and its plan, and none has its lesson yet. `make check` passes;
+> `make release-check` fails until no draft remains.
 
 ## What you will learn
 
@@ -114,6 +115,7 @@ make quiz N=05      the chapter check
 make challenge N=05 the break-it challenges, against your latest run
 make progress       every chapter: predictions, check, exercise, challenges
 make doctor         check Ollama, models and config
+make case           regenerate case/state and case/statements from scripts/build_case.py
 make check          lint, unit tests, prose and structure gates (drafts allowed)
 make release-check  the same, and fail while any chapter is still a draft
 make smoke          live tests against Ollama
