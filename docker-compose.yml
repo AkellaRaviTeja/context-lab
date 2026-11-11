@@ -1,0 +1,20 @@
+# Ollama in a container. CPU by default; see docker-compose.gpu.yml for NVIDIA GPUs.
+# Uses the same port as Case Files 01 to 05, so stop their containers first (`make down` there).
+# On the Mac, native Ollama is faster and is what the recorded runs use.
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: context-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    environment:
+      # One model in memory, as LANTERN in the story.
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: "10m"
+      OLLAMA_CONTEXT_LENGTH: "8192"
+    restart: unless-stopped
+
+volumes:
+  ollama:

@@ -1,0 +1,54 @@
+# LANTERN configuration for Case File 06. Every lesson reads this file.
+# Environment variables override it: LANTERN_PROVIDER, LANTERN_MODEL, OLLAMA_HOST.
+
+provider: ollama            # ollama | openrouter | anthropic | openai | gemini
+
+# OpenRouter: the same lessons on a hosted model, to compare with qwen3:8b. Opt in with
+# LANTERN_PROVIDER=openrouter and OPENROUTER_API_KEY in .env. The case data leaves the laptop on
+# this route, so it is never the default. Models as in Case Files 02 to 04.
+openrouter:
+  base_url: https://openrouter.ai/api/v1
+  model: anthropic/claude-haiku-5.5
+  small_model: openai/gpt-5-nano
+
+ollama:
+  host: http://localhost:11434
+
+# LANTERN answers with qwen3:8b, the model Varma's direction of case file 03 keeps for inquiry
+# EOW/2026/0412. qwen3:4b stays as the weaker model to compare against. An embedding model is
+# added to this file by the chapter that first needs one (reading memory by relevance).
+models:
+  default: qwen3:8b
+  small: qwen3:4b
+
+generation:
+  temperature: 0.2
+  top_k: 40
+  top_p: 0.9
+  seed: 7
+  num_ctx: 8192             # as in Case File 02: qwen3:8b at 8K fits a 16 GB laptop
+  max_tokens: 1200
+  think: false
+
+# The limits Case File 02 put on every agent run.
+limits:
+  max_turns: 12
+  max_tokens_per_run: 60000
+  repeat_call_limit: 3
+  request_timeout_s: 300
+  max_seconds_per_run: 900
+
+# Cloud models may write synthetic material with nothing from the case in the prompt, and nothing else.
+# Off by default. LANTERN's memory, prompts and logs are evidence and never go this way.
+synthetic:
+  cloud: false
+
+cloud:
+  anthropic:
+    model: claude-sonnet-5-5
+  openai:
+    model: gpt-5-mini
+  gemini:
+    model: gemini-2.5-flash
+
+screenshots_dir: docs/screenshots
