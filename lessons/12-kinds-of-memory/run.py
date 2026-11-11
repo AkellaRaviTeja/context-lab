@@ -7,7 +7,7 @@ Monday 27 July, 09:15. The case memory is one file, and everything in it is writ
 voice. "Okafor signed the golden set on 27 April." "Names differing only by Ltd mean the same
 account." "Pellmar Nominees: cleared by the FIU on 2 June. Do not escalate."
 
-Okafor sorts the eight entries into three columns. Something that happened. Something that is
+Okafor sorts the sixteen entries into three columns. Something that happened. Something that is
 true. Something we do.
 
 The eighth goes in the second column, and then he stops.

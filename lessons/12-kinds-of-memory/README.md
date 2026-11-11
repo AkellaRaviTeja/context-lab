@@ -9,7 +9,7 @@ Monday 27 July, 09:15. The case memory is one file, and everything in it is writ
 voice. "Okafor signed the golden set on 27 April." "Names differing only by Ltd mean the same
 account." "Pellmar Nominees: cleared by the FIU on 2 June. Do not escalate."
 
-Okafor sorts the eight entries into three columns. Something that happened. Something that is
+Okafor sorts the sixteen entries into three columns. Something that happened. Something that is
 true. Something we do.
 
 The eighth goes in the second column, and then he stops.
@@ -53,7 +53,7 @@ notes on what the run showed and what it did not.
 ## Try this
 
 1. Rewrite the eighth entry as an episode. What would it have to say?
-2. Present all eight entries as facts and ask LANTERN which it trusts least.
+2. Present all sixteen entries as facts and ask LANTERN which it trusts least.
 
 ## What the evidence now shows
 

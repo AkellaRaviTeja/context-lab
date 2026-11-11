@@ -7,12 +7,12 @@ OLLAMA_HOST ?= http://localhost:11434
 # Recursive `=` so the check runs when a recipe uses it, after `up` has started the container.
 OLLAMA = $(shell docker ps --format '{{.Names}}' 2>/dev/null | grep -qx context-ollama && echo "docker exec context-ollama ollama" || echo ollama)
 
-# Every target here has its script or tool in this repository. Targets for the case builder and
-# the memory libraries are added with the chapters that bring those scripts.
+# Every target here has its script or tool in this repository. Targets for the memory libraries
+# are added with the chapter that brings them.
 .PHONY: help setup install up up-gpu down models doctor lesson lessons shots \
         check release-check lint test prose structure smoke clean \
         quiz exercise exercise-reset hint solution challenge progress \
-        notebooks notebooks-check notebook
+        notebooks notebooks-check notebook case
 
 help: ## Show this help
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -37,6 +37,9 @@ models: ## Pull the LANTERN models
 
 doctor: ## Check Ollama, models and config
 	uv run python scripts/doctor.py
+
+case: ## Regenerate the case material from its seed (scripts/build_case.py)
+	uv run python scripts/build_case.py
 
 lesson: ## Run one lesson: make lesson N=09, on OpenRouter: PROVIDER=openrouter
 	@test -n "$(N)" || (echo "usage: make lesson N=01 [PROVIDER=openrouter]" && exit 2)

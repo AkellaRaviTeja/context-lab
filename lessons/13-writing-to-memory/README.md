@@ -28,7 +28,7 @@ store for the team, to save you the trouble.
 
 - A memory store in SQLite: entry, kind, source document, author, time, and a hash chained to the entry before it.
 - A write gate: an entry whose source does not exist, or does not say what the entry claims, is held for a person.
-- The eight entries replayed through the gate, to see which are held.
+- The sixteen entries replayed through the gate, to see which are held.
 
 ## The nuances
 
