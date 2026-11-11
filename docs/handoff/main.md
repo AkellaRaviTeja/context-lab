@@ -2,7 +2,7 @@
 Updated: 2026-11-11. Branches, stacked: main (scaffold, 98f5c7d), docs/OpenDecisions,
 feature/Chapter01TheWholeInput, feature/Chapter02ABaseline. Nothing pushed; no GitHub repository
 yet.
-Gate: make check passes: ruff clean, 85 passed, prose 0 problems, structure 23 lessons 21
+Gate: make check passes: ruff clean, 70 passed, prose 0 problems, structure 23 lessons 21
 drafts; notebooks 2 current. `make release-check` fails on the 21 drafts and on nothing else.
 Machine: the Mac (16 GB, Apple silicon), native Ollama 0.40.15 with qwen3:8b.
 
