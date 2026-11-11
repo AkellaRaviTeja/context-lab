@@ -1,0 +1,194 @@
+[
+ {
+  "label": "other conversation (evicts)",
+  "prompt_tokens": 41,
+  "prompt_s": 0.198,
+  "load_s": 0.002,
+  "eval_s": 0.423,
+  "wall_s": 0.75
+ },
+ {
+  "label": "cold",
+  "prompt_tokens": 3343,
+  "prompt_s": 16.231,
+  "load_s": 0.001,
+  "eval_s": 0.563,
+  "wall_s": 16.81
+ },
+ {
+  "label": "exact repeat",
+  "prompt_tokens": 3343,
+  "prompt_s": 0.051,
+  "load_s": 0.001,
+  "eval_s": 0.56,
+  "wall_s": 0.63
+ },
+ {
+  "label": "same prefix, new question at end",
+  "prompt_tokens": 3344,
+  "prompt_s": 0.191,
+  "load_s": 0.001,
+  "eval_s": 0.509,
+  "wall_s": 0.72
+ },
+ {
+  "label": "timestamp at the top",
+  "prompt_tokens": 3366,
+  "prompt_s": 16.415,
+  "load_s": 0.001,
+  "eval_s": 0.563,
+  "wall_s": 17.23
+ },
+ {
+  "label": "timestamp at the top, again",
+  "prompt_tokens": 3363,
+  "prompt_s": 16.236,
+  "load_s": 0.001,
+  "eval_s": 0.974,
+  "wall_s": 17.4
+ },
+ {
+  "label": "other conversation in between",
+  "prompt_tokens": 41,
+  "prompt_s": 0.304,
+  "load_s": 0.002,
+  "eval_s": 0.426,
+  "wall_s": 0.92
+ },
+ {
+  "label": "same prefix after the other conversation",
+  "prompt_tokens": 3341,
+  "prompt_s": 0.182,
+  "load_s": 0.001,
+  "eval_s": 0.153,
+  "wall_s": 0.46
+ },
+ {
+  "label": "other conversation (evicts)",
+  "prompt_tokens": 42,
+  "prompt_s": 0.163,
+  "load_s": 0.001,
+  "eval_s": 0.425,
+  "wall_s": 0.67
+ },
+ {
+  "label": "cold",
+  "prompt_tokens": 3344,
+  "prompt_s": 16.231,
+  "load_s": 0.001,
+  "eval_s": 0.562,
+  "wall_s": 16.81
+ },
+ {
+  "label": "exact repeat",
+  "prompt_tokens": 3344,
+  "prompt_s": 0.051,
+  "load_s": 0.001,
+  "eval_s": 0.561,
+  "wall_s": 0.63
+ },
+ {
+  "label": "same prefix, new question at end",
+  "prompt_tokens": 3345,
+  "prompt_s": 0.192,
+  "load_s": 0.001,
+  "eval_s": 0.511,
+  "wall_s": 0.73
+ },
+ {
+  "label": "timestamp at the top",
+  "prompt_tokens": 3367,
+  "prompt_s": 16.394,
+  "load_s": 0.001,
+  "eval_s": 0.561,
+  "wall_s": 17.14
+ },
+ {
+  "label": "timestamp at the top, again",
+  "prompt_tokens": 3364,
+  "prompt_s": 16.267,
+  "load_s": 0.001,
+  "eval_s": 0.972,
+  "wall_s": 17.42
+ },
+ {
+  "label": "other conversation in between",
+  "prompt_tokens": 41,
+  "prompt_s": 0.304,
+  "load_s": 0.001,
+  "eval_s": 0.919,
+  "wall_s": 1.42
+ },
+ {
+  "label": "same prefix after the other conversation",
+  "prompt_tokens": 3342,
+  "prompt_s": 0.187,
+  "load_s": 0.001,
+  "eval_s": 0.98,
+  "wall_s": 1.31
+ },
+ {
+  "label": "other conversation (evicts)",
+  "prompt_tokens": 41,
+  "prompt_s": 0.178,
+  "load_s": 0.001,
+  "eval_s": 0.425,
+  "wall_s": 0.87
+ },
+ {
+  "label": "cold",
+  "prompt_tokens": 3343,
+  "prompt_s": 16.24,
+  "load_s": 0.001,
+  "eval_s": 0.562,
+  "wall_s": 16.83
+ },
+ {
+  "label": "exact repeat",
+  "prompt_tokens": 3343,
+  "prompt_s": 0.052,
+  "load_s": 0.001,
+  "eval_s": 0.585,
+  "wall_s": 0.65
+ },
+ {
+  "label": "same prefix, new question at end",
+  "prompt_tokens": 3344,
+  "prompt_s": 0.193,
+  "load_s": 0.003,
+  "eval_s": 0.509,
+  "wall_s": 0.74
+ },
+ {
+  "label": "timestamp at the top",
+  "prompt_tokens": 3365,
+  "prompt_s": 16.384,
+  "load_s": 0.001,
+  "eval_s": 0.562,
+  "wall_s": 17.15
+ },
+ {
+  "label": "timestamp at the top, again",
+  "prompt_tokens": 3363,
+  "prompt_s": 16.235,
+  "load_s": 0.001,
+  "eval_s": 0.971,
+  "wall_s": 17.4
+ },
+ {
+  "label": "other conversation in between",
+  "prompt_tokens": 42,
+  "prompt_s": 0.306,
+  "load_s": 0.001,
+  "eval_s": 0.897,
+  "wall_s": 1.41
+ },
+ {
+  "label": "same prefix after the other conversation",
+  "prompt_tokens": 3341,
+  "prompt_s": 0.191,
+  "load_s": 0.003,
+  "eval_s": 0.154,
+  "wall_s": 0.51
+ }
+]

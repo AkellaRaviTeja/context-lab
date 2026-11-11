@@ -1,0 +1,125 @@
+{
+ "json": {
+  "chars": 5489,
+  "prompt_tokens": 2350,
+  "right": 7,
+  "of": 10,
+  "wrong": [
+   [
+    "How many payments are listed? Reply with a number.",
+    "31",
+    "30"
+   ],
+   [
+    "How many payments came from payer_account KB-110-2",
+    "3",
+    "2"
+   ],
+   [
+    "What is the reference of the largest payment?",
+    "NW-0419",
+    "NW-0439"
+   ]
+  ]
+ },
+ "json-compact": {
+  "chars": 4372,
+  "prompt_tokens": 1762,
+  "right": 7,
+  "of": 10,
+  "wrong": [
+   [
+    "How many payments are listed? Reply with a number.",
+    "31",
+    "30"
+   ],
+   [
+    "How many payments came from payer_account KB-110-2",
+    "3",
+    "2"
+   ],
+   [
+    "What is the reference of the largest payment?",
+    "NW-0419",
+    "NW-0439"
+   ]
+  ]
+ },
+ "yaml": {
+  "chars": 4278,
+  "prompt_tokens": 1945,
+  "right": 8,
+  "of": 10,
+  "wrong": [
+   [
+    "How many payments are listed? Reply with a number.",
+    "31",
+    "30"
+   ],
+   [
+    "What is the reference of the largest payment?",
+    "NW-0419",
+    "NW-0439"
+   ]
+  ]
+ },
+ "markdown": {
+  "chars": 2654,
+  "prompt_tokens": 1503,
+  "right": 8,
+  "of": 10,
+  "wrong": [
+   [
+    "How many payments are listed? Reply with a number.",
+    "31",
+    "30"
+   ],
+   [
+    "What is the reference of the largest payment?",
+    "NW-0419",
+    "NW-0439"
+   ]
+  ]
+ },
+ "csv": {
+  "chars": 2248,
+  "prompt_tokens": 1429,
+  "right": 7,
+  "of": 10,
+  "wrong": [
+   [
+    "How many payments are listed? Reply with a number.",
+    "31",
+    "30"
+   ],
+   [
+    "How many payments came from payer_account KB-110-2",
+    "3",
+    "2"
+   ],
+   [
+    "What is the reference of the largest payment?",
+    "NW-0419",
+    "NW-0439"
+   ]
+  ]
+ },
+ "toon": {
+  "chars": 2325,
+  "prompt_tokens": 1497,
+  "right": 8,
+  "of": 10,
+  "wrong": [
+   [
+    "How many payments came from payer_account KB-110-2",
+    "3",
+    "2"
+   ],
+   [
+    "What is the reference of the largest payment?",
+    "NW-0419",
+    "NW-0439"
+   ]
+  ]
+ }
+}
