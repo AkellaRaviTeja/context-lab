@@ -1,0 +1,143 @@
+# Chapter 06 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=06).
+chapter: "06"
+title: The middle
+
+objectives:
+  - Test whether a fact's position in a long context changes how often it is found.
+  - Test where the question should sit, and what each arrangement costs.
+  - Read wrong answers for how they went wrong, not only that they did.
+  - Score a change of order in a real context against the baseline.
+
+quiz:
+  - q: The register fitted the window with 2,556 tokens to spare, and LANTERN found 14 of 21 accounts. What does that show?
+    options:
+      - The budget is wrong.
+      - "Fitting in the window and being used are different things. Nothing was cut, and a third of the lookups still failed."
+      - The register had errors.
+      - The model needs a larger window.
+    answer: b
+    why: >
+      Chapter 03's check answers whether the request will be read whole. It says nothing about
+      how well each part is used once it is read.
+
+  - q: Where in the register were the misses, with the question after it?
+    options:
+      - All in the middle.
+      - All at the end.
+      - "Spread across it: 2 of 3 found in the first band, 3 of 3 in the fourth, 1 of 3 in the sixth."
+      - All at the start.
+    answer: c
+    why: >
+      "Lost in the middle" is a reported effect, and this run did not show it. With three
+      questions a band it could not show it finely either. What it showed is that misses
+      happen everywhere when the question comes last.
+
+  - q: Four wrong answers had the right digits under another bank's letters. Why is that worse than a plainly wrong number?
+    options:
+      - It is longer.
+      - "It looks exactly like a real account number and is on no line of the register. Nothing about it invites a check."
+      - It uses more tokens.
+      - It is not worse.
+    answer: b
+    why: >
+      The model assembled a plausible answer from parts of several lines. An officer reading
+      SMB-23-89593 has no reason to doubt it. Only comparing it with the register shows the
+      account does not exist.
+
+  - q: With the question before the register, LANTERN found 21 of 21. What is the likely reason?
+    options:
+      - The register was shorter.
+      - "It read the register knowing what it was looking for, in place of being asked after the read."
+      - The seed changed.
+      - The standing orders were removed.
+    answer: b
+    why: >
+      Nothing else differed. The same 21 lines, the same register, the same seed. Telling the
+      model the question first changed what it attended to as it read.
+
+  - q: What did putting the question first cost?
+    options:
+      - Accuracy.
+      - More tokens in the window.
+      - "Time: the register could no longer be reused from the cache, so it was read afresh for every question."
+      - Nothing.
+    answer: c
+    why: >
+      A local model keeps the prefix of the last request ready. When the question comes last,
+      the register is that prefix and each new question costs a second or two. When the
+      question comes first, the prefix changes every time. Chapter 16 measures this.
+
+  - q: The standing orders were moved to the end of the system message and the score went from 17 to 15. Not a word changed. What follows?
+    options:
+      - The harness is not deterministic.
+      - "Order is part of the context. A reordering goes through the baseline like any other change."
+      - Rules should always come first.
+      - The standing orders are wrong.
+    answer: b
+    why: >
+      The noise floor is zero changed answers on this machine and seed, so the four answers
+      that moved did so because of the move. It does not follow that first is best in general,
+      only that last was worse here.
+
+  - q: Which of these is supported by the chapter's run?
+    options:
+      - Always put the question last.
+      - Facts in the middle are always lost.
+      - "On this model and this register, the question before the document beat the question after it, 21 to 14. Placement advice should be run before it is followed."
+      - Order does not matter below 8,000 tokens.
+    answer: c
+    why: >
+      The first two are common advice and the run contradicted one and failed to show the
+      other. The lesson is the method: hold the content still, move one thing, and count.
+
+exercise:
+  title: Arrange and reorder
+  task: |
+    Open `lessons/06-order-and-placement/practice/exercise.py` and write `arrange` and
+    `reorder`. The tests pass in text and sections, so no model is needed. They check that:
+
+    - "after", "before" and "both" put the question where they say, one blank line apart,
+    - "both" holds the register once,
+    - any other arrangement is refused by name,
+    - `reorder` moves one system section to the end of the system message and nothing else,
+    - no text changes and no section is dropped,
+    - a section outside the system message, or one that does not exist, is refused.
+  hints:
+    - |
+      `arrange`: build `body = "Register of accounts:\n" + doc` once, then three `if` branches
+      that return f-strings joined by `\n\n`, and a final `raise ValueError(...)` that includes
+      `where`.
+    - |
+      `reorder`: three lists. The system sections other than `last`; the section named `last`;
+      and every section whose `where` is not SYSTEM. Return them joined in that order.
+    - |
+      Check first: `if not any(s.name == last and s.where == SYSTEM for s in parts): raise
+      ValueError(...)`.
+  after: >
+    Arrange every request with your function: `make lesson N=06 ARGS=--mine`, then
+    `make challenge N=06`.
+
+challenges:
+  - id: your-arrangement
+    title: Your arrangement, on the register
+    goal: Run the lesson with the arrange you wrote. The question first should still find every line.
+    change: "Pass the exercise first, then run `make lesson N=06 ARGS=--mine`."
+    target: "mine == true and found_before == 21"
+
+  - id: memory-last
+    title: Move the memory instead
+    goal: >
+      Put the case memory nearest the session instead of the standing orders, and score it.
+      Does it do better than the 15 of 26 the standing orders got?
+    change: Set MOVE_LAST = "case memory" in lessons/06-order-and-placement/run.py.
+    target: "moved_last == 'case memory' and reordered_passed >= 0"
+    reset: git checkout lessons/06-order-and-placement/run.py
+
+  - id: a-short-register
+    title: "Break it: nothing to lose it among"
+    goal: >
+      Cut the register to 35 lines and ask with the question after it. With few lookalikes
+      around it, is every line found?
+    change: Set LINES = 35 in lessons/06-order-and-placement/run.py.
+    target: "lines == 35 and found_after >= 19"
+    reset: git checkout lessons/06-order-and-placement/run.py
