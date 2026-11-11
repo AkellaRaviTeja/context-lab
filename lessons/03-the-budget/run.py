@@ -85,8 +85,9 @@ console.print(table)
 largest = max(spent, key=spent.get)
 ev_share = 100 * spent["session: evidence"] / total
 told = total - spent["session: evidence"] - spent["session: talk"] - spent["the question"]
-note(f"The largest account is the {largest}: {spent[largest]:,} tokens, {spent[largest] / total:.0%}"
-     f" of the input. Evidence is {spent['session: evidence']:,} tokens, {ev_share:.1f}%. "
+note(f"The largest account is the {largest}: {spent[largest]:,} tokens, "
+     f"{spent[largest] / total:.0%} of the input. Evidence is "
+     f"{spent['session: evidence']:,} tokens, {ev_share:.1f}%. "
      f"{told:,} tokens, {told / total:.0%}, are sent with every question whatever it asks.")
 order = ["standing orders", "case memory", "summaries", "tool schemas", "session: evidence"]
 groups = dict(spent)
