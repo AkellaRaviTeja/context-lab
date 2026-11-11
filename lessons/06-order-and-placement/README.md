@@ -174,4 +174,4 @@ four answers of 26 without changing a word: 15 of 26. The order LANTERN is told 
 now a recorded decision with a score against it. So far every experiment has taken something
 out or moved it. Mensah wants to put more in.
 
-**Next:** [Chapter 07: They are in the way](../07-less-is-more/README.md)
+**Next:** [Chapter 07: More to go on](../07-less-is-more/README.md)

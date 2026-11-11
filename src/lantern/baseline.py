@@ -129,17 +129,21 @@ def answer(messages: list[dict[str, Any]], schemas: list[dict[str, Any]], *,
 def score(parts: list[Section], *, chat: Callable[..., Any], seed: int = SEED,
           max_tokens: int = 160, only: list[str] | None = None,
           grade: Callable[[str, dict[str, Any]], bool] = grade,
-          render: Callable[[dict[str, Any]], Any] | None = None) -> list[dict[str, Any]]:
+          render: Callable[[dict[str, Any]], Any] | None = None,
+          per_question: Callable[[list[Section], str], list[Section]] | None = None,
+          ) -> list[dict[str, Any]]:
     """Ask every signed question with these sections as the context, and grade each answer.
 
     `only` asks a subset by id; `grade` swaps the grader (for a learner's own, with --mine).
+    `per_question` rebuilds the sections for each question (a context builder that selects).
     """
     parts = with_evidence(parts, render)
     out = []
     for q in questions():
         if only and q["id"] not in only:
             continue
-        messages, schemas = context.request(asking(parts, q["question"]))
+        mine = per_question(parts, q["question"]) if per_question else parts
+        messages, schemas = context.request(asking(mine, q["question"]))
         got = answer(messages, schemas, chat=chat, seed=seed, max_tokens=max_tokens,
                      render=render)
         out.append({"id": q["id"], "slice": q["slice"], "question": q["question"], **got,

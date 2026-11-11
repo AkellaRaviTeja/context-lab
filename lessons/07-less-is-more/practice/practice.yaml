@@ -1,0 +1,140 @@
+# Chapter 07 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=07).
+chapter: "07"
+title: More to go on
+
+objectives:
+  - Test whether true, related, unneeded material makes answers worse on your model, in place of assuming it.
+  - Say what unneeded material costs for certain: room in the window, on every question.
+  - Build a cut-off that admits a page by a score that can be read afterwards.
+  - Record every page the builder leaves out, with the score it was left out on.
+
+quiz:
+  - q: Twelve true pages about Pellmar were added, each with a figure or reference like one in evidence. What happened to the eight evidence answers?
+    options:
+      - They got steadily worse.
+      - One changed at eight pages.
+      - "Nothing. 8 of 8 with 0, 4, 8 and 12 pages."
+      - They all changed.
+    answer: c
+    why: >
+      The run was built to show distraction and did not find it. That is a result, and it is
+      reported as one.
+
+  - q: Why did you expect the answers to get worse?
+    options:
+      - Because the pages were false.
+      - "Because distraction by related material is a widely reported effect. It is a claim about a model and a task, and it had not been tested on this one."
+      - Because the window was full.
+      - Because Okafor said so.
+    answer: b
+    why: >
+      Advice about context is mostly true somewhere. Whether it is true of your model on your
+      questions is found by running it, which is what Varma asked for.
+
+  - q: If the pages cost no answers, what did they cost?
+    options:
+      - Nothing.
+      - "Room. The budget's spare fell from 1,586 tokens to 620, on every question, whether the page helped or not."
+      - The noise floor.
+      - The grader's accuracy.
+    answer: b
+    why: >
+      A window is a fixed sum. Twelve short pages took most of what was left of it. Thirteen
+      more would not have fitted, and without chapter 03's check the server would have cut the
+      oldest part of the context to make room.
+
+  - q: With all twelve related pages loaded, Q-23 was fixed. No page mentions Saltire Quay. What is the right reading?
+    options:
+      - The pages contained the answer.
+      - "Adding text changed how an unrelated answer was worded. It is the same effect as chapter 02's two broken answers, pointing the other way."
+      - The grader changed.
+      - More context is always better.
+    answer: b
+    why: >
+      One answer moved in the right direction for no reason the pages explain. It is not
+      evidence that loading everything helps, any more than chapter 02 showed that removing a
+      line hurts in general.
+
+  - q: The cut-off admitted 5 pages over 26 questions and scored the same as the baseline. Why keep it?
+    options:
+      - It improved the score.
+      - "It keeps the window's room, and it leaves a record of what was offered and not loaded."
+      - It is faster than loading nothing.
+      - It removes the false memory.
+    answer: b
+    why: >
+      Its case here rests on cost and on the record. On a model that does get distracted it
+      would also protect answers, and the same run would show that.
+
+  - q: Why does select() return the pages it left out, with their scores?
+    options:
+      - To use more memory.
+      - "Leaving a document out of the context is a decision. If the answer turns out to depend on that page, someone has to be able to see that it was offered, and why it was not loaded."
+      - The tests require two return values.
+      - To load them later automatically.
+    answer: b
+    why: >
+      In an inquiry, "the system did not look at it" needs a reason on record. A score and a
+      threshold are a reason. A page that silently never arrived is not.
+
+  - q: Which statement does the chapter's run support?
+    options:
+      - Related pages always distract.
+      - Related pages never distract.
+      - "On this model, with exact statements in front of it and specific questions, 12 to 24 true unneeded pages moved no answer for the worse. Other models, sources and questions have to be run."
+      - Unrelated pages distract more than related ones.
+    answer: c
+    why: >
+      The run measured one configuration. It is enough to stop repeating the claim untested,
+      and not enough to replace it with its opposite.
+
+exercise:
+  title: A cut-off that keeps a record
+  task: |
+    Open `lessons/07-less-is-more/practice/exercise.py` and write `overlap` and `select`.
+    `terms` is given. The tests pass in pages as text, so no model is needed. They check that:
+
+    - overlap is a share of the question's terms, whatever the page's length,
+    - common words do not count, and a question with nothing telling scores 0.0,
+    - figures match with or without commas,
+    - a page at the threshold is admitted,
+    - every page left out is recorded with its score, in order,
+    - a threshold of zero admits everything.
+  hints:
+    - |
+      `overlap`: `asked = terms(question)`. If `asked` is empty return 0.0. Otherwise
+      `len(asked & terms(page.text)) / len(asked)`.
+    - |
+      `select`: two lists. For each page compute the score once, then
+      `kept.append(p)` when `score >= threshold`, else
+      `left_out.append((p.path, round(score, 2)))`.
+    - |
+      Use `>=`, not `>`. And return a tuple of the two lists: `return kept, left_out`.
+  after: >
+    Build each question's context with your select: `make lesson N=07 ARGS=--mine`, then
+    `make challenge N=07`.
+
+challenges:
+  - id: your-cut-off
+    title: Your cut-off, on the pages
+    goal: Run the lesson with the select you wrote. It should admit the same five pages.
+    change: "Pass the exercise first, then run `make lesson N=07 ARGS=--mine`."
+    target: "mine == true and admitted == 5"
+
+  - id: a-looser-threshold
+    title: Let more in
+    goal: >
+      Lower the threshold to 0.25 and score again. Count what was admitted, and read whether
+      the score moved from 17.
+    change: Set THRESHOLD = 0.25 in lessons/07-less-is-more/run.py.
+    target: "threshold == 0.25 and admitted > 5"
+    reset: git checkout lessons/07-less-is-more/run.py
+
+  - id: nothing-passes
+    title: "Break it: a cut-off nothing passes"
+    goal: >
+      Set the threshold above 1 so that no page is ever admitted. The context is then the
+      baseline's, and the score should be the baseline's, answer for answer.
+    change: Set THRESHOLD = 1.1 in lessons/07-less-is-more/run.py.
+    target: "admitted == 0 and cut_fixed == 0 and cut_broken == 0"
+    reset: git checkout lessons/07-less-is-more/run.py
