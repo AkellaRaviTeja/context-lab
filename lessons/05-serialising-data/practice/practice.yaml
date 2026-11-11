@@ -1,0 +1,139 @@
+# Chapter 05 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=05).
+chapter: "05"
+title: Thirty-one payments, five ways
+
+objectives:
+  - Write the same records as JSON, YAML, a Markdown table, CSV and TOON without changing a value.
+  - Count what each shape costs with the model's own tokenizer.
+  - Score how each shape is read, by kind of question, before choosing one.
+  - Test a change of shape on the signed questions, and drop it when it does not pay.
+
+quiz:
+  - q: The same 31 payments were 2,296 tokens as indented JSON and 1,374 as CSV. Where did the extra 922 tokens go?
+    options:
+      - Into the values.
+      - "Into keys, quotes, braces and white space written again for every row."
+      - Into a longer system prompt.
+      - Into rounding.
+    answer: b
+    why: >
+      No value differs between the shapes. A shape that names "amount" 31 times pays for it 31
+      times.
+
+  - q: Looking up one cell, all six shapes were right 21 times of 21. What does that say about the keys beside every value in JSON?
+    options:
+      - They are essential.
+      - "On this model and this table they bought nothing: a header read once was enough to find the cell."
+      - They made JSON more accurate.
+      - They confused the model.
+    answer: b
+    why: >
+      The argument for JSON is that each value carries its label. Here the model found the
+      right cell from a header 31 rows above it every time.
+
+  - q: Asked how many payments were listed, five shapes said 30 on every seed and TOON said 31. Why?
+    options:
+      - TOON is a better format in general.
+      - "TOON's header states the count: payments[31]. The model read it. In the other shapes it had to count, and counted wrong."
+      - The other shapes lost a row.
+      - Luck.
+    answer: b
+    why: >
+      The model did not count 31 rows in any shape. One shape told it the answer. That is a
+      reason to state a count where the count matters, and no evidence that the model can
+      count.
+
+  - q: No shape found the largest payment. What should LANTERN do with that kind of question?
+    options:
+      - Use indented JSON.
+      - Ask three times and take the majority.
+      - "Use a tool. Standing order 7 already says so: never add, subtract or count in your head."
+      - Sort the rows by date.
+    answer: c
+    why: >
+      Every shape gave NW-0439, where the largest is NW-0419, on every seed. A different shape
+      does not make a model do arithmetic over 31 rows. A tool does.
+
+  - q: TOON, YAML and the Markdown table each scored 24 of 30. Why did the run choose TOON for step 4?
+    options:
+      - It is the newest.
+      - "Among the shapes that read best it used the fewest tokens: 1,442 against 1,449 and 1,891."
+      - The author prefers it.
+      - It is the only one the model understands.
+    answer: b
+    why: >
+      The rule was fixed in code before the run: best read, then fewest tokens. The margin over
+      the Markdown table is seven tokens, which is no margin at all.
+
+  - q: With every statement drawn as TOON, the signed questions went from 17 to 15 of 26 and the largest request fell by 112 tokens. Is the change kept?
+    options:
+      - Yes, it saves tokens.
+      - "No. It saved 2% of the request and broke two answers, one of them on evidence."
+      - Yes, TOON read best in step 3.
+      - It cannot be decided.
+    answer: b
+    why: >
+      The two statements are ten rows between them, so there was little to save. A shape earns
+      its place on a long table. On a short one the change costs more than it returns.
+
+  - q: Which of these is the sound conclusion from the chapter?
+    options:
+      - Always use TOON.
+      - Never use JSON.
+      - "For many uniform rows a table shape costs about 60% of indented JSON and read no worse here; state counts and totals, or compute them with a tool; and score the change before keeping it."
+      - The format does not matter.
+    answer: c
+    why: >
+      The chapter measured one table, one model and ten questions. The method carries over.
+      The winner may not.
+
+exercise:
+  title: Two shapes by hand
+  task: |
+    Open `lessons/05-serialising-data/practice/exercise.py` and write `cell`, `to_markdown` and
+    `to_toon`. The tests pass in rows, so no model is needed. They check that:
+
+    - the Markdown table names the keys once, then a rule, then a line a row,
+    - the TOON header gives the name, the number of rows and the keys,
+    - a cell with a comma is quoted, and a quote inside it is doubled,
+    - no value is changed in either shape,
+    - the case's 31 payments give `payments[31]{...}:`.
+  hints:
+    - |
+      `cell`: `if any(c in value for c in ',"\n')` then return
+      `'"' + value.replace('"', '""') + '"'`, else the value.
+    - |
+      `to_markdown`: `keys = list(rows[0])`. The header is `"| " + " | ".join(keys) + " |"`,
+      the rule is `"|" + "---|" * len(keys)`, and each row is the same pattern over
+      `r.values()`.
+    - |
+      `to_toon`: the header is `f"{name}[{len(rows)}]{{{','.join(keys)}}}:"`. In an f-string a
+      literal brace is written twice.
+  after: >
+    Count and read the payments in your shapes: `make lesson N=05 ARGS=--mine`, then
+    `make challenge N=05`.
+
+challenges:
+  - id: your-shapes
+    title: Your shapes, on the payments
+    goal: Run the lesson on the to_toon and to_markdown you wrote. They should cost what the lesson's do.
+    change: "Pass the exercise first, then run `make lesson N=05 ARGS=--mine`."
+    target: "mine == true and tokens_toon == 1442 and tokens_markdown == 1449"
+
+  - id: the-cheapest
+    title: The cheapest shape, scored
+    goal: >
+      CSV is the smallest shape and read 21 of 30. Draw the statements as CSV and score the
+      signed questions. Does it do better or worse than TOON's 15?
+    change: Set STATEMENT_AS = "CSV" in lessons/05-serialising-data/run.py.
+    target: "chosen == 'CSV' and reshaped_passed >= 0"
+    reset: git checkout lessons/05-serialising-data/run.py
+
+  - id: the-dearest
+    title: "Break it: pay for every key"
+    goal: >
+      Draw the statements as indented JSON, the dearest shape, and watch the largest request
+      grow while the score does what it does.
+    change: Set STATEMENT_AS = "JSON, indented" in lessons/05-serialising-data/run.py.
+    target: "chosen == 'JSON, indented' and tokens_saved_largest < 0"
+    reset: git checkout lessons/05-serialising-data/run.py

@@ -16,6 +16,8 @@ Everything here is fictional. Lessons read these files through `lantern.case`. F
 | `statements/` | Pellmar's reserve (MTB-31-02290) and client account (ICB-77-10458) as the banks reported them, 18 June to 6 July | 01 | written |
 | `questions/questions.jsonl`, `questions/signoff.md` | 26 questions in five slices with the record each answer comes from, signed by D. Okafor on 13 July at 16:40, with the file's SHA-256 | 02 | written |
 | `fiu/kobayashi-2026-07-13.md` | The FIU's note of 13 July: it cleared nothing on 2 June, and holds no record of Ostrander Marine Finance SA | 02 | written |
+| `ledger/halcyon-to-northwind.csv` | The 31 payments from Halcyon to Northwind of Case File 02, as five fields a row | 05 | written |
+| `rebuilt/` | What the audit proposes in place of parts of LANTERN's state. Not evidence | 04 | written |
 | `memory-log/` | The access and write log of the memory store, with the session records behind each write | 12 | planned |
 | `custody/` | DS Iyer's suspension and badge records, consistent with Case File 03 | 20 | planned |
 | `review/` | The case review of chapter 22 | 22 | planned |

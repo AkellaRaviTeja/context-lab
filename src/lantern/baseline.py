@@ -84,12 +84,19 @@ def reserve_lookup() -> list[dict[str, Any]]:
     ]
 
 
-def with_evidence(parts: list[Section]) -> list[Section]:
-    """The sections with the reserve's statement added to the session, for every question."""
+def with_evidence(parts: list[Section],
+                  render: Callable[[dict[str, Any]], Any] | None = None) -> list[Section]:
+    """The sections with the reserve's statement added to the session, for every question.
+
+    `render` redraws what every tool returned (chapter 05); None leaves it as the JSON it was.
+    """
     out = []
     for s in parts:
         if s.where == HISTORY:
             turns = [*s.payload, *reserve_lookup()]
+            if render:
+                turns = [{**m, "content": render(json.loads(m["content"]))}
+                         if m["role"] == "tool" else m for m in turns]
             s = replace(s, text="".join(context._turn(m) for m in turns), payload=turns)
         out.append(s)
     return out
@@ -102,7 +109,8 @@ def asking(parts: list[Section], question: str) -> list[Section]:
 
 def answer(messages: list[dict[str, Any]], schemas: list[dict[str, Any]], *,
            chat: Callable[..., Any], seed: int, max_tokens: int,
-           max_tool_turns: int = 3) -> dict[str, Any]:
+           max_tool_turns: int = 3,
+           render: Callable[[dict[str, Any]], Any] | None = None) -> dict[str, Any]:
     """One question to its answer, running any tools the model calls (at most three rounds)."""
     messages, called, prompt_tokens = list(messages), [], 0
     for _ in range(max_tool_turns + 1):
@@ -113,24 +121,27 @@ def answer(messages: list[dict[str, Any]], schemas: list[dict[str, Any]], *,
         messages.append(r.message)
         for c in r.tool_calls:
             called.append(c.name)
-            messages.append(tool_result(c.name, tools.run(c.name, c.arguments)))
+            result = tools.run(c.name, c.arguments)
+            messages.append(tool_result(c.name, render(result) if render else result))
     return {"answer": r.text, "called": called, "prompt_tokens": prompt_tokens}
 
 
 def score(parts: list[Section], *, chat: Callable[..., Any], seed: int = SEED,
           max_tokens: int = 160, only: list[str] | None = None,
-          grade: Callable[[str, dict[str, Any]], bool] = grade) -> list[dict[str, Any]]:
+          grade: Callable[[str, dict[str, Any]], bool] = grade,
+          render: Callable[[dict[str, Any]], Any] | None = None) -> list[dict[str, Any]]:
     """Ask every signed question with these sections as the context, and grade each answer.
 
     `only` asks a subset by id; `grade` swaps the grader (for a learner's own, with --mine).
     """
-    parts = with_evidence(parts)
+    parts = with_evidence(parts, render)
     out = []
     for q in questions():
         if only and q["id"] not in only:
             continue
         messages, schemas = context.request(asking(parts, q["question"]))
-        got = answer(messages, schemas, chat=chat, seed=seed, max_tokens=max_tokens)
+        got = answer(messages, schemas, chat=chat, seed=seed, max_tokens=max_tokens,
+                     render=render)
         out.append({"id": q["id"], "slice": q["slice"], "question": q["question"], **got,
                     "passed": grade(got["answer"], q["expect"])})
     if not out:
