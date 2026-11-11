@@ -1,0 +1,20 @@
+date,description,counterparty,counterparty_account,reference,debit,credit,balance
+2026-01-27,Management services,Pellmar Nominees Ltd,MTB-31-02266,PEL-0001,,231000.00,235400.00
+2026-01-30,Distribution to trust,Tidewater Holdings Trust,SC-0090-0001,OSP-0001,230000.00,,5400.00
+2026-01-30,Monthly account fee,Sabran Commercial Bank,,FEE-2026-01,60.00,,5340.00
+2026-02-03,Management services,Pellmar Nominees Ltd,MTB-31-02266,PEL-0002,,154000.00,159340.00
+2026-02-06,Distribution to trust,Tidewater Holdings Trust,SC-0090-0001,OSP-0002,154000.00,,5340.00
+2026-02-10,Management services,Pellmar Nominees Ltd,MTB-31-02266,PEL-0003,,126000.00,131340.00
+2026-02-13,Distribution to trust,Tidewater Holdings Trust,SC-0090-0001,OSP-0003,127000.00,,4340.00
+2026-02-17,Management services,Pellmar Nominees Ltd,MTB-31-02266,PEL-0004,,362000.00,366340.00
+2026-02-20,Distribution to trust,Tidewater Holdings Trust,SC-0090-0001,OSP-0004,359000.00,,7340.00
+2026-02-24,Management services,Pellmar Nominees Ltd,MTB-31-02266,PEL-0005,,164000.00,171340.00
+2026-02-27,Distribution to trust,Tidewater Holdings Trust,SC-0090-0001,OSP-0005,166000.00,,5340.00
+2026-02-27,Monthly account fee,Sabran Commercial Bank,,FEE-2026-02,60.00,,5280.00
+2026-03-03,Management services,Pellmar Nominees Ltd,MTB-31-02266,PEL-0006,,71000.00,76280.00
+2026-03-06,Distribution to trust,Tidewater Holdings Trust,SC-0090-0001,OSP-0006,72000.00,,4280.00
+2026-03-10,Management services,Pellmar Nominees Ltd,MTB-31-02266,PEL-0007,,455000.00,459280.00
+2026-03-13,Distribution to trust,Tidewater Holdings Trust,SC-0090-0001,OSP-0007,451000.00,,8280.00
+2026-03-24,Management services,Pellmar Nominees Ltd,MTB-31-02266,PEL-0008,,300000.00,308280.00
+2026-03-27,Distribution to trust,Tidewater Holdings Trust,SC-0090-0001,OSP-0008,302000.00,,6280.00
+2026-03-31,Monthly account fee,Sabran Commercial Bank,,FEE-2026-03,60.00,,6220.00

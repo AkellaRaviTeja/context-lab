@@ -1,0 +1,10 @@
+account_no,holder,bank,jurisdiction,file,opening_balance
+88-301-4471,Northwind Freight Ltd,Sabran Mercantile Bank,Port Sabran,northwind-freight.csv,4210.55
+KB-117-60218,Arden Logistics Ltd,Kestrel Bay Commercial Bank,Kestrel Bay,arden-logistics.csv,96320.40
+SC-0071-5530,Corvane Trading Ltd,Sabran Commercial Bank,Port Sabran,corvane-trading.csv,12500.00
+SM-88-410-207,Lowmarsh Shipping Services Ltd,Sabran Mercantile Bank,Port Sabran,lowmarsh-shipping.csv,3100.00
+MTB-30-77104,Calder Reach Holdings Ltd,Meridian Trust Bank,Meridian Isles,calder-reach.csv,1850.00
+MTB-30-77391,Greyfen Advisory Ltd,Meridian Trust Bank,Meridian Isles,greyfen-advisory.csv,2200.00
+MTB-31-02266,Pellmar Nominees Ltd,Meridian Trust Bank,Meridian Isles,pellmar-nominees.csv,975.00
+SC-0071-8812,Osprey Point Management Ltd,Sabran Commercial Bank,Port Sabran,osprey-point.csv,4400.00
+SC-0090-0001,Tidewater Holdings Trust,Sabran Commercial Bank,Port Sabran,tidewater-holdings.csv,250000.00

@@ -1,0 +1,141 @@
+# Chapter 09 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=09).
+chapter: "09"
+title: What stays behind
+
+objectives:
+  - Measure how much of an agent's context is tool results from earlier turns.
+  - Clear a used result and leave a note that says what it was.
+  - Explain why a model's summary of a tool result is a new document that can be wrong.
+  - Decide at the tool what a result should hold, before it enters the window.
+
+quiz:
+  - q: By the ninth request of the trace that kept whole statements, what share of the conversation was results from earlier turns?
+    options:
+      - About a tenth.
+      - About a third.
+      - "About two thirds: 4,528 tokens of statements the agent had already reported from."
+      - All of it.
+    answer: c
+    why: >
+      A result is read once and resent on every later request. In a long run the used results
+      become most of what the model reads.
+
+  - q: The trace that kept everything stopped before its tenth request. Why is that the better outcome?
+    options:
+      - It saved tokens.
+      - "The loop refused a request of 8,336 tokens and said so. A server would have cut the oldest turns, which hold the task and the first findings, and answered anyway."
+      - The agent had finished.
+      - The model asked to stop.
+    answer: b
+    why: >
+      Chapter 03 showed the silent cut. An agent whose task has been cut out of its own context
+      keeps working, on something else.
+
+  - q: Clearing used results let the agent open eight statements in place of five. Why did it still fail?
+    options:
+      - The stub confused it.
+      - "It opened Arden's statement, 24,809 tokens in one result. Clearing manages old results; it cannot make one result fit that is larger than the window."
+      - It ran out of turns.
+      - Clearing removed the task.
+    answer: b
+    why: >
+      The fix for a result that large is at the tool: refuse it, page it, or return less. It
+      got there because an earlier report had invented a payment to Arden, and the check sent
+      it to look.
+
+  - q: None of the four summaries the model wrote had every total right. What makes a wrong summary dangerous here?
+    options:
+      - It is longer than the statement.
+      - "It replaces the statement in the conversation. From then on the model reads its own mistake as the source."
+      - It cannot be deleted.
+      - It uses the wrong currency.
+    answer: b
+    why: >
+      The first summary listed Arden as a payee of Corvane's. Arden was the payer. Nothing in
+      the conversation afterwards could contradict it, because the statement was gone.
+
+  - q: Why must a cleared result leave a note behind?
+    options:
+      - To keep the message count the same.
+      - "Without it the model has no sign that it ever looked. With it, the model knows what was there and how to get it back."
+      - The server requires a tool message.
+      - To save more tokens.
+    answer: b
+    why: >
+      The stub names the call that produced the result. An agent that needs a line of it again
+      can make the same call, and an agent that does not is told it has already reported from
+      it.
+
+  - q: Which arm got every total right, and why?
+    options:
+      - Cleared when used, because the window had room.
+      - Summarised when used, because summaries are short.
+      - "Trimmed at the tool, because the tool did the sums and returned payees, counts and totals."
+      - Whole statements kept, because nothing was lost.
+    answer: c
+    why: >
+      The model was never asked to add. What it cannot do reliably was done in code before the
+      result entered the window. Standing order 7 says as much.
+
+  - q: What is the difference between trimming at the tool and the other two treatments?
+    options:
+      - It is slower.
+      - "The others manage what is already in the conversation. Trimming at the tool decides what enters it, and what was never returned cannot be mistaken for the whole."
+      - It needs a larger model.
+      - There is none.
+    answer: b
+    why: >
+      A trimmed-afterwards result once was whole and looks whole. A tool that returns a digest
+      says so in its description, and the agent knows from the start what it has.
+
+exercise:
+  title: Put a result down
+  task: |
+    Open `lessons/09-tool-results/practice/exercise.py` and write `clear_old`. The tests pass
+    in conversations as lists of messages, so no model is needed. They check that:
+
+    - an old result becomes a note that starts with the cleared marker,
+    - the newest result is kept whole,
+    - the note names the call that produced the result,
+    - a short result is left alone, and clearing twice changes nothing more,
+    - nothing is added, dropped or changed in place,
+    - a conversation with no results comes back as it was.
+  hints:
+    - |
+      `newest = max((i for i, m in enumerate(messages) if m["role"] == "tool"), default=-1)`.
+    - |
+      Walk with `enumerate`. When a message is an assistant turn with `tool_calls`, remember
+      `f = m["tool_calls"][0]["function"]` as
+      `f"{f['name']}({', '.join(str(v) for v in f['arguments'].values())})"`.
+    - |
+      Replace with a new dict, `{**m, "content": stub(call)}`, when the role is "tool", the
+      index is not `newest`, the content is longer than SMALL and does not already start with
+      CLEARED. Append every message, changed or not, to a new list.
+  after: >
+    Run the clearing arm on your function: `make lesson N=09 ARGS=--mine`, then
+    `make challenge N=09`.
+
+challenges:
+  - id: your-clearing
+    title: Your clearing, in the trace
+    goal: Run the lesson with the clear_old you wrote. The largest request should stay under half the window.
+    change: "Pass the exercise first, then run `make lesson N=09 ARGS=--mine`."
+    target: "mine == true and cleared_largest < 4096 and cleared_largest > 0"
+
+  - id: only-the-tool
+    title: The arm that worked, alone
+    goal: >
+      Run only the first arm and the trimmed tool, to see in five minutes what the other
+      twenty were for.
+    change: Set ARMS = ("whole statements, kept", "trimmed at the tool") in lessons/09-tool-results/run.py.
+    target: "trimmed_found == 7 and trimmed_totals == 7 and cleared_found == -1"
+    reset: git checkout lessons/09-tool-results/run.py
+
+  - id: carry-everything
+    title: "Break it: carry everything"
+    goal: >
+      Run only the arm that keeps whole statements and read how far it gets before the loop
+      refuses to send the next request.
+    change: Set ARMS = ("whole statements, kept",) in lessons/09-tool-results/run.py.
+    target: "kept_stopped == 'over budget before turn 10' and trimmed_found == -1"
+    reset: git checkout lessons/09-tool-results/run.py

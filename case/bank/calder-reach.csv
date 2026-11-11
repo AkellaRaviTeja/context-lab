@@ -1,0 +1,20 @@
+date,description,counterparty,counterparty_account,reference,debit,credit,balance
+2026-01-21,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,LOW-0001,,239000.00,240850.00
+2026-01-22,Advisory retainer,Greyfen Advisory Ltd,MTB-30-77391,CAL-0001,236000.00,,4850.00
+2026-01-28,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,LOW-0002,,152000.00,156850.00
+2026-01-29,Advisory retainer,Pellmar Nominees Ltd,MTB-31-02266,CAL-0002,153000.00,,3850.00
+2026-01-30,Monthly account fee,Meridian Trust Bank,,FEE-2026-01,85.00,,3765.00
+2026-02-04,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,LOW-0003,,125000.00,128765.00
+2026-02-05,Advisory retainer,Greyfen Advisory Ltd,MTB-30-77391,CAL-0003,125000.00,,3765.00
+2026-02-11,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,LOW-0004,,368000.00,371765.00
+2026-02-12,Advisory retainer,Greyfen Advisory Ltd,MTB-30-77391,CAL-0004,366000.00,,5765.00
+2026-02-18,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,LOW-0005,,158000.00,163765.00
+2026-02-19,Advisory retainer,Greyfen Advisory Ltd,MTB-30-77391,CAL-0005,160000.00,,3765.00
+2026-02-25,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,LOW-0006,,70000.00,73765.00
+2026-02-26,Advisory retainer,Pellmar Nominees Ltd,MTB-31-02266,CAL-0006,71000.00,,2765.00
+2026-02-27,Monthly account fee,Meridian Trust Bank,,FEE-2026-02,85.00,,2680.00
+2026-03-04,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,LOW-0007,,466000.00,468680.00
+2026-03-05,Advisory retainer,Greyfen Advisory Ltd,MTB-30-77391,CAL-0007,462000.00,,6680.00
+2026-03-18,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,LOW-0008,,295000.00,301680.00
+2026-03-19,Advisory retainer,Greyfen Advisory Ltd,MTB-30-77391,CAL-0008,297000.00,,4680.00
+2026-03-31,Monthly account fee,Meridian Trust Bank,,FEE-2026-03,85.00,,4595.00

@@ -1,0 +1,143 @@
+# Chapter 03 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=03).
+chapter: "03"
+title: Who is spending the window
+
+objectives:
+  - Count a context by account with the model's own tokenizer, and say what share is evidence.
+  - Explain why a count in characters or words does not balance.
+  - Keep back a reserve for everything the model writes, thinking included.
+  - Refuse an over-full context in code before it is sent, and score a budget move like any other change.
+
+quiz:
+  - q: In the recorded run, which account spent the most of the input?
+    options:
+      - The standing orders.
+      - The summaries.
+      - "The tool schemas: 1,891 of 5,410 tokens, 35%."
+      - The evidence.
+    answer: c
+    why: >
+      Every tool LANTERN has been given since April is described in full on every request,
+      whether or not the question needs a tool. The evidence, the only part that came from a
+      bank, was 316 tokens.
+
+  - q: A statement returned by a tool was 314 tokens. Characters divided by four said 177. Why so far out?
+    options:
+      - The tokenizer is faulty.
+      - "Figures, dates and account numbers break into many short tokens. A rule of thumb fitted to prose is wrong by a different amount for each kind of text."
+      - JSON is always twice as long.
+      - The tool result was truncated.
+    answer: b
+    why: >
+      The same rule was within 2% on the standing orders and 44% under on the statement. A
+      budget kept in characters would have let the evidence overrun it.
+
+  - q: With thinking on and 160 tokens allowed, the reply held 106 words of thinking and no answer. What does that say about the reserve?
+    options:
+      - Thinking is free.
+      - "The reserve pays for everything the model writes. Thinking is spent first, and the answer gets what is left."
+      - The model refused the question.
+      - The window was too small for the input.
+    answer: b
+    why: >
+      Output is one account. A reserve sized for the answer alone leaves nothing when the model
+      thinks before it answers.
+
+  - q: The input was 19,343 tokens against a window of 8,192. What did Ollama return?
+    options:
+      - An error naming the limit.
+      - A warning, then the answer.
+      - "An ordinary answer. The only sign was a prompt count of 4,098."
+      - Nothing.
+    answer: c
+    why: >
+      The server cut the prompt to about half the window and answered from what was left. The
+      rule that names the two officers who sign was in the part that was dropped, and the
+      answer no longer named them.
+
+  - q: Why does check() name an account before it names the whole input?
+    options:
+      - It is faster.
+      - "Because the person who must fix it needs to know which part grew. 'Too long' sends them to read everything."
+      - The whole input cannot be measured.
+      - Accounts are checked by the server.
+    answer: b
+    why: >
+      The standing orders were 13,767 tokens over their own limit. That is a message somebody
+      can act on in a minute.
+
+  - q: Sending 3 tool schemas in place of 19 saved 1,538 tokens a question. Why was it still scored on all 26 questions?
+    options:
+      - To use the tokens saved.
+      - "Because taking something out of the context is a change to the context. It moved one answer here; it might have moved several the wrong way."
+      - The schemas contain evidence.
+      - The harness requires 19 tools.
+    answer: b
+    why: >
+      In the recorded run Q-21 was fixed and nothing was broken. Chapter 02's change, one line
+      of memory, broke two. Neither result could have been known without the run.
+
+  - q: The sections counted one by one came to 5,410 tokens and Ollama counted the request at 5,112. Which does the budget use, and why?
+    options:
+      - "The larger, counted before sending. It can be known without making the request, and it errs towards refusing."
+      - The smaller, because it is the true count.
+      - The average of the two.
+      - Neither; it uses characters.
+    answer: a
+    why: >
+      A check that runs before the request cannot use a number that only the request returns.
+      Being a few percent strict costs little; being a few percent loose loses the oldest part
+      of the context without a word.
+
+exercise:
+  title: A budget that refuses
+  task: |
+    Open `lessons/03-the-budget/practice/exercise.py` and write `check`. The tests pass in token
+    counts, so no model is needed. They check that:
+
+    - a context that fits returns the tokens of input left,
+    - the reserve is taken off the window first,
+    - an account over its own limit is refused by name, with the amount over in the message,
+    - exactly at a limit fits,
+    - with two accounts over, the first sent is named,
+    - an account is named before the whole input,
+    - an account with no limit is only counted in the whole.
+  hints:
+    - |
+      Loop over `spent.items()` in order. `budget.limits.get(account)` is None for an account
+      with no limit; skip those.
+    - |
+      Compare with `>` and not `>=`: a limit is the most allowed. Raise
+      `OverBudget(account, tokens, limit)`.
+    - |
+      After the loop: `for_input = budget.window - budget.reserve`, `total = sum(spent.values())`.
+      Raise `OverBudget("the whole input", total, for_input)` if the total is larger, else
+      return `for_input - total`.
+  after: >
+    Check LANTERN's context with your function: `make lesson N=03 ARGS=--mine`, then
+    `make challenge N=03`.
+
+challenges:
+  - id: your-budget
+    title: Your check, on LANTERN's context
+    goal: Run the lesson with the check you wrote. It should refuse the over-full context and pass the real one.
+    change: "Pass the exercise first, then run `make lesson N=03 ARGS=--mine`."
+    target: "mine == true and refused == true and refused_account == 'standing orders'"
+
+  - id: a-tighter-reserve
+    title: Leave room to think
+    goal: >
+      Set the reserve to what a reply with thinking would need, 2,000 tokens, and find the
+      context as it stands still fits with room to spare.
+    change: Set RESERVE = 2000 in lessons/03-the-budget/run.py.
+    target: "reserve >= 2000 and left_for_input > 0"
+    reset: git checkout lessons/03-the-budget/run.py
+
+  - id: one-tool-too-few
+    title: "Break it: save too much"
+    goal: >
+      Send only one tool schema, `statement`, and read what the saving cost on the questions
+      that need a total or a count.
+    change: Set KEEP_TOOLS = ["statement"] in lessons/03-the-budget/run.py.
+    target: "tools_kept == 1 and tokens_saved > 1538"
+    reset: git checkout lessons/03-the-budget/run.py

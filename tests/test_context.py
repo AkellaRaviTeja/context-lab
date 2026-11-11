@@ -50,3 +50,11 @@ def test_without_leaves_the_statement_and_the_question_alone():
     assert context.request(less)[0][-1] == context.request(parts)[0][-1]
     assert context.request(less)[1] == context.request(parts)[1]
     assert [m for m in context.request(less)[0][1:]] == [m for m in context.request(parts)[0][1:]]
+
+
+def test_a_long_text_is_counted_in_pieces_that_lose_nothing():
+    text = "".join(f"line {i} of the statement\n" for i in range(50)) + "x" * 95
+    pieces = context.pieces_of(text, 40)
+    assert "".join(pieces) == text
+    assert max(len(p) for p in pieces) <= 40
+    assert context.pieces_of("short\n", 40) == ["short\n"]

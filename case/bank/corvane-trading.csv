@@ -1,0 +1,38 @@
+date,description,counterparty,counterparty_account,reference,debit,credit,balance
+2026-01-09,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0001,,93000.00,105500.00
+2026-01-13,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0002,,156000.00,261500.00
+2026-01-15,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,CVT-LMS-0001,241000.00,,20500.00
+2026-01-16,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0003,,90000.00,110500.00
+2026-01-20,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0004,,61000.00,171500.00
+2026-01-22,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,CVT-LMS-0002,151000.00,,20500.00
+2026-01-23,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0005,,205000.00,225500.00
+2026-01-27,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0006,,70000.00,295500.00
+2026-01-29,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,CVT-LMS-0003,125000.00,,170500.00
+2026-01-30,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0007,,164000.00,334500.00
+2026-01-30,Monthly account fee,Sabran Commercial Bank,,FEE-2026-01,60.00,,334440.00
+2026-02-02,Freight rebate,Northwind Freight Ltd,88-301-4471,CV-RB-0001,150000.00,,184440.00
+2026-02-03,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0008,,206000.00,390440.00
+2026-02-05,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,CVT-LMS-0004,370000.00,,20440.00
+2026-02-06,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0009,,86000.00,106440.00
+2026-02-10,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0010,,70000.00,176440.00
+2026-02-12,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,CVT-LMS-0005,156000.00,,20440.00
+2026-02-13,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0011,,65000.00,85440.00
+2026-02-17,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0012,,164000.00,249440.00
+2026-02-19,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,CVT-LMS-0006,69000.00,,180440.00
+2026-02-20,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0013,,236000.00,416440.00
+2026-02-23,Freight rebate,Northwind Freight Ltd,88-301-4471,CV-RB-0002,160000.00,,256440.00
+2026-02-24,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0014,,234000.00,490440.00
+2026-02-26,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,CVT-LMS-0007,470000.00,,20440.00
+2026-02-27,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0015,,49000.00,69440.00
+2026-02-27,Monthly account fee,Sabran Commercial Bank,,FEE-2026-02,60.00,,69380.00
+2026-03-03,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0016,,91000.00,160380.00
+2026-03-06,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0017,,91000.00,251380.00
+2026-03-09,Freight rebate,Northwind Freight Ltd,88-301-4471,CV-RB-0003,145000.00,,106380.00
+2026-03-10,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0018,,207000.00,313380.00
+2026-03-12,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,CVT-LMS-0008,293000.00,,20380.00
+2026-03-17,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0019,,146000.00,166380.00
+2026-03-20,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0020,,83000.00,249380.00
+2026-03-23,Freight rebate,Northwind Freight Ltd,88-301-4471,CV-RB-0004,155000.00,,94380.00
+2026-03-24,Charter brokerage,Arden Logistics Ltd,KB-117-60218,ARD-CV-0021,,313000.00,407380.00
+2026-03-26,Port services agreement,Lowmarsh Shipping Services Ltd,SM-88-410-207,CVT-LMS-0009,387000.00,,20380.00
+2026-03-31,Monthly account fee,Sabran Commercial Bank,,FEE-2026-03,60.00,,20320.00

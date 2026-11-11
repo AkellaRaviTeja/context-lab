@@ -544,6 +544,104 @@ Entered in the case log: A. Varma, 16:52.
 """
 
 # ---------------------------------------------------------------- render
+# ---- pages on file (chapter 07) ----------------------------------------------------------------
+# Twelve real pages about Pellmar that answer none of the signed questions, and twelve about two
+# suppliers the inquiry closed long ago. Every figure in them is true of something else.
+
+RELATED_PAGES = [
+    ("ICB account opening letter, 12 May 2026",
+     "Isles Cooperative Bank to Pellmar Nominees Ltd. Client account ICB-77-10458 is opened "
+     "today. Minimum balance 3,000.00. Statements are issued daily at 06:00. Payments above "
+     "250,000.00 need a second approver at the bank."),
+    ("Pellmar fee note PNL-FN-0618-1, 18 June 2026",
+     "Pellmar Nominees Ltd to Corvane Trading Ltd. Administration fee for the quarter: "
+     "1,183.37. Payable to the client account within 30 days. This note is not a transfer "
+     "and moved no money."),
+    ("MTB standing instruction PNL-S4, schedule as lodged 9 June 2026",
+     "Meridian Trust Bank holds standing instruction PNL-S4 for Pellmar Nominees Ltd re "
+     "Reserve 2. The schedule as lodged lists six transfers, PNL-S4-001 to PNL-S4-006. The "
+     "sixth was withdrawn by Pellmar on 16 June and was never executed."),
+    ("Email, Pellmar operations to ICB payments desk, 23 June 2026 16:02",
+     "Please have the drawdown of 296,400.00 ready for release on 25 June at the latest. The "
+     "beneficiary details follow by secure message. Confirm the cut-off time for same-day "
+     "value."),
+    ("ICB payment advice PNL-CL-0624-1, 24 June 2026",
+     "Isles Cooperative Bank payment advice. Beneficiary bank: Halde Bank. Correspondent "
+     "account used for settlement: HDB-5-100017. Charges 36.00, borne by the remitter and "
+     "billed separately on 30 June."),
+    ("MTB fee schedule for nominee accounts, 2026",
+     "Meridian Trust Bank. Incoming transfer per standing instruction: no charge. Outgoing "
+     "transfer: 96.12 for each transfer. Account maintenance: 612.24 a quarter. Hold "
+     "administration under a court order: no charge."),
+    ("Minutes, Pellmar administration meeting, 17 June 2026",
+     "Present: the administrators of Pellmar Nominees Ltd. Resolved to consolidate treasury "
+     "balances of the five administered companies into Reserve 2 under Schedule 4. Tidewater "
+     "Holdings Trust was discussed and is not administered by Pellmar."),
+    ("MTB hold notice MTB-ORD-0001, 18 June 2026 11:30",
+     "Meridian Trust Bank confirms a hold on MTB-31-02290 from 11:30 on 18 June under order "
+     "MTB-ORD-0001. Balance held: 2,284,893.10. Transfers out are refused while the hold "
+     "stands. Transfers in are accepted."),
+    ("ICB know-your-customer refresh letter, 29 June 2026",
+     "Isles Cooperative Bank to Pellmar Nominees Ltd. Our periodic review of client account "
+     "ICB-77-10458 is due by 24 July. Please supply the current list of underlying clients "
+     "and the purpose of payments above 250,000.00."),
+    ("Pellmar client ledger extract, June 2026",
+     "Pellmar Nominees Ltd, client ledger. Opening balance 1 June: nil. Receipts in June: one. "
+     "Payments in June: one. The ledger gives no client name for either entry and refers to "
+     "file PNL-CL-0624."),
+    ("Courier receipt KBX-55310, 22 June 2026",
+     "Collected from Pellmar Nominees Ltd, 4 Customs Row, Port Sabran. One sealed envelope for "
+     "Isles Cooperative Bank, payments desk. Signed for at 15:40. Declared contents: "
+     "documents, no value."),
+    ("ICB daily statement cover sheet, 25 June 2026",
+     "Isles Cooperative Bank. Statement for ICB-77-10458 for 24 June is attached. Entries: 1. "
+     "Next statement 26 June at 06:00. Queries to the payments desk quoting reference "
+     "PNL-CL-0625-0."),
+]
+UNRELATED_PAGES = [
+    ("Harbour Telecom invoice HT-20418, January 2026",
+     "Harbour Telecom to Halcyon Logistics Ltd. Line rental for 14 lines: 1,120.00. Calls: "
+     "386.40. Total 1,506.40. Paid by direct debit on 28 January."),
+    ("Harbour Telecom invoice HT-20977, February 2026",
+     "Harbour Telecom to Halcyon Logistics Ltd. Line rental for 14 lines: 1,120.00. Calls: "
+     "412.15. Total 1,532.15. Paid by direct debit on 26 February."),
+    ("Harbour Telecom invoice HT-21530, March 2026",
+     "Harbour Telecom to Halcyon Logistics Ltd. Line rental for 15 lines: 1,200.00. Calls: "
+     "398.70. Total 1,598.70. Paid by direct debit on 27 March."),
+    ("Kestrel Office Supplies delivery note KOS-8841, 14 January 2026",
+     "Delivered to Halcyon Logistics Ltd, Quay Road. 40 reams of paper, 6 toner cartridges, 2 "
+     "boxes of archive folders. Signed for at reception at 10:15."),
+    ("Kestrel Office Supplies invoice KOS-I-3307, January 2026",
+     "Kestrel Office Supplies to Halcyon Logistics Ltd. Stationery and toner as delivery note "
+     "KOS-8841: 964.80. Terms 30 days. Paid on 12 February."),
+    ("Kestrel Office Supplies delivery note KOS-9102, 3 March 2026",
+     "Delivered to Halcyon Logistics Ltd, Quay Road. 30 reams of paper, 4 toner cartridges, 1 "
+     "shredder. Signed for at reception at 09:50."),
+    ("Kestrel Office Supplies invoice KOS-I-3562, March 2026",
+     "Kestrel Office Supplies to Halcyon Logistics Ltd. Stationery, toner and one shredder as "
+     "delivery note KOS-9102: 1,241.30. Terms 30 days. Paid on 2 April."),
+    ("Harbour Telecom service notice, 9 February 2026",
+     "Planned maintenance on the Quay Road exchange on 15 February from 01:00 to 04:00. Lines "
+     "may drop for up to ten minutes. No action is needed."),
+    ("Harbour Telecom contract renewal, 2 March 2026",
+     "Harbour Telecom and Halcyon Logistics Ltd renew the business line contract for 24 months "
+     "from 1 April 2026 at the current tariff. One line is added from March."),
+    ("Kestrel Office Supplies statement of account, 31 March 2026",
+     "Kestrel Office Supplies. Halcyon Logistics Ltd: invoices in the quarter 2, total "
+     "2,206.10. Outstanding at 31 March: 1,241.30, since paid."),
+    ("Building services memo, Quay Road, 20 January 2026",
+     "The lift in the east stair is out of service until 24 January. Deliveries use the "
+     "loading bay on Customs Lane. Fire drill on 30 January at 11:00."),
+    ("Harbour Telecom fault report HT-F-7719, 11 March 2026",
+     "Reported by Halcyon Logistics Ltd at 08:20: no dial tone on two lines. Cause: a damaged "
+     "cable in the riser. Repaired at 13:05 the same day. No charge."),
+]
+
+
+def page(title: str, body: str) -> str:
+    return f"## {title}\n\n{body}\n"
+
+
 def standing_orders(upto: str | None = None) -> str:
     rules = [o for o in ORDERS if upto is None or o[0] <= upto]
     lines = [f"# LANTERN standing orders: inquiry {INQUIRY}", ""]
@@ -611,6 +709,9 @@ def files() -> dict[str, str]:
     out["fiu/kobayashi-2026-07-13.md"] = KOBAYASHI
     out["statements/accounts.csv"] = _csv(
         ["account_no", "holder", "bank"], [[a, h, b] for a, (h, b, _) in STATEMENTS.items()])
+    for folder, pages in (("related", RELATED_PAGES), ("unrelated", UNRELATED_PAGES)):
+        for n, (title, body) in enumerate(pages, 1):
+            out[f"pages/{folder}/p{n:02d}.md"] = page(title, body)
     return out
 
 
@@ -629,7 +730,7 @@ def main() -> int:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding="utf-8")
     if check:
-        for folder in ("state", "statements", "questions", "fiu"):
+        for folder in ("state", "statements", "questions", "fiu", "pages"):
             for path in (CASE / folder).rglob("*"):
                 rel = path.relative_to(CASE).as_posix()
                 if path.is_file() and rel not in wanted:

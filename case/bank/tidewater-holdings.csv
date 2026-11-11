@@ -1,0 +1,12 @@
+date,description,counterparty,counterparty_account,reference,debit,credit,balance
+2026-01-30,Distribution to trust,Osprey Point Management Ltd,SC-0071-8812,OSP-0001,,230000.00,480000.00
+2026-01-30,Monthly account fee,Sabran Commercial Bank,,FEE-2026-01,60.00,,479940.00
+2026-02-06,Distribution to trust,Osprey Point Management Ltd,SC-0071-8812,OSP-0002,,154000.00,633940.00
+2026-02-13,Distribution to trust,Osprey Point Management Ltd,SC-0071-8812,OSP-0003,,127000.00,760940.00
+2026-02-20,Distribution to trust,Osprey Point Management Ltd,SC-0071-8812,OSP-0004,,359000.00,1119940.00
+2026-02-27,Distribution to trust,Osprey Point Management Ltd,SC-0071-8812,OSP-0005,,166000.00,1285940.00
+2026-02-27,Monthly account fee,Sabran Commercial Bank,,FEE-2026-02,60.00,,1285880.00
+2026-03-06,Distribution to trust,Osprey Point Management Ltd,SC-0071-8812,OSP-0006,,72000.00,1357880.00
+2026-03-13,Distribution to trust,Osprey Point Management Ltd,SC-0071-8812,OSP-0007,,451000.00,1808880.00
+2026-03-27,Distribution to trust,Osprey Point Management Ltd,SC-0071-8812,OSP-0008,,302000.00,2110880.00
+2026-03-31,Monthly account fee,Sabran Commercial Bank,,FEE-2026-03,60.00,,2110820.00

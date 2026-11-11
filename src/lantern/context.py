@@ -22,6 +22,7 @@ SUMMARIES = ("month-2026-06.md", "week-2026-06-15.md", "week-2026-06-22.md",
 # Where each section travels in the request: inside the system message, as tool schemas, as
 # earlier turns of the conversation, or as the last user turn.
 SYSTEM, TOOLS, HISTORY, QUESTION = "system", "tools", "history", "question"
+CHUNK = 12000  # characters counted in one call; well inside the counting window of 16,384
 
 
 @dataclass(frozen=True)
@@ -109,11 +110,29 @@ def without(parts: list[Section], lines: list[str], only: str | None = None) -> 
     return out
 
 
+def pieces_of(text: str, size: int) -> list[str]:
+    """`text` in pieces of at most `size` characters, ending on a line where a line fits."""
+    pieces, piece = [], ""
+    for line in text.splitlines(keepends=True):
+        while len(line) > size:
+            pieces, piece = [*pieces, *([piece] if piece else []), line[:size]], ""
+            line = line[size:]
+        if piece and len(piece) + len(line) > size:
+            pieces.append(piece)
+            piece = ""
+        piece += line
+    return [*pieces, piece] if piece else pieces
+
+
 @lru_cache(maxsize=4096)
 def count_tokens(text: str, model: str | None = None) -> int:
     """How many tokens the model's own tokenizer makes of `text` (Ollama, raw, no template)."""
     if not text:
         return 0
+    if len(text) > CHUNK:
+        # A text longer than the counting window would itself be cut and miscounted, so it is
+        # counted in pieces that end on a line. The sum is within a token or two a piece.
+        return sum(count_tokens(x, model) for x in pieces_of(text, CHUNK))
     cfg = load_config()
     r = httpx.post(
         f"{cfg['ollama']['host']}/api/generate",

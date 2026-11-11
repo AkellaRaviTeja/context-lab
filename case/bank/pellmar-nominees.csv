@@ -1,0 +1,20 @@
+date,description,counterparty,counterparty_account,reference,debit,credit,balance
+2026-01-26,Nominee services,Greyfen Advisory Ltd,MTB-30-77391,GRE-0001,,233000.00,233975.00
+2026-01-27,Management services,Osprey Point Management Ltd,SC-0071-8812,PEL-0001,231000.00,,2975.00
+2026-01-29,Advisory retainer,Calder Reach Holdings Ltd,MTB-30-77104,CAL-0002,,153000.00,155975.00
+2026-01-30,Monthly account fee,Meridian Trust Bank,,FEE-2026-01,85.00,,155890.00
+2026-02-03,Management services,Osprey Point Management Ltd,SC-0071-8812,PEL-0002,154000.00,,1890.00
+2026-02-09,Nominee services,Greyfen Advisory Ltd,MTB-30-77391,GRE-0002,,126000.00,127890.00
+2026-02-10,Management services,Osprey Point Management Ltd,SC-0071-8812,PEL-0003,126000.00,,1890.00
+2026-02-16,Nominee services,Greyfen Advisory Ltd,MTB-30-77391,GRE-0003,,363000.00,364890.00
+2026-02-17,Management services,Osprey Point Management Ltd,SC-0071-8812,PEL-0004,362000.00,,2890.00
+2026-02-23,Nominee services,Greyfen Advisory Ltd,MTB-30-77391,GRE-0004,,163000.00,165890.00
+2026-02-24,Management services,Osprey Point Management Ltd,SC-0071-8812,PEL-0005,164000.00,,1890.00
+2026-02-26,Advisory retainer,Calder Reach Holdings Ltd,MTB-30-77104,CAL-0006,,71000.00,72890.00
+2026-02-27,Monthly account fee,Meridian Trust Bank,,FEE-2026-02,85.00,,72805.00
+2026-03-03,Management services,Osprey Point Management Ltd,SC-0071-8812,PEL-0006,71000.00,,1805.00
+2026-03-09,Nominee services,Greyfen Advisory Ltd,MTB-30-77391,GRE-0005,,457000.00,458805.00
+2026-03-10,Management services,Osprey Point Management Ltd,SC-0071-8812,PEL-0007,455000.00,,3805.00
+2026-03-23,Nominee services,Greyfen Advisory Ltd,MTB-30-77391,GRE-0006,,299000.00,302805.00
+2026-03-24,Management services,Osprey Point Management Ltd,SC-0071-8812,PEL-0008,300000.00,,2805.00
+2026-03-31,Monthly account fee,Meridian Trust Bank,,FEE-2026-03,85.00,,2720.00
