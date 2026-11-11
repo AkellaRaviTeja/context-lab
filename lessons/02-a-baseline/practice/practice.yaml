@@ -1,0 +1,149 @@
+# Chapter 02 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=02).
+chapter: "02"
+title: It seems better
+
+objectives:
+  - Build a question set whose right answers come from records, not from the system being measured, and fix it with a hash.
+  - Write a grader in code and say what it cannot see.
+  - Report a score with the interval its question count allows, by slice.
+  - Measure one change against the baseline question by question, and against the noise floor.
+
+quiz:
+  - q: Why is the context scored with the false entries still in it?
+    options:
+      - Removing them would take too long.
+      - "Because the baseline is what every change is compared with. Fix first and there is nothing to show what the fix did, or what it cost."
+      - The false entries may be true.
+      - The grader needs wrong answers to calibrate on.
+    answer: b
+    why: >
+      A baseline with the fault in it is still the baseline. In the recorded run the first fix
+      anyone suggested, removing the eighth entry, fixed nothing and broke two answers. Without
+      the baseline that would have looked like progress.
+
+  - q: Where do the right answers in the question set come from?
+    options:
+      - LANTERN's best answers, checked by an officer.
+      - The case memory, since the team agreed it.
+      - "Bank statements, sourced entries whose author is known, and the FIU's note. Nothing LANTERN said, and no entry written under eow-fin-07."
+      - A larger model.
+    answer: c
+    why: >
+      An answer key copied from the system under test scores that system's habits as correct.
+      Case File 03 chapter 04 found five of seven such answers wrong. Here it would have signed
+      "Pellmar is cleared" as the right answer.
+
+  - q: The score was 17 of 26, with an interval of 46% to 81%. After a change it was 15 of 26. What do the totals alone show?
+    options:
+      - The change made the context worse.
+      - "Nothing: the intervals overlap, so a difference of two in 26 cannot be told from no difference by the totals."
+      - The change made the context better on the hard questions.
+      - The baseline was wrong.
+    answer: b
+    why: >
+      With a few dozen questions the interval is tens of points wide. The totals cannot carry
+      a small difference. The paired record can: the same two questions, the same seed, and a
+      noise floor of zero changed answers say that those two answers moved because of the
+      change.
+
+  - q: Run twice on the same seed, all 26 answers were identical. Why does that matter?
+    options:
+      - It proves the answers are right.
+      - It shows the model is deterministic on every machine.
+      - "It is the noise floor. Any answer that differs after a change, on this machine and seed, differs because of the change."
+      - It means three seeds are never needed.
+    answer: c
+    why: >
+      Before the difference between two contexts means anything you need the difference between
+      a context and itself. Here it was nothing. On another machine, model or temperature it
+      has to be measured again.
+
+  - q: Removing one line about Pellmar changed the answers to two questions that have nothing to do with Pellmar. What does that tell you?
+    options:
+      - The harness has a bug.
+      - Those two questions depended on the eighth entry.
+      - "Every token in the context can move every answer. A change is tested on the whole set, not only on the questions it was aimed at."
+      - The model was confused by the missing line number.
+    answer: c
+    why: >
+      One question stopped saying "not in evidence" in those words; the other chose a different
+      tool, which failed. Neither is about Pellmar. This is why the slices that were passing
+      are scored again after every change.
+
+  - q: Three failures say, truthfully, that nothing is known, without the words "not in evidence". Why are they left as failures?
+    options:
+      - The grader cannot be edited.
+      - "Changing the grader after seeing the score tunes the measure to the result. The limit is written down beside the number instead."
+      - They are wrong answers.
+      - A person would fail them too.
+    answer: b
+    why: >
+      Standing order 2 asks for those words, so the signed rule does too. The lesson reports the
+      three beside the score. A grader loosened to pass them would also have to be shown not to
+      pass something false, on answers it has not seen.
+
+  - q: A grader that checks whether "5" appears in the answer passes "the references run from PNL-S4-001 to PNL-S4-005". What is the fault?
+    options:
+      - The question is ambiguous.
+      - "It matches a substring. A number inside a longer number or a reference is not that number."
+      - The model should have written "five".
+      - Nothing; the answer contains the right number.
+    answer: b
+    why: >
+      A code grader is exact about what it was told to look for and blind to everything else.
+      Its rules are tested on known answers before it is trusted, which is what the exercise
+      does.
+
+exercise:
+  title: The grader
+  task: |
+    Open `lessons/02-a-baseline/practice/exercise.py` and write `normal`, `says` and `grade`.
+    The tests pass in answers as text, so no model is needed. They check that:
+
+    - commas inside numbers do not matter, and case does not matter,
+    - a number inside a reference or a longer number is not that number,
+    - `starts` reads the first word only, ignoring punctuation,
+    - `all` needs every value and `any` needs one,
+    - `none` fails an added currency and a flow stated backwards,
+    - "not in evidence" passes only where the record allows it,
+    - an empty answer never passes.
+  hints:
+    - |
+      `normal`: `re.sub(r"(?<=\d),(?=\d)", "", text).lower()` removes a comma only between two
+      digits.
+    - |
+      `says`: search the normal form of the text for the normal form of the value, with a
+      lookbehind `(?<![\w.])` before it and a lookahead `(?!\w)` after it. `re.escape` the value.
+    - |
+      `grade`: return False for a blank answer first. Then, if `or_not_in_evidence` is set and
+      the answer says it, return True. Then fail on `starts`, `all`, `any` in turn, and finish
+      with `not any(normal(v) in normal(answer) for v in expect.get("none", []))`.
+  after: >
+    Score LANTERN's context with your grader: `make lesson N=02 ARGS=--mine`, then
+    `make challenge N=02`.
+
+challenges:
+  - id: your-grader
+    title: Your grader, on LANTERN's answers
+    goal: Run the lesson with the grade you wrote. It should agree with the lesson's on every answer.
+    change: "Pass the exercise first, then run `make lesson N=02 ARGS=--mine`."
+    target: "mine == true and grader_agrees == graded"
+
+  - id: a-better-change
+    title: Fix what it believes
+    goal: >
+      Write a change to the context that fixes at least four of the questions the false entries
+      decide. Then read what it broke: two attempts made while this chapter was built fixed
+      four and broke two each.
+    change: Rewrite change() in lessons/02-a-baseline/run.py.
+    target: "changed_fixed >= 4"
+    reset: git checkout lessons/02-a-baseline/run.py
+
+  - id: tuned-to-pass
+    title: "Break it: a baseline tuned to pass"
+    goal: >
+      Ask only the questions LANTERN already gets right and watch the score reach 100%. This is
+      what a question set chosen after looking at the answers measures.
+    change: Set ONLY to a list of question ids in lessons/02-a-baseline/run.py.
+    target: "asked < 26 and pass_pct == 100"
+    reset: git checkout lessons/02-a-baseline/run.py

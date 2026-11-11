@@ -1,16 +1,23 @@
 # context-lab, Case File 06 (What LANTERN Remembers): in progress
 Updated: 2026-11-11. Branches, stacked: main (scaffold, 98f5c7d), docs/OpenDecisions,
-feature/Chapter01TheWholeInput. Nothing pushed; no GitHub repository yet.
-Gate: make check passes: ruff clean, 49 passed, prose 0 problems, structure 23 lessons 22
-drafts; notebooks 1 current. `make release-check` fails on the 22 drafts and on nothing else.
+feature/Chapter01TheWholeInput, feature/Chapter02ABaseline. Nothing pushed; no GitHub repository
+yet.
+Gate: make check passes: ruff clean, 85 passed, prose 0 problems, structure 23 lessons 21
+drafts; notebooks 2 current. `make release-check` fails on the 21 drafts and on nothing else.
 Machine: the Mac (16 GB, Apple silicon), native Ollama 0.40.15 with qwen3:8b.
 
 ## Next (do this first)
-- Chapter 02, "It seems better" (`lessons/02-a-baseline/`): the question set that depends on
-  memory and context, with answers from the statements and the write history (not from
-  LANTERN), under `case/questions/`, and the harness that scores one context version on it.
-  Chapter 01 measured one question; every later chapter needs this score.
-- Then chapters 03 onward in order, one branch each, stacked.
+- Chapter 03, "Who is spending the window" (`lessons/03-the-budget/`): tokens by section from
+  `lantern.context`, a budget with a reserve for the answer, and a request refused in code when
+  it would not fit. Score every change with `lantern.baseline.score` against chapter 02's run
+  (17 of 26; `.scratch/02/baseline.json` on this machine, `.progress/results/02.json`).
+- Then chapters 04 onward in order, one branch each, stacked.
+
+## How a context change is measured from here on
+`baseline.score(parts, chat=chat)` asks the 26 signed questions with `parts` as the context and
+both Pellmar statements in the session, running the three connected tools (`lantern.tools`).
+`baseline.changed(before, after)` names what was fixed and broken. The noise floor on this
+machine is zero changed answers on seed 7.
 
 ## Decisions (docs/decisions/)
 1. TOON is one row in chapter 05's table (the author, 11 November).
@@ -34,17 +41,28 @@ Machine: the Mac (16 GB, Apple silicon), native Ollama 0.40.15 with qwen3:8b.
   model add a line to the case memory.
 - A standing note of 19 June (Mensah) says DS Iyer is suspended. The dates of his suspension
   and of his badge are left for chapter 20.
+- Okafor signs the question set on Monday 13 July at 16:40 and Varma enters it in the case log
+  at 16:52 (`case/questions/signoff.md`). Kobayashi's note of 09:35 that morning says the FIU
+  cleared nothing on 2 June, issues no clearances in that form, sent the EOW nothing that day,
+  and holds no record of Ostrander Marine Finance SA (`case/fiu/kobayashi-2026-07-13.md`).
 
 ## Found while building
 - Chapter 01: the planned beat was one line that says Pellmar is cleared. The run found the
   word on 8 lines in 6 sections, and with all 8 removed LANTERN still said no, from entries 14
   and 16. Removing "need no review" as well turns the answer to yes on 3 of 3 (probed outside
   the lesson; it is the chapter's second challenge).
+- Chapter 02: the baseline is 17 of 26 (46% to 81%). Removing the eighth entry fixed nothing
+  and broke Q-11 and Q-22, neither about Pellmar. The planned beat only asked for a score.
+- Chapter 02: the grader first passed a flow stated backwards (Q-26); fixed before the recorded
+  run. Three "not told" failures say so in other words and are left as failures on purpose.
+- Chapter 02: two larger clean-ups probed outside the lesson each fixed four questions and
+  broke two (Q-02 and Q-25, or Q-02 and Q-22).
 - A prompt over the window is cut to about half the window without a word (4,098 tokens kept at
   num_ctx 8,192). Every measured prompt must be checked to fit.
 - Sections tokenised one by one add to 5,410; the request as sent is counted at 5,112.
 
 ## Not done
-- Chapters 02 to 23.
-- The two challenges of chapter 01 that edit run.py were not run through `make lesson`.
+- Chapters 03 to 23.
+- The challenges of chapters 01 and 02 that edit run.py were not run through `make lesson`;
+  their targets were probed with the same functions.
 - No GitHub repository. Nothing pushed.
