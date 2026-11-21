@@ -1,0 +1,126 @@
+# Chapter 12 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=12).
+chapter: "12"
+title: A fact with no episode
+
+objectives:
+  - Sort memory into episodes, facts and procedures, and say how each is written and trusted.
+  - Find the entries in a store that rest on nothing, in code, from the store's own records.
+  - Explain why a model reading one-line entries cannot tell a sourced fact from an unsourced one.
+  - Decide what a context must show beside a memory for the model to weigh it.
+
+quiz:
+  - q: What separates an episode from a fact in LANTERN's memory?
+    options:
+      - "An episode records something that happened, at a time, with who was there; a fact is a claim held to be true, which should rest on an episode or a record."
+      - An episode is longer.
+      - A fact is newer.
+      - Only facts are loaded into the context.
+    answer: a
+    why: >
+      A statement arriving, an order served, a ruling read: those are episodes. "Pellmar is
+      cleared" is a claim. Every claim an officer wrote names the episode or the record behind it.
+
+  - q: Four entries rest on nothing. What else do three of them have in common that the twelve sourced entries do not?
+    options:
+      - They are the longest entries.
+      - They mention the FIU.
+      - "They tell LANTERN what not to do: do not escalate, do not flag, need no review."
+      - They were written by Varma.
+    answer: c
+    why: >
+      A procedure wrongly stored as a fact is followed without question. An instruction
+      written as a fact, with nothing behind it, is the most dangerous line in the store.
+
+  - q: Asked what each of the sixteen lines rests on, LANTERN said "none" for the eighth entry. Why does that not show it could find the unsupported entries?
+    options:
+      - The model was wrong about the eighth.
+      - "It also said \"none\" for most of the entries that do have support. Its \"none\" did not separate the two, because the lines it reads do not carry their support."
+      - It used the wrong seed.
+      - It refused to answer.
+    answer: b
+    why: >
+      A result has to be read against the cases where the right answer is the other one. A
+      check that says "none" for nearly everything finds the four by accident.
+
+  - q: With each line's kind and source shown beside it, LANTERN's labels matched the write log. What does that say about where the fix belongs?
+    options:
+      - In a larger model.
+      - In more examples in the prompt.
+      - Nowhere; the labels were already right.
+      - "In the context: the store already knows each entry's kind and source; the model only knows what it is shown."
+    answer: d
+    why: >
+      The kind, the episode and the record were in the write log all along. The file LANTERN
+      loads drops them. Chapter 14 renders them with every entry it loads.
+
+  - q: An entry names a source that is a single word, "FIU". What does a support check in code establish about it?
+    options:
+      - "Only that the field is filled in. Whether the source exists and says what the entry claims is chapter 13's question."
+      - That the FIU said it.
+      - That it is true.
+      - That it was written by an officer.
+    answer: a
+    why: >
+      The challenge "a source by hand" shows it: give the eighth entry a source of one word
+      and the check counts it as supported. A support check is the first gate, not the last.
+
+  - q: Why should the kind of a memory change how it is written?
+    options:
+      - It changes the token count.
+      - Each kind needs its own database.
+      - "Episodes are written by what happened and are rarely wrong; facts are claims that need an episode or a record; procedures change how the team works and need a person's authority."
+      - It does not; all memories are the same.
+    answer: c
+    why: >
+      Three kinds, three rules for writing. Chapter 13 builds the gate that applies them.
+
+exercise:
+  title: Sort the memory and find what rests on nothing
+  task: |
+    Open `lessons/12-kinds-of-memory/practice/exercise.py` and write `by_kind` and
+    `unsupported`. The tests use LANTERN's own case memory, replayed from the write log. They
+    check that:
+
+    - every kind is a key, in order, empty where there is none, and an unknown kind is refused,
+    - the sixteen entries split into 3 episodes, 2 procedures and 11 facts,
+    - M-08, M-12, M-14 and M-16 are the entries with nothing behind them,
+    - an episode id that is not in the store supports nothing, and a blank source is no source,
+    - episodes need a record, summaries need what they were built from, procedures are checked
+      like facts.
+  hints:
+    - |
+      `out = {k: [] for k in KINDS}`, then `out[e.kind].append(e)`, raising ValueError when
+      `e.kind not in out`.
+    - |
+      For `unsupported`, first `episodes = {e.id for e in entries if e.kind == "episode"}`
+      (turn `entries` into a list first: it may be a generator).
+    - |
+      `source = (e.source or "").strip()`. A summary is fine when `e.derived_from`; an episode
+      when `source`; anything else when `source or e.episode in episodes`.
+  after: >
+    Sort the memory with yours: `make lesson N=12 ARGS=--mine`, then `make challenge N=12`.
+
+challenges:
+  - id: your-split
+    title: Your split, on the case memory
+    goal: Run the lesson with the by_kind and unsupported you wrote; the four must still be found.
+    change: "Pass the exercise first, then run `make lesson N=12 ARGS=--mine`."
+    target: "mine == true and unsupported == 4 and facts == 11"
+
+  - id: a-source-by-hand
+    title: "Break it: a source of one word"
+    goal: >
+      Give the eighth entry a source by hand and watch the support check count it as
+      supported. A filled-in field is not a record.
+    change: 'Set FAKE_SOURCE = {"M-08": "FIU"} in lessons/12-kinds-of-memory/run.py.'
+    target: "faked == 1 and unsupported == 3"
+    reset: git checkout lessons/12-kinds-of-memory/run.py
+
+  - id: one-seed
+    title: One seed, half the time
+    goal: >
+      Ask the plain arm on one seed only, and see whether the labels on that seed tell the
+      same story as three.
+    change: Set SEEDS = (7,) in lessons/12-kinds-of-memory/run.py.
+    target: "seeds == 1 and invented_plain_of == 4"
+    reset: git checkout lessons/12-kinds-of-memory/run.py

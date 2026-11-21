@@ -329,3 +329,263 @@ def from_case(policy: Policy | None = None, path: Path | str = ":memory:") -> St
                           author=o["author"], written_at=o["written_at"], user=o["user"],
                           source="officer's note"))
     return store
+
+
+# ---- chapter 12: kinds ------------------------------------------------------------------------
+
+
+def by_kind(entries: Iterable[Entry]) -> dict[str, list[Entry]]:
+    """Entries split by kind, every kind in KINDS present (empty where none), in the order
+    given. An entry of an unknown kind is refused."""
+    out: dict[str, list[Entry]] = {k: [] for k in KINDS}
+    for e in entries:
+        if e.kind not in out:
+            raise ValueError(f"{e.id}: unknown kind {e.kind!r}")
+        out[e.kind].append(e)
+    return out
+
+
+def unsupported(entries: Iterable[Entry]) -> list[Entry]:
+    """Entries with nothing behind them, in the order given. An episode must name its record;
+    a fact or a procedure a record, or an episode that is among `entries`; a summary what it
+    was built from. A source of only spaces is no source."""
+    entries = list(entries)
+    episodes = {e.id for e in entries if e.kind == "episode"}
+    out = []
+    for e in entries:
+        source = (e.source or "").strip()
+        if e.kind == "summary":
+            ok = bool(e.derived_from)
+        elif e.kind == "episode":
+            ok = bool(source)
+        else:
+            ok = bool(source) or e.episode in episodes
+        if not ok:
+            out.append(e)
+    return out
+
+
+# ---- chapter 13: the write gate ---------------------------------------------------------------
+
+JUDGEMENT = re.compile(r"\b(cleared|licensed|routine|ordinary|need no|do not)\b", re.I)
+FIGURE = re.compile(r"\b\d[\d,]*\.\d{2}\b|\b[A-Z]{2,}(?:-[A-Z0-9]+)+\b")
+
+
+def figures(text: str) -> list[str]:
+    """Amounts (296,400.00) and references (ICB-77-10458) in a text, commas taken out."""
+    return [f.replace(",", "") for f in FIGURE.findall(text)]
+
+
+def write_gate(read: dict[str, str] | None = None, *,
+               machine_accounts: Iterable[str] = ("svc-lantern-sync",),
+               inactive: dict[str, str] | None = None,
+               models: Iterable[str] = ("lantern",)) -> Policy:
+    """Chapter 13's write policy. On top of `default_policy` (a source, no machine account, no
+    closed account): an entry the model proposes must cite a document read in this session
+    (`read`: name -> text) that shows every amount and reference it states; and an entry that
+    passes a judgement on a party (cleared, licensed, routine, ordinary, need no, do not) is
+    held for a person whoever wrote it. A word list is crude: it holds, it does not decide."""
+    base = default_policy(machine_accounts, inactive)
+    docs = dict(read or {})
+    model_authors = set(models)
+
+    def policy(entry: Entry, store: Store) -> list[str]:
+        problems = base(entry, store)
+        if entry.author in model_authors:
+            cited = [name for name in docs if name.lower() in (entry.source or "").lower()]
+            if not cited:
+                problems.append("cites no document read in this session")
+            else:
+                shown = " ".join(docs[n] for n in cited).replace(",", "")
+                missing = [f for f in figures(entry.text) if f not in shown]
+                if missing:
+                    problems.append(f"the source does not show {', '.join(missing)}")
+        found = JUDGEMENT.findall(entry.text)
+        if found:
+            problems.append(f"a judgement ({found[0].lower()}): a person must keep it")
+        return problems
+    return policy
+
+
+# ---- chapter 14: reading -------------------------------------------------------------------------
+
+Embed = Callable[[list[str], str], list[list[float]]]  # (texts, "query" | "document") -> vectors
+
+
+def cosine(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b, strict=True))
+    na, nb = math.sqrt(sum(x * x for x in a)), math.sqrt(sum(y * y for y in b))
+    return dot / (na * nb) if na and nb else 0.0
+
+
+def retrieve(entries: Iterable[Entry], inquiry: str | None, *, user: str | None = None,
+             query: str | None = None, k: int | None = None, by: str = "relevance",
+             embed: Embed | None = None) -> list[Entry]:
+    """What a session starts with, from a list of entries: kept entries only; then scope
+    (`inquiry` None reads every inquiry, and every officer's private notes: the unscoped
+    arm); then order: "recency" newest first, "relevance" BM25 against `query` (no match, not
+    loaded), "embedding" cosine against `query` with `embed`, "all" as written; then `k`."""
+    pool = [e for e in entries if e.status == "kept"]
+    if inquiry is not None:
+        pool = [e for e in pool if e.inquiry == inquiry and (e.user is None or e.user == user)]
+    pool.sort(key=lambda e: (e.written_at, e.id))
+    if by == "recency":
+        pool = sorted(pool, key=lambda e: e.written_at, reverse=True)
+    elif by in ("relevance", "embedding"):
+        if not query:
+            raise ValueError(f"by={by!r} needs a query")
+        if by == "relevance":
+            scores = bm25([e.text for e in pool], query)
+            keep = [i for i in range(len(pool)) if scores[i] > 0]
+        else:
+            if embed is None:
+                raise ValueError("by='embedding' needs embed")
+            q = embed([query], "query")[0]
+            scores = [cosine(q, v) for v in embed([e.text for e in pool], "document")] \
+                if pool else []
+            keep = list(range(len(pool)))
+        pool = [pool[i] for i in sorted(keep, key=lambda i: (-scores[i], pool[i].written_at))]
+    elif by != "all":
+        raise ValueError(f"unknown order {by!r}")
+    return pool if k is None else pool[:k]
+
+
+# ---- chapter 18: correcting --------------------------------------------------------------------
+
+Rebuild = Callable[[Entry, list[Entry]], str]  # (old summary, what it may now rest on) -> text
+
+
+def vanished(store: Store) -> list[str]:
+    """Entries the log says were written that are no longer in the store at all: a row
+    deleted by hand. `verify` checks the entries that are there; this checks the ones that
+    are not."""
+    written = list(dict.fromkeys(e["entry"] for e in store.events() if e["event"] == "write"))
+    return [i for i in written if store.get(i) is None]
+
+
+def retract_and_rebuild(store: Store, ids: Iterable[str], *, by: str, at: str, reason: str,
+                        rebuild: Rebuild) -> dict[str, str]:
+    """Retract `ids`, then rebuild every live entry built on them, oldest first, so a summary
+    built on another summary is rebuilt from the new one. Each rebuilt entry rests on what
+    its old one rested on, less what was retracted and with rebuilt entries in place of old
+    ones; it supersedes the old entry. Returns {old id: new id}."""
+    affected: list[str] = []
+    for i in ids:
+        for d in store.retract(i, by=by, at=at, reason=reason):
+            if d not in affected:
+                affected.append(d)
+    done: dict[str, str] = {}
+    for old in sorted((store.get(i) for i in affected), key=lambda e: (e.written_at, e.id)):
+        basis = []
+        for d in old.derived_from:
+            d = done.get(d, d)
+            e = store.get(d)
+            if e is not None and e.status == "kept":
+                basis.append(e)
+        new = Entry(id=f"{old.id}-r", text=rebuild(old, basis), kind=old.kind,
+                    inquiry=old.inquiry, author=old.author, written_at=at, via=old.via,
+                    user=old.user, derived_from=[e.id for e in basis])
+        store.supersede(old.id, new, by=by, reason=f"rebuilt after {reason}")
+        done[old.id] = new.id
+    return done
+
+
+# ---- chapter 20: the audit ---------------------------------------------------------------------
+
+MONTH_NUMBERS = {m: i for i, m in enumerate(
+    ("January", "February", "March", "April", "May", "June", "July", "August", "September",
+     "October", "November", "December"), start=1)}
+PERSONNEL_ROW = re.compile(r"^\| \w+ (\d+) (\w+) (\d{4}), (\d\d:\d\d)[^|]*\| ([^|]+?) \|")
+
+
+def personnel(text: str) -> tuple[str, list[tuple[str, str]]]:
+    """A personnel record: the account it covers, and its dated events, oldest first, as
+    (ISO time, what happened)."""
+    account = re.search(r"^Account: (\S+)", text, re.M)
+    events = []
+    for line in text.splitlines():
+        m = PERSONNEL_ROW.match(line)
+        if m:
+            d, month, y, hm, what = m.groups()
+            events.append((f"{y}-{MONTH_NUMBERS[month]:02d}-{int(d):02d}T{hm}:00", what.strip()))
+    return (account.group(1) if account else ""), sorted(events)
+
+
+def audit(store: Store, write_log: list[dict[str, Any]], record: str) -> list[dict[str, Any]]:
+    """Every entry in the write log joined to the store: its source, episode, account, host,
+    route, session and tool; whether its text is still the text that was written; whether it
+    rests on anything; and, for the account the personnel record covers, every event in that
+    record that came before the write."""
+    account, events = personnel(record)
+    rows = []
+    for r in write_log:
+        e = store.get(f"M-{r['entry']:02d}")
+        rows.append({
+            "entry": f"M-{r['entry']:02d}", "written_at": r["written_at"],
+            "account": r["account"], "kind": r["kind"], "source": r["source"],
+            "episode": r["episode"], "host": r["host"], "route": r["via"],
+            "session": r["session"], "tool": r["tool"],
+            "text_matches": e is not None and e.text_hash == r["text_sha256"],
+            "unsourced": not (r["source"] or r["episode"]),
+            "after": [what for at, what in events if at <= r["written_at"]]
+            if r["account"] == account else [],
+        })
+    return rows
+
+
+# ---- chapter 19: graders for a memory suite ------------------------------------------------------
+
+NEGATION = re.compile(r"\b(not|never|no|nothing|neither|nor|without|cannot|isn't|wasn't|hasn't|"
+                      r"didn't|doesn't|aren't|weren't|haven't)\b")
+ABSTAIN = ("not in evidence", "not in the case memory", "no record", "was not told",
+           "were not told", "does not say", "do not have", "not recorded", "no information",
+           "does not record", "not stated")
+
+
+def _plain(text: str) -> str:
+    return re.sub(r"(?<=\d),(?=\d)", "", text.lower().replace("’", "'"))
+
+
+def whole_figure(answer: str, figure: str) -> bool:
+    """`figure` is in the answer as a whole figure: 2,284,893.10 matches 2284893.10, not
+    12,284,893.10, 2,284,893.1 or 2,284,893.105."""
+    f = re.escape(_plain(figure))
+    return re.search(rf"(?<![\d.]){f}(?![\d]|\.\d)", _plain(answer)) is not None
+
+
+def cites(answer: str, entry_id: str) -> bool:
+    """The answer names the entry by its id: M-01, not M-010 or M-1."""
+    return re.search(rf"(?<![\w-]){re.escape(entry_id)}(?![\w-]|-r)", answer) is not None
+
+
+def first_sentence(text: str) -> str:
+    return re.split(r"(?<=[.;:!?])\s", text.strip(), maxsplit=1)[0]
+
+
+def abstains(answer: str, question: str = "") -> bool:
+    """The answer says it was not told, in one of several phrasings, in its first sentence,
+    and states no figure or date the question did not already give."""
+    head = _plain(first_sentence(answer))
+    if not any(p in head for p in ABSTAIN):
+        return False
+    asked = set(re.findall(r"\d+", _plain(question)))
+    return all(n in asked for n in re.findall(r"\d+", _plain(answer)))
+
+
+def denies(answer: str, claim: str) -> bool:
+    """The answer does not affirm a retracted claim (`claim` is its key word, "cleared").
+    A first word of "no" passes and "yes" fails; otherwise every use of the word must have a
+    negation in the six words before it (and after any earlier use), and an answer that
+    abstains passes. "Not cleared" is not "cleared"."""
+    words = re.findall(r"[a-z']+", _plain(answer))
+    if not words:
+        return False
+    if words[0] == "no":
+        return True
+    if words[0] == "yes":
+        return False
+    uses = [i for i, w in enumerate(words) if w.startswith(claim.lower())]
+    if not uses:
+        return abstains(answer)
+    starts = [max(0, i - 6, prev + 1) for prev, i in zip([-1, *uses], uses, strict=False)]
+    return all(NEGATION.search(" ".join(words[s:i])) for s, i in zip(starts, uses, strict=True))
