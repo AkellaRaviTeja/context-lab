@@ -119,6 +119,18 @@ What did not happen: the plan had each treatment "scored on tokens and on flows 
 all three were workable. Two of the three failed, and the one that worked is not a treatment
 of the result at all.
 
+## On a hosted model
+
+```bash
+make lesson N=09 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: context editing (`clear_tool_uses_20250919`, with `keep` and `trigger`) as the provider's own way to clear old tool results, beside the chapter's hand-written clearing. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** Trimming at the tool should win on any model: it changes what enters the window. The model's failure to add thirty-seven lines is expected to be smaller on a hosted model, but the lab's rule (do the arithmetic with a tool) stands either way.
+
 ## Try this
 
 1. Open `.scratch/09/summaries.json` and check each summary against

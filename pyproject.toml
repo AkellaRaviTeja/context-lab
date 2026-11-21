@@ -41,7 +41,7 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "lessons"]
+testpaths = ["tests", "lessons", "capstone"]
 markers = ["live: needs a running Ollama with the configured models"]
 addopts = "-m 'not live' --import-mode=importlib"
 

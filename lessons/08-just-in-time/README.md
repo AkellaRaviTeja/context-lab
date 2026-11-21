@@ -134,6 +134,18 @@ What the recorded run showed:
 What did not happen: the plan expected a list and two tools to trace the trail "at a measured
 cost and with a measured loss". Left to itself the agent lost six hops of seven.
 
+## On a hosted model
+
+```bash
+make lesson N=08 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: native tool calling for the file list and the search tool, and context editing (`clear_tool_uses_20250919`) available for old results. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** That references cost fewer tokens than loading everything holds on any model. Whether the agent opens the right files in the right order is a model behaviour and should be measured.
+
 ## Try this
 
 1. Open `.scratch/08/traces.json` and read the six reports the check refused. What did each

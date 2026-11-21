@@ -1,0 +1,7 @@
+# What the reference solution recorded live (capstone/live.py solution), and what yours must
+# meet. Filled in from the recorded run; see capstone/README.md.
+live:
+  held: "== 4"
+  unsourced_loaded: "== 0"
+  chain_problems: "== 0"
+  passed: ">= 0"

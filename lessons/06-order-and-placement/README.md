@@ -132,6 +132,18 @@ What did not happen: the planned beat had a fact in the middle missed and the sa
 end found. The misses were not in the middle, and moving the question did more than moving the
 fact would have.
 
+## On a hosted model
+
+```bash
+make lesson N=06 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: the register with the question before or after it, as one cached prefix. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** Lost in the middle is weaker on current hosted models at this length (about 4,400 tokens), so the gap between question first and question last is expected to shrink. At 128K tokens and more it is expected to return; chapter 17 has the long-context arm.
+
 ## Try this
 
 1. Open `.scratch/06/placement.json` and list the seven wrong answers. For each, find the line

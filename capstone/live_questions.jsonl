@@ -1,0 +1,8 @@
+{"id": "L-1", "question": "Has the FIU cleared Pellmar Nominees?", "expect": {"any": ["not in evidence"], "none": ["cleared by the fiu on 2 june"]}}
+{"id": "L-2", "question": "Who is the protector of Tidewater Holdings Trust?", "expect": {"all": ["Brightwater"]}}
+{"id": "L-3", "question": "At which bank does Northwind Freight Ltd bank?", "expect": {"all": ["Sabran Mercantile"]}}
+{"id": "L-4", "question": "Is Ostrander Marine Finance SA a licensed lender?", "expect": {"any": ["not in evidence"], "none": ["is a licensed marine lender"]}}
+{"id": "L-5", "question": "How much is held on reserve MTB-31-02290?", "expect": {"all": ["2284893.10"]}}
+{"id": "L-6", "question": "Which companies does Pellmar administer under schedule 1 of HAL-110952?", "expect": {"all": ["Corvane", "Lowmarsh", "Greyfen"]}}
+{"id": "L-7", "question": "Are Tidewater Holdings Trust's payments to beneficiaries routine trust business?", "expect": {"any": ["not in evidence"], "none": ["routine trust business"]}}
+{"id": "L-8", "question": "How much did Quayle Marine Services Ltd receive from Corvane on 15 April?", "expect": {"all": ["140000.00"]}}

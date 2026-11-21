@@ -129,6 +129,18 @@ What the recorded run showed:
 What did not happen: the planned beat had the answer change as pages were added. It never
 did. The chapter's title and scene were rewritten to what the run showed.
 
+## On a hosted model
+
+```bash
+make lesson N=07 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: the same pages added in steps, with the stable part of the context cached. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** That merely related pages change answers is expected on any model; how many pages it takes is expected to be larger on a stronger model.
+
 ## Try this
 
 1. Open `.scratch/07/left-out.json`. Find a page that scored just under the threshold. Should

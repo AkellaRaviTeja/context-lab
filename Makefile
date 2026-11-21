@@ -12,7 +12,7 @@ OLLAMA = $(shell docker ps --format '{{.Names}}' 2>/dev/null | grep -qx context-
 .PHONY: help setup install up up-gpu down models doctor lesson lessons shots \
         check release-check lint test prose structure smoke clean \
         quiz exercise exercise-reset hint solution challenge progress \
-        notebooks notebooks-check notebook case
+        notebooks notebooks-check notebook case capstone capstone-live
 
 help: ## Show this help
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -106,3 +106,10 @@ notebook: ## Open a chapter's notebook in JupyterLab: make notebook N=05
 
 clean: ## Remove caches and the scratch area
 	rm -rf .pytest_cache .ruff_cache .scratch
+
+# ---- capstone: capstone/README.md ----
+capstone: ## Grade your capstone/mine/contextkit offline (16 tests, no model)
+	@CAPSTONE=mine uv run pytest -q capstone
+
+capstone-live: ## Your capstone on the real memory and the local model: WHICH=solution for the reference
+	@$(if $(TIER),LANTERN_TIER=$(TIER)) uv run python capstone/live.py $(or $(WHICH),mine)

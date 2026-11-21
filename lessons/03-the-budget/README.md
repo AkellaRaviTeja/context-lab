@@ -126,6 +126,18 @@ What the recorded run showed:
 What did not happen: the planned beat said the evidence takes least. The question takes
 least, at 71 tokens; the evidence is the smallest of everything else but the session's talk.
 
+## On a hosted model
+
+```bash
+make lesson N=03 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: token counts from the provider's own usage, beside the local tokenizer's. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** Which sections spend the window is a property of the context and should hold. The silent cut at the window is an Ollama behaviour: Claude Sonnet 5.5 has a 1M window and returns an error, not a cut, when a request is too long.
+
 ## Try this
 
 1. Open `.scratch/03/fewer-tools.json` and compare Q-21 with `.scratch/02/baseline.json`. Which

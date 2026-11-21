@@ -124,6 +124,18 @@ What the recorded run showed:
 What did not happen: the planned beat had one line that says Pellmar is cleared. The run found
 eight, and a belief that survived the removal of all eight.
 
+## On a hosted model
+
+```bash
+make lesson N=01 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: the same whole input as one request, with the tool schemas as native tools and the standing orders and memory as cached system blocks. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** The length of the input and the share the tool schemas take are properties of the context, not of the model: they should hold, counted with Claude's tokenizer instead of qwen3:8b's. Whether the model trusts the eighth entry is a model behaviour, and a larger model may still trust it: rule 16 tells it to.
+
 ## Try this
 
 1. Open `.scratch/01/input.txt` and read it from the top. Mark every line you could not name

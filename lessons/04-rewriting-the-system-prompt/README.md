@@ -120,6 +120,18 @@ What the recorded run showed:
 What did not happen: the planned beat had the model follow whichever rule it read last. It
 followed rule 18 in every position tried.
 
+## On a hosted model
+
+```bash
+make lesson N=04 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: the rewritten standing orders as a cached system block. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** That a shorter prompt written from the failures scores no worse is expected to hold. Which questions it fixes and breaks is model-specific and should be measured, not assumed.
+
 ## Try this
 
 1. Open `.scratch/04/clash.json` and read the three answers to Q-26. Which states the flow

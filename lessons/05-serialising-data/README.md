@@ -122,6 +122,18 @@ What the recorded run showed:
 What did not happen: the planned beat had the shapes differ in how often the model reads the
 right cell. They did not differ at all on cells. They differed on counts.
 
+## On a hosted model
+
+```bash
+make lesson N=05 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: the six shapes of the same rows, with native structured output for the answers. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** Token counts per shape should rank the same with Claude's tokenizer. How often each shape is read right is a small-model effect: expect a larger model to read every shape better and the differences between shapes to shrink.
+
 ## Try this
 
 1. Open `.scratch/05/wrong.json`. For each kind of question, would a tool have got it right?

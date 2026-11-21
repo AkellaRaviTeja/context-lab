@@ -132,6 +132,18 @@ What the recorded run showed:
 - Without the eighth entry: 15 of 26. Fixed: none. Broken: Q-11 and Q-22.
 - The baseline run again: 26 of 26 answers identical.
 
+## On a hosted model
+
+```bash
+make lesson N=02 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: the 26 signed questions with native tool calling for the three connected tools. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** The question set, its hash check and the grader do not change with the model. The score will: expect more of the "not told" slice to pass on a larger model, and expect the false-memory slice to stay low while the false entries are loaded, because they are presented as the inquiry's own record.
+
 ## Try this
 
 1. Open `.scratch/02/baseline.json` and `.scratch/02/changed.json` and read Q-11 and Q-22 in
