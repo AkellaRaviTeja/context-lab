@@ -41,9 +41,9 @@ doctor: ## Check Ollama, models and config
 case: ## Regenerate the case material from its seed (scripts/build_case.py)
 	uv run python scripts/build_case.py
 
-lesson: ## Run one lesson: make lesson N=09; on the hosted model: TIER=hosted
+lesson: ## Run one lesson: make lesson N=09; hosted model: TIER=hosted; traces: TRACE=1
 	@test -n "$(N)" || (echo "usage: make lesson N=01 [TIER=hosted] [PROVIDER=openrouter]" && exit 2)
-	@$(if $(PROVIDER),LANTERN_PROVIDER=$(PROVIDER)) $(if $(TIER),LANTERN_TIER=$(TIER)) uv run python lessons/$(N)-*/run.py $(ARGS)
+	@$(if $(PROVIDER),LANTERN_PROVIDER=$(PROVIDER)) $(if $(TIER),LANTERN_TIER=$(TIER)) $(if $(TRACE),LANTERN_TRACE=.scratch/traces/$(N).jsonl) uv run python lessons/$(N)-*/run.py $(ARGS)
 
 lessons: ## Run every lesson in order (stops at the first draft)
 	@for d in lessons/[0-9][0-9]-*/; do n=$$(basename $$d | cut -c1-2); $(MAKE) -s lesson N=$$n || exit 1; done

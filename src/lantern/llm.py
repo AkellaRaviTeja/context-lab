@@ -93,6 +93,7 @@ USAGE = Usage()
 def chat(
     messages: list[Message] | str,
     *,
+    _traced: bool = False,
     system: str | None = None,
     model: str | None = None,
     tools: list[dict[str, Any]] | None = None,
@@ -110,6 +111,23 @@ def chat(
     `messages` may be a plain string (one user turn) or a list of message dicts.
     Any generation setting left as None falls back to config.yaml.
     """
+    from lantern import tracing
+
+    if not _traced and tracing.enabled():
+        hosted_tier = tier() == "hosted"
+        cfg0 = load_config()
+        name = cfg0["hosted"]["model"] if hosted_tier else model_name(model)
+        with tracing.span(f"chat {name}", **{
+                "gen_ai.operation.name": "chat", "gen_ai.request.model": name,
+                "gen_ai.request.max_tokens": max_tokens, "gen_ai.request.seed": seed,
+                "lantern.tier": "hosted" if hosted_tier else "local",
+                "lantern.tools": len(tools or [])}) as s:
+            r = chat(messages, _traced=True, system=system, model=model, tools=tools,
+                     temperature=temperature, top_k=top_k, top_p=top_p, seed=seed,
+                     num_ctx=num_ctx, max_tokens=max_tokens, think=think, format=format)
+            tracing.record_reply(s, r, cfg0["hosted"]["provider"] if hosted_tier
+                                 else cfg0["provider"])
+            return r
     cfg = load_config()
     messages, settings = _prepare(
         messages,

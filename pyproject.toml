@@ -10,6 +10,7 @@ dependencies = [
     "pyyaml>=6.0",
     "rich>=13.7",
     "python-dotenv>=1.0",
+    "opentelemetry-sdk>=1.27",
 ]
 
 [project.optional-dependencies]

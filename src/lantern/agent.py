@@ -76,6 +76,24 @@ def run(messages: list[dict[str, Any]], *, chat: Callable[..., Any],
     `until` is a check in code on every answer: it returns None when the task is done, or
     what is still missing, which is sent back to the model as the next turn.
     """
+    from lantern import tracing
+
+    with tracing.span("invoke_agent lantern", **{"gen_ai.operation.name": "invoke_agent",
+                                                 "gen_ai.agent.name": "lantern"}) as s:
+        out = _run(messages, chat=chat, schemas=schemas, handlers=handlers,
+                   max_turns=max_turns, max_tokens=max_tokens, seed=seed, limit=limit,
+                   before_request=before_request, until=until)
+        if s is not None:
+            s.set_attribute("lantern.turns", len(out.turns))
+            s.set_attribute("lantern.stopped", out.stopped.split(":")[0])
+            s.set_attribute("lantern.prompt_tokens", out.total_prompt_tokens)
+        return out
+
+
+def _run(messages, *, chat, schemas, handlers, max_turns, max_tokens, seed, limit,
+         before_request, until) -> Run:
+    from lantern import tracing
+
     out = Run(messages=list(messages))
     seen: dict[str, int] = {}
     for n in range(1, max_turns + 1):
@@ -108,10 +126,12 @@ def run(messages: list[dict[str, Any]], *, chat: Callable[..., Any],
                 result = {"failed": True, "error": "You have made this exact call before. "
                           "Use what it returned, or call something else."}
             else:
-                try:
-                    result = handlers[name](**arguments)
-                except TypeError as e:
-                    result = {"failed": True, "error": f"Bad arguments for {name}: {e}"}
+                with tracing.span(f"execute_tool {name}", **{
+                        "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": name}):
+                    try:
+                        result = handlers[name](**arguments)
+                    except TypeError as e:
+                        result = {"failed": True, "error": f"Bad arguments for {name}: {e}"}
             out.messages.append(tool_result(name, result))
     out.stopped = "turn limit"
     return out
