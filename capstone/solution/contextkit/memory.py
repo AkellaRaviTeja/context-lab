@@ -80,7 +80,8 @@ class MemoryStore:
 
     # records
     def _save(self, r: Record) -> None:
-        self.db.execute("INSERT OR REPLACE INTO records VALUES (?, ?)", (r.id, json.dumps(asdict(r))))
+        self.db.execute("INSERT OR REPLACE INTO records VALUES (?, ?)",
+                        (r.id, json.dumps(asdict(r))))
         self.db.commit()
 
     def get(self, id: str) -> Record | None:
