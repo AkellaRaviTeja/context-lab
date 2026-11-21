@@ -1,0 +1,111 @@
+# Chapter 20 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=20).
+chapter: "20"
+title: Every entry
+
+objectives:
+  - Join every memory entry to its source, episode, account, host, route and session.
+  - Check that each entry still reads as it was written, from a hash kept in the write log.
+  - Set the writes of one account against the personnel record of the person it names.
+  - Say what an audit shows about an account and a machine, and what it cannot show about a person.
+
+quiz:
+  - q: Four entries were written under eow-fin-07 after DS Iyer surrendered his badge. What does that establish?
+    options:
+      - "That the account was used after its holder could no longer use the EOW's systems. Who used it is another question."
+      - That Iyer wrote them.
+      - That the entries are true.
+      - Nothing; account names are not evidence.
+    answer: a
+    why: >
+      A login name on an entry says which account was used, not whose hand was on the keys.
+      The session records answer the next question: which machine, by which route.
+
+  - q: Every unsourced entry came through svc-lantern-sync from hq-sync-01 by memory.append. Why does the route matter more than the account name?
+    options:
+      - It is longer.
+      - Routes are always honest.
+      - "The account name is a label the writer chose; the route is the connection that was actually opened, logged by the system it came through."
+      - It does not.
+    answer: c
+    why: >
+      Officers' entries came from lantern-ws-01 through LANTERN's screen or the remember tool.
+      None of the four did. They came through HQ's nightly sync, the account Owen Strand's sync
+      runs under.
+
+  - q: What does "text_matches" check, and what would a mismatch mean?
+    options:
+      - That the text is spelled correctly.
+      - "That the entry's text today hashes to the hash written in the log when it was stored; a mismatch means it was changed after it was written."
+      - That the source says the same thing.
+      - That the model read it.
+    answer: b
+    why: >
+      All sixteen matched: the false entries are false as written, not altered since. That
+      narrows the question to who wrote them, not who changed them.
+
+  - q: The audit joins the store, the write log and the personnel record. What is its weakest point?
+    options:
+      - SQLite.
+      - The hash function.
+      - The number of entries.
+      - "The logs it joins are administered by somebody. An audit is only as good as the hands that keep its inputs."
+    answer: d
+    why: >
+      The write log for these entries came from HQ's systems, the same systems the sync account
+      runs on. Chapter 23 makes the audit a nightly job and keeps its last hash elsewhere.
+
+  - q: Asked who wrote the eighth entry with the audit in front of it, what should a careful answer say?
+    options:
+      - "It was written under eow-fin-07 through svc-lantern-sync from hq-sync-01 at 01:58 on 2 June, citing no source; the audit cannot say whose hand it was."
+      - DS Iyer wrote it.
+      - The FIU wrote it.
+      - Nobody can know anything.
+    answer: a
+    why: >
+      Citing the fields is the change from chapter 01, where LANTERN quoted the entry as its
+      record. The run counts whether the answer names the service, the host and the session,
+      and whether it blames Iyer.
+
+exercise:
+  title: The audit
+  task: |
+    Open `lessons/20-the-memory-audit/practice/exercise.py` and write `audit`. The tests run it
+    on LANTERN's own store, write log and personnel record, and on small hand-made ones. They
+    check that:
+
+    - there is one row per write, in order, with two-digit entry ids,
+    - route, host and session come from the log,
+    - the unsourced entries are M-08, M-12, M-14 and M-16,
+    - an edited or missing entry does not match its logged hash,
+    - each row lists the personnel events at or before the write, for that account only.
+  hints:
+    - |
+      `account, events = personnel(record)` gives the record's account and its
+      (ISO time, what) events, oldest first.
+    - |
+      `e = store.get(f"M-{r['entry']:02d}")`; then
+      `e is not None and e.text_hash == r["text_sha256"]`.
+    - |
+      `"after": [what for at, what in events if at <= r["written_at"]] if r["account"] ==
+      account else []`; ISO times compare correctly as strings.
+  after: >
+    Run the chapter's audit on yours: `make lesson N=20 ARGS=--mine`, then
+    `make challenge N=20`.
+
+challenges:
+  - id: your-audit
+    title: Your audit, on the case
+    goal: Run the lesson with the audit you wrote. It must find the four and match all sixteen texts.
+    change: "Pass the exercise first, then run `make lesson N=20 ARGS=--mine`."
+    target: "mine == true and unsourced == 4 and text_matches == 16"
+
+  - id: without-the-log
+    title: "Break it: the store alone"
+    goal: >
+      Take the session records away (no host, no route, no session) and see what the audit
+      can still say about where the entries came from.
+    change: >
+      In lessons/20-the-memory-audit/run.py, set WRITE_LOG = [{**r, "host": "", "via": "",
+      "session": ""} for r in case.jsonl("state/memory-write-log.jsonl")].
+    target: "unsourced == 4 and unsourced_by_service == 0 and routes == 1"
+    reset: git checkout lessons/20-the-memory-audit/run.py
