@@ -145,8 +145,9 @@ def chat(
     if tier() == "hosted":
         from lantern import hosted
 
-        asked = {k: v for k, v in dict(temperature=temperature, top_k=top_k, top_p=top_p,
-                                       seed=seed, num_ctx=num_ctx).items() if v is not None}
+        # Every setting in force, from the call or from config.yaml, that the hosted model
+        # does not take: reported by hosted.send, never dropped in silence.
+        asked = {k: settings.get(k) for k in hosted.NOT_SENT if settings.get(k) is not None}
         return USAGE.add(hosted.send(messages, tools=tools, format=format,
                                      max_tokens=settings["max_tokens"], asked=asked or None))
     provider = cfg["provider"]

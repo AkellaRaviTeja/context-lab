@@ -127,3 +127,45 @@ def test_config_prices_name_the_page_and_the_date():
     h = hosted.settings()
     assert h["provider"] == "anthropic" and h["prices_checked"]
     assert set(h["prices"]) == set(PRICES)
+
+
+def test_lantern_chat_on_the_hosted_tier_goes_end_to_end_through_the_sdk(monkeypatch):
+    """TIER=hosted: lantern.chat builds the native request, sends it through the SDK client
+    and reads the reply, usage and cost back. The SDK is faked; nothing leaves the machine."""
+    import sys
+    import types
+
+    from lantern import llm
+
+    sent = {}
+
+    class Messages:
+        def create(self, **kwargs):
+            sent.update(kwargs)
+            return types.SimpleNamespace(to_dict=lambda: FIXTURE)
+
+    class Client:
+        def __init__(self, **kwargs):
+            sent["client"] = kwargs
+            self.messages = Messages()
+            self.beta = types.SimpleNamespace(messages=Messages())
+
+    monkeypatch.setitem(sys.modules, "anthropic", types.SimpleNamespace(Anthropic=Client))
+    monkeypatch.setenv("LANTERN_TIER", "hosted")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-not-real")
+    real = hosted.load_config
+
+    def config():
+        cfg = real()
+        return {**cfg, "synthetic": {"cloud": True}}
+
+    monkeypatch.setattr(hosted, "load_config", config)
+    before = llm.USAGE.calls
+    r = llm.chat([{"role": "system", "content": "rules"}, {"role": "user", "content": "go"}],
+                 tools=[TOOL], seed=7, temperature=0.2)
+    assert r.tool_calls[0].name == "money_out" and r.cost > 0
+    assert sent["model"] == "claude-sonnet-5-5" and sent["cache_control"]
+    assert "temperature" not in sent and "seed" not in sent
+    assert {"seed", "temperature", "num_ctx"} <= set(r.raw["unsupported"])
+    assert sent["client"]["max_retries"] >= 2 and sent["client"]["timeout"]
+    assert llm.USAGE.calls == before + 1
