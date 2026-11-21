@@ -81,3 +81,14 @@ def test_score_asks_each_question_with_both_statements_in_the_session():
     assert [r["passed"] for r in got] == [True, False]
     with pytest.raises(ValueError):
         baseline.score(context.sections(), chat=scripted, only=["Q-99"])
+
+
+def test_says_matches_whole_figures_only():
+    """Chapter 05's grader used `in`, so "3" was found in "13" and "30" (review, 21 November)."""
+    from lantern import baseline
+
+    assert not baseline.says("There are 13 payments.", "3")
+    assert not baseline.says("30", "3")
+    assert not baseline.says("3.5 million", "3")
+    assert baseline.says("3.", "3") and baseline.says("It is 3", "3")
+    assert baseline.says("1,183,369.26 in all", "1183369.26")

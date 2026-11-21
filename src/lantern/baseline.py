@@ -48,7 +48,8 @@ def normal(text: str) -> str:
 
 def says(text: str, value: str) -> bool:
     """Is `value` in `text` as a whole word or number, not as part of a longer one?"""
-    return re.search(rf"(?<![\w.]){re.escape(normal(value))}(?!\w)", normal(text)) is not None
+    return re.search(rf"(?<![\w.]){re.escape(normal(value))}(?!\w|\.\d)",
+                     normal(text)) is not None
 
 
 def first_word(text: str) -> str:

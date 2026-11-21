@@ -15,13 +15,31 @@ def seen_flows(ledger: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
             if not any(w in p["payee"] for w in BANK_WORDS)]
 
 
-def check(state: dict[str, Any], ledger: dict[str, dict[str, Any]]) -> list[str]:
+def number(value: Any) -> float | None:
+    """A figure from a form as a number, or None when it is not one (None, a list, "n/a")."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.replace(",", "").strip())
+        except ValueError:
+            return None
+    return None
+
+
+def check(state: Any, ledger: dict[str, dict[str, Any]]) -> list[str]:
     """Problems with a filled-in form, against the ledger. An empty list means it is kept."""
+    if not isinstance(state, dict):
+        return ["the form is not a JSON object"]
     problems = []
     want = {(f["payer"], f["payee"]): f for f in seen_flows(ledger)}
+    returned = {(d["holder"], p["payee"]) for d in ledger.values() for p in d["paid_out_to"]}
     got = {}
     for i, f in enumerate(state.get("flows", []), 1):
-        missing = [k for k in ("payer", "payee", "payments", "total", "source") if not f.get(k)]
+        missing = [k for k in ("payer", "payee", "payments", "total", "source")
+                   if f.get(k) in (None, "", [])]
         if missing:
             problems.append(f"flow {i} has no {', '.join(missing)}")
             continue
@@ -30,14 +48,14 @@ def check(state: dict[str, Any], ledger: dict[str, dict[str, Any]]) -> list[str]
         g = got.get(key)
         if g is None:
             problems.append(f"missing: {key[0]} paid {key[1]} ({f['source']})")
-        elif float(str(g["total"]).replace(",", "")) != float(f["total"]):
+        elif number(g["total"]) != number(f["total"]):
             problems.append(f"{key[0]} paid {key[1]}: total {g['total']}, the tool said "
                             f"{f['total']}")
-        elif int(g["payments"]) != f["payments"]:
+        elif number(g["payments"]) != f["payments"]:
             problems.append(f"{key[0]} paid {key[1]}: {g['payments']} payments, the tool said "
                             f"{f['payments']}")
     for key in got:
-        if key not in want and not any(w in key[1] for w in BANK_WORDS):
+        if key not in returned:
             problems.append(f"not in any tool result: {key[0]} paid {key[1]}")
     unread = sorted(set(ledger) - set(state.get("accounts_read", [])))
     if unread:

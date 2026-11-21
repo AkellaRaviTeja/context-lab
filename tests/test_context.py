@@ -58,3 +58,29 @@ def test_a_long_text_is_counted_in_pieces_that_lose_nothing():
     assert "".join(pieces) == text
     assert max(len(p) for p in pieces) <= 40
     assert context.pieces_of("short\n", 40) == ["short\n"]
+
+
+def test_count_tokens_asks_with_the_chats_own_window(monkeypatch):
+    """Review of 21 November 2026: counting at num_ctx 16,384 while the chat runs at 8,192 made
+    Ollama reload the model on every switch when only one model may be loaded."""
+    from lantern import context
+    from lantern.config import load_config
+
+    sent = {}
+
+    class R:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"prompt_eval_count": 3}
+
+    def post(url, json, timeout):
+        sent.update(json)
+        return R()
+
+    monkeypatch.setattr(context.httpx, "post", post)
+    context.count_tokens.cache_clear()
+    assert context.count_tokens("a short text for the window test") == 3
+    assert sent["options"]["num_ctx"] == load_config()["generation"]["num_ctx"]
+    context.count_tokens.cache_clear()

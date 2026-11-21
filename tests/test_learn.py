@@ -154,3 +154,18 @@ def test_mine_loads_an_exercise_that_defines_a_dataclass(tmp_path, monkeypatch):
     assert module.Case("G-001").id == "G-001"
     monkeypatch.setattr(sys, "argv", [str(lesson / "run.py")])
     assert learn.mine() is None
+
+
+@pytest.mark.parametrize("path", PRACTICE, ids=lambda p: p.parent.parent.name)
+def test_no_challenge_target_passes_whatever_the_run(path):
+    """A condition every count meets (>= 0, > -1) checks nothing: the review of 21 November
+    2026 found two. Each condition must be one an unchanged or careless run can miss."""
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    for c in data.get("challenges", []):
+        for part in re.split(r"\s+and\s+", c["target"].strip()):
+            name, op, raw = cli.CONDITION.match(part).groups()
+            want = yaml.safe_load(raw)
+            if isinstance(want, bool) or not isinstance(want, int | float):
+                continue
+            vacuous = (op == ">=" and want <= 0) or (op == ">" and want < 0)
+            assert not vacuous, f"{path}: {c['id']}: {part!r} is met by any count"

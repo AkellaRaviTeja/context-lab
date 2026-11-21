@@ -65,7 +65,7 @@ def test_a_wrong_count_is_reported(impl):
 
 
 def test_a_flow_no_tool_returned_is_refused(impl):
-    """A flow that is in no tool result is reported; a payment to a bank is let through."""
+    """A flow that is in no tool result is reported; a real payment to a bank is let through."""
     state = copy.deepcopy(GOOD)
     state["flows"].append({"payer": "Corvane Trading Ltd", "payee": "Arden Logistics Ltd",
                            "payments": 14, "total": "1625000.00",
@@ -80,3 +80,22 @@ def test_every_file_opened_must_be_listed(impl):
     """accounts_read must hold every file in the ledger."""
     state = {**GOOD, "accounts_read": ["corvane-trading.csv"]}
     assert impl.check(state, LEDGER) == ["accounts_read leaves out lowmarsh-shipping.csv"]
+
+
+def test_an_invented_flow_to_a_bank_is_refused_too(impl):
+    """A bank is not required, but a flow to a bank that no tool returned is still invented."""
+    state = copy.deepcopy(GOOD)
+    state["flows"].append({"payer": "Lowmarsh Shipping Services Ltd",
+                           "payee": "Sabran Commercial Bank", "payments": 1,
+                           "total": "296400.00", "source": "lowmarsh-shipping.csv"})
+    assert impl.check(state, LEDGER) == [
+        "not in any tool result: Lowmarsh Shipping Services Ltd paid Sabran Commercial Bank"]
+
+
+def test_figures_that_are_not_strings_are_checked_not_crashed(impl):
+    """A count of "9" or 9 is the same; a total of None or a list is reported, not a crash."""
+    assert impl.check(changed(f0_payments="9", f1_total=1873000), LEDGER) == []
+    assert impl.check(changed(f0_total=["2262000.00"]), LEDGER) == [
+        "Corvane Trading Ltd paid Lowmarsh Shipping Services Ltd: total ['2262000.00'], "
+        "the tool said 2262000.00"]
+    assert impl.check(["a list"], LEDGER) == ["the form is not a JSON object"]

@@ -15,6 +15,7 @@ window: it is what the check compares the model's form against.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -74,53 +75,108 @@ def seen_flows(ledger: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
             if not any(w in p["payee"] for w in BANK_WORDS)]
 
 
+AMOUNT = re.compile(r"(?<![\d.])\d[\d,]*(?:\.\d+)?(?![\d])")
+
+
+def number(value: Any) -> float | None:
+    """A figure as a number, or None. Model output may be a string, a number or anything else:
+    "1,873,000.00", 1873000 and "1873000" are the same figure; None, a list or "n/a" is none."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.replace(",", "").strip())
+        except ValueError:
+            return None
+    return None
+
+
+def amounts(text: str) -> set[float]:
+    """Every whole figure written in a text, as numbers. A figure is matched whole: 2262000 is
+    not found inside 22620000, and 1,873,000 equals 1873000.00."""
+    return {float(m.replace(",", "")) for m in AMOUNT.findall(text)}
+
+
 def survived(text: str, flows: list[dict[str, Any]]) -> int:
-    """How many seen flows are still whole in a text: payer, payee and total all present."""
-    plain = text.replace(",", "")
-    return sum(f["payer"] in plain and f["payee"] in plain
-               and f["total"].replace(".00", "") in plain for f in flows)
+    """How many seen flows are still whole in a text: payer, payee and total all present, the
+    total as a whole figure."""
+    figures = amounts(text)
+    return sum(f["payer"] in text and f["payee"] in text and number(f["total"]) in figures
+               for f in flows)
 
 
-def check(state: dict[str, Any], ledger: dict[str, dict[str, Any]]) -> list[str]:
-    """Problems with a filled-in form, against the ledger. An empty list means it is kept."""
+def all_pairs(ledger: dict[str, dict[str, Any]]) -> set[tuple[str, str]]:
+    """Every (payer, payee) any tool result holds, banks included."""
+    return {(d["holder"], p["payee"]) for d in ledger.values() for p in d["paid_out_to"]}
+
+
+def check(state: Any, ledger: dict[str, dict[str, Any]]) -> list[str]:
+    """Problems with a filled-in form, against the ledger. An empty list means it is kept.
+
+    A flow to a bank is not required (bank charges are not hops), but it must still be in a tool
+    result: an invented flow is refused whoever the payee is."""
+    if not isinstance(state, dict):
+        return ["the form is not a JSON object"]
     problems = []
     want = {(f["payer"], f["payee"]): f for f in seen_flows(ledger)}
+    returned = all_pairs(ledger)
     got = {}
-    for i, f in enumerate(state.get("flows", []), 1):
-        missing = [k for k in ("payer", "payee", "payments", "total", "source") if not f.get(k)]
+    flows = state.get("flows", [])
+    for i, f in enumerate(flows if isinstance(flows, list) else [], 1):
+        if not isinstance(f, dict):
+            problems.append(f"flow {i} is not an object")
+            continue
+        missing = [k for k in ("payer", "payee", "payments", "total", "source")
+                   if f.get(k) in (None, "", [])]
         if missing:
             problems.append(f"flow {i} has no {', '.join(missing)}")
             continue
-        got[(f["payer"], f["payee"])] = f
+        got[(str(f["payer"]), str(f["payee"]))] = f
     for key, f in want.items():
         g = got.get(key)
         if g is None:
             problems.append(f"missing: {key[0]} paid {key[1]} ({f['source']})")
-        elif float(str(g["total"]).replace(",", "")) != float(f["total"]):
+        elif number(g["total"]) != number(f["total"]):
             problems.append(f"{key[0]} paid {key[1]}: total {g['total']}, the tool said "
                             f"{f['total']}")
-        elif int(g["payments"]) != f["payments"]:
+        elif number(g["payments"]) != f["payments"]:
             problems.append(f"{key[0]} paid {key[1]}: {g['payments']} payments, the tool said "
                             f"{f['payments']}")
     for key in got:
-        if key not in want and not any(w in key[1] for w in BANK_WORDS):
+        if key not in returned:
             problems.append(f"not in any tool result: {key[0]} paid {key[1]}")
-    unread = sorted(set(ledger) - set(state.get("accounts_read", [])))
+    read = state.get("accounts_read", [])
+    unread = sorted(set(ledger) - set(read if isinstance(read, list) else []))
     if unread:
         problems.append(f"accounts_read leaves out {', '.join(unread)}")
     return problems
 
 
+def _split(messages: Messages) -> tuple[Messages, Messages, str]:
+    """The head a compaction never touches (every leading system message and the first user
+    message, the task), the turns after it, and the task text. Found by role, not position: a
+    conversation may open with two system messages, or with none."""
+    i = 0
+    while i < len(messages) and messages[i]["role"] == "system":
+        i += 1
+    if i >= len(messages) or messages[i]["role"] != "user":
+        raise ValueError("a conversation to compact must hold its task as the first user "
+                         "message after the system messages")
+    return messages[:i + 1], messages[i + 1:], messages[i]["content"]
+
+
 def _head(messages: Messages) -> tuple[Messages, str]:
-    """The system message and the task, which a compaction never touches, and the task text."""
-    head = [m for m in messages[:2]]
-    return head, next(m["content"] for m in head if m["role"] == "user")
+    """The system messages and the task, which a compaction never touches, and the task text."""
+    head, _, task = _split(messages)
+    return head, task
 
 
 def _rendered(messages: Messages) -> str:
     """The turns to be compacted, as text for the model that will compact them."""
     lines = []
-    for m in messages[2:]:
+    for m in _split(messages)[1]:
         said = m.get("content") or json.dumps([c["function"] for c in m.get("tool_calls", [])])
         lines.append(f"{m['role']}: {said}")
     return "\n".join(lines)
@@ -174,7 +230,7 @@ def with_schema(chat: Callable[..., Any], threshold: int, count: Callable[[str],
                 state = chat(ask, system=FORM + task, seed=7, max_tokens=900,
                              format=SCHEMA).json()
                 problems = check(state, ledger)
-            except ValueError:
+            except (ValueError, TypeError):
                 problems = ["the reply was not JSON"]
             if not problems:
                 break
@@ -218,6 +274,14 @@ def from_source(threshold: int, count: Callable[[str], int], log: Log,
     return hook
 
 
+def _reported(report: str, flow: dict[str, Any]) -> bool:
+    """A FLOW line for this payer and payee holds this total, as a whole figure."""
+    for line in report.splitlines():
+        if f"{flow['payer']} -> {flow['payee']}" in line and number(flow["total"]) in amounts(line):
+            return True
+    return False
+
+
 def report_covers(ledger: dict[str, dict[str, Any]], skip: tuple[str, ...] = ()
                   ) -> Callable[[str], str | None]:
     """A check for agent.run(until=...): a report must hold every flow in the ledger.
@@ -227,10 +291,8 @@ def report_covers(ledger: dict[str, dict[str, Any]], skip: tuple[str, ...] = ()
     payees the task said to ignore.
     """
     def check(report: str) -> str | None:
-        plain = report.replace(",", "")
         left = [f for f in seen_flows(ledger) if f["payee"] not in skip
-                and not (f"{f['payer']} -> {f['payee']}" in plain
-                         and f["total"].replace(".00", "") in plain)]
+                and not _reported(report, f)]
         if not left:
             return None
         return ("Not done. Your report leaves out flows you have already found: "

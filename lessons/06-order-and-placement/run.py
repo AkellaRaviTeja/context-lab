@@ -192,8 +192,10 @@ learn.record(
     moved_last=MOVE_LAST,
     baseline_passed=k,
     reordered_passed=k2,
+    reordered_scored=len(moved),
     reordered_fixed=len(diff["fixed"]),
     reordered_broken=len(diff["broken"]),
+    reordered_changed=len(diff["fixed"]) + len(diff["broken"]),
     mine=MINE is not None,
 )
 

@@ -96,3 +96,69 @@ def test_nothing_is_compacted_under_the_threshold():
     messages = conversation()
     assert compaction.from_source(threshold=10**9, count=len, log=log)(messages) == messages
     assert log.compactions == 0
+
+
+# Regressions from the review of 21 November 2026.
+
+def test_an_invented_flow_to_a_bank_is_refused():
+    """A flow to a payee with "Bank" in its name is not required, but it must still be in a
+    tool result: an invented one is the poisoning this lab teaches."""
+    form = json.loads(json.dumps(GOOD))
+    form["flows"].append({"payer": "Corvane Trading Ltd", "payee": "Halden Private Bank",
+                          "payments": 1, "total": "296400.00", "source": "corvane-trading.csv"})
+    problems = compaction.check(form, ledger())
+    assert "not in any tool result: Corvane Trading Ltd paid Halden Private Bank" in problems
+
+
+def test_a_real_flow_to_a_bank_is_let_through():
+    form = json.loads(json.dumps(GOOD))
+    form["flows"].append({"payer": "Lowmarsh Shipping Services Ltd",
+                          "payee": "Sabran Mercantile Bank", "payments": 3, "total": "135.00",
+                          "source": "lowmarsh-shipping.csv"})
+    assert compaction.check(form, ledger()) == []
+
+
+def test_survived_matches_a_total_as_a_whole_figure():
+    flow = [{"payer": "Corvane Trading Ltd", "payee": "Lowmarsh Shipping Services Ltd",
+             "total": "2262000.00"}]
+    text = "Corvane Trading Ltd paid Lowmarsh Shipping Services Ltd "
+    assert compaction.survived(text + "22620000.00", flow) == 0
+    assert compaction.survived(text + "12262000", flow) == 0
+    assert compaction.survived(text + "2,262,000", flow) == 1
+    assert compaction.survived(text + "2262000.00.", flow) == 1
+
+
+def test_a_form_with_figures_that_are_not_strings_is_checked_not_crashed():
+    form = json.loads(json.dumps(GOOD))
+    form["flows"][0]["total"] = None
+    form["flows"][1]["total"] = ["1873000.00"]
+    form["flows"][1]["payments"] = {"n": 8}
+    problems = compaction.check(form, ledger())
+    assert problems[0] == "flow 1 has no total"
+    assert any("total ['1873000.00']" in p for p in problems)
+    assert compaction.check(["not", "a", "form"], ledger()) == ["the form is not a JSON object"]
+    form = json.loads(json.dumps(GOOD))
+    form["flows"][0]["total"] = 2262000
+    form["flows"][0]["payments"] = "9"
+    assert compaction.check(form, ledger()) == []
+
+
+def test_the_head_is_found_by_role_not_position():
+    two_systems = [{"role": "system", "content": "rules"},
+                   {"role": "system", "content": "listing"}, *conversation()[1:]]
+    head, task = compaction._head(two_systems)
+    assert [m["role"] for m in head] == ["system", "system", "user"] and task == "trace it"
+    assert "listing" not in compaction._rendered(two_systems)
+    no_system = conversation()[1:]
+    head, task = compaction._head(no_system)
+    assert head == no_system[:1] and "trace it" not in compaction._rendered(no_system)
+
+
+def test_the_report_check_matches_whole_figures_on_the_flow_line():
+    led = ledger()
+    covers = compaction.report_covers(led)
+    good = ("FLOW: Corvane Trading Ltd -> Lowmarsh Shipping Services Ltd | 9 payments | total "
+            "2,262,000.00\nFLOW: Lowmarsh Shipping Services Ltd -> Calder Reach Holdings Ltd | 8 "
+            "payments | total 1873000.00\nDONE")
+    assert covers(good) is None
+    assert covers(good.replace("2,262,000.00", "22,620,000.00")) is not None

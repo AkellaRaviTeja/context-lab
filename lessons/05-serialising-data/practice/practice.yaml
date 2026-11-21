@@ -123,10 +123,11 @@ challenges:
   - id: the-cheapest
     title: The cheapest shape, scored
     goal: >
-      CSV is the smallest shape and read 21 of 30. Draw the statements as CSV and score the
-      signed questions. Does it do better or worse than TOON's 15?
+      CSV is the smallest shape and read 21 of 30. Draw the statements as CSV and score all 26
+      signed questions. The target checks that the CSV run scored every question and changed at
+      least one answer against the baseline; whether it beats TOON's 15 is yours to read.
     change: Set STATEMENT_AS = "CSV" in lessons/05-serialising-data/run.py.
-    target: "chosen == 'CSV' and reshaped_passed >= 0"
+    target: "chosen == 'CSV' and reshaped_scored == 26 and reshaped_changed >= 1"
     reset: git checkout lessons/05-serialising-data/run.py
 
   - id: the-dearest

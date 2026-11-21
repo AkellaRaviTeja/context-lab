@@ -19,21 +19,32 @@ def seen_flows(ledger: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
             if not any(w in p["payee"] for w in BANK_WORDS)]
 
 
-def check(state: dict[str, Any], ledger: dict[str, dict[str, Any]]) -> list[str]:
+def number(value: Any) -> float | None:
+    """A figure from a form as a number, or None when it is not one (None, a list, "n/a")."""
+    # TODO 0: ints and floats as they are; strings without commas through float(); else None.
+    raise NotImplementedError("write number")
+
+
+def check(state: Any, ledger: dict[str, dict[str, Any]]) -> list[str]:
     """Problems with a filled-in form, against the ledger. An empty list means it is kept.
 
     `state` is {"flows": [{"payer", "payee", "payments", "total", "source"}],
     "accounts_read": [file], "open_questions": [text]}. `seen_flows(ledger)` is what the tools
     returned. Report, in this order:
 
+    - "the form is not a JSON object"   when `state` is not a dict, and nothing else
     - "flow N has no payer, total"      a flow with an empty or absent field (N from 1); such
                                         a flow is then ignored
     - "missing: A paid B (file)"        a seen flow that the form does not hold
     - "A paid B: total X, the tool said Y"       a total that differs (compare as numbers:
                                                  "1,873,000.00" equals "1873000.00")
     - "A paid B: N payments, the tool said M"    a count that differs
-    - "not in any tool result: A paid B"         a flow the tools never returned (a payee
-                                                 that is a bank is let through)
+    - "not in any tool result: A paid B"         a flow the tools never returned. A flow to a
+                                                 bank is not required, but an invented one is
+                                                 refused like any other: check every flow
+                                                 against every pair the ledger holds
+    Figures from a model may be strings, numbers or neither: "9", 9 and 9.0 are the same
+    count, and a total of None or ["1.00"] is wrong, not a crash.
     - "accounts_read leaves out x.csv, y.csv"    files in the ledger the form does not list
     """
     # TODO 1: index the seen flows and the form's complete flows by (payer, payee).

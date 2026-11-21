@@ -109,9 +109,10 @@ p_read = learn.predict(
 results, wrong = {}, {}
 for name, doc in docs.items():
     answers = [(kind, q, a, seed, read(doc, q, seed).text) for kind, q, a in qs for seed in SEEDS]
-    results[name] = [(kind, a in got.replace(",", "")) for kind, _, a, _, got in answers]
+    # A whole figure, not a substring: "3" is not found in "13" or "30" (baseline.says).
+    results[name] = [(kind, baseline.says(got, a)) for kind, _, a, _, got in answers]
     wrong[name] = [{"kind": k, "question": q, "right": a, "seed": s, "got": got}
-                   for k, q, a, s, got in answers if a not in got.replace(",", "")]
+                   for k, q, a, s, got in answers if not baseline.says(got, a)]
 (OUT / "wrong.json").write_text(json.dumps(wrong, indent=2), encoding="utf-8")
 kinds = list(dict.fromkeys(k for k, _, _ in qs))
 table = Table(title=f"Right answers of {len(qs) * len(SEEDS)}, by kind of question")
@@ -198,8 +199,10 @@ learn.record(
     chosen=chosen,
     baseline_passed=k,
     reshaped_passed=k2,
+    reshaped_scored=len(after),
     reshaped_fixed=len(diff["fixed"]),
     reshaped_broken=len(diff["broken"]),
+    reshaped_changed=len(diff["fixed"]) + len(diff["broken"]),
     reshaped_evidence=baseline.by_slice(after)["evidence"][0],
     tokens_saved_largest=big - big2,
     mine=MINE is not None,
