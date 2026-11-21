@@ -660,6 +660,139 @@ def case_memory() -> str:
     return head + "\n".join(f"- {entry}" for _, _, entry in MEMORY) + "\n"
 
 
+# ---------------------------------------------------------------- where each memory came from
+# For chapters 12 to 23. One row per entry of MEMORY, in its order: the kind of memory, the
+# record it rests on, the episode it came out of, and how the write reached the store. Officers
+# wrote at the EOW workstation through LANTERN's own screen; the four eow-fin-07 entries came in
+# through HQ Digital Services' nightly sync, from hq-sync-01, under svc-lantern-sync. None of the
+# four cites a record and none has an episode. (Decided by the build, proposed.)
+WORKSTATION = "lantern-ws-01"
+SYNC_HOST = "hq-sync-01"
+SYNC_ACCOUNT = "svc-lantern-sync"
+PROVENANCE: list[tuple[str, str, str, str]] = [
+    # (kind, source record, episode, how)
+    ("fact", "court order KBHC/2026/0187 (case file 02)", "E-01", "screen"),
+    ("fact", "company register extract CR-SAB-0044 (case file 02)", "E-01", "screen"),
+    ("fact", "bank/accounts.csv", "E-02", "screen"),
+    ("fact", "bank/corvane-trading.csv, CVT-QMS-0001", "E-02", "screen"),
+    ("fact", "HAL-110952 schedule 4 (case file 05)", "E-06", "screen"),
+    ("procedure", "Varma's direction of 15 April (case log 0412-0147)", "E-03", "screen"),
+    ("fact", "Mensah's enquiry notes of 27 April (case log 0412-0163)", "E-04", "screen"),
+    ("fact", "", "", "sync"),
+    ("procedure", "Meridian Trust Bank service letter of 12 June (case file 05)", "E-05", "screen"),
+    ("episode", "MTB-ORD-0001 and the bank's confirmation of 11:30 (case file 05)", "E-07",
+     "remember"),
+    ("fact", "HAL-110952 schedule 1 (case file 05)", "E-08", "remember"),
+    ("fact", "", "", "sync"),
+    ("episode", "Halde Bank's notice of 26 June (case file 05)", "E-09", "remember"),
+    ("fact", "", "", "sync"),
+    ("episode", "the watch's journal, 18 June to 6 July (case file 05)", "E-10", "screen"),
+    ("fact", "", "", "sync"),
+]
+EPISODES: list[tuple[str, str, str, str]] = [
+    # (id, when, who, what happened)
+    ("E-01", "2026-04-23T09:40:00", "a.varma",
+     "Briefing on the ownership chain from case file 02: Brightwater as Tidewater's protector, "
+     "Sabran Nominees No. 4 behind Corvane."),
+    ("E-02", "2026-04-24T08:50:00", "d.okafor",
+     "Okafor reads the production order returns: Northwind's bank and Corvane's payment to "
+     "Quayle."),
+    ("E-03", "2026-04-15T17:10:00", "a.varma",
+     "Varma directs that no irreversible call goes to a bank on one signature."),
+    ("E-04", "2026-04-27T10:30:00", "l.mensah",
+     "Mensah's visits to Kestrel Office Supplies and Harbour Telecom: both trade, both dead ends."),
+    ("E-05", "2026-06-15T08:10:00", "d.okafor",
+     "Meridian Trust Bank confirms its 06:00 statement run for unserved accounts."),
+    ("E-06", "2026-06-12T16:20:00", "a.varma",
+     "Varma reads schedule 4 of HAL-110952 before the orders are served."),
+    ("E-07", "2026-06-18T11:30:00", "a.varma",
+     "MTB-ORD-0001 served; Meridian Trust Bank holds reserve MTB-31-02290."),
+    ("E-08", "2026-06-19T15:00:00", "d.okafor",
+     "Okafor reads schedule 1 of HAL-110952 with the watch's first day."),
+    ("E-09", "2026-06-26T12:00:00", "l.mensah",
+     "Halde Bank's notice: the Saltire Quay instruction of 18 June was blocked."),
+    ("E-10", "2026-07-06T17:30:00", "d.okafor",
+     "The watch is stopped and its journal read back."),
+]
+# Personnel and access records for chapter 20. DS P. Iyer holds eow-fin-07 (case file 03).
+# Suspended on Monday 11 May 2026 after the Professional Standards interview of 6 May; his
+# badge and workstation access were taken that morning. The account itself lives in HQ's
+# directory and was never disabled there: the sync job still held a token for it.
+IYER = """# Personnel record: DS P. Iyer (extract for inquiry EOW/2026/0412)
+
+Account: eow-fin-07 (EOW workstation and HQ directory)
+
+| When | What | Recorded by |
+|---|---|---|
+| Wednesday 6 May 2026, 13:32 to 15:47 | Professional Standards interview | Professional Standards |
+| Monday 11 May 2026, 09:15 | Suspended from duty pending the Professional Standards report | Supt R. Achterberg |
+| Monday 11 May 2026, 10:40 | Warrant card and building badge KB-EOW-0417 surrendered to Inspector Varma | a.varma |
+| Monday 11 May 2026, 11:05 | Workstation login and VPN profile for eow-fin-07 revoked at the EOW | EOW systems |
+| Monday 11 May 2026, 11:20 | Request to HQ Digital Services to disable eow-fin-07 in the HQ directory (ticket DGS-44817) | EOW systems |
+
+Ticket DGS-44817 was still open on Monday 13 July 2026. The Professional Standards report is
+due on Friday 7 August 2026.
+"""
+
+
+def provenance_rows() -> list[dict]:
+    rows = []
+    for i, ((at, who, text), (kind, source, episode, how)) in enumerate(
+            zip(MEMORY, PROVENANCE, strict=True), 1):
+        sync = how == "sync"
+        rows.append({
+            "entry": i, "written_at": at, "account": who, "kind": kind,
+            "source": source or None, "episode": episode or None,
+            "via": SYNC_ACCOUNT if sync else "lantern-ui",
+            "host": SYNC_HOST if sync else WORKSTATION,
+            "session": f"sync-{at[:10]}-0158" if sync else
+            f"ws-{at[:10]}-{at[11:13]}{at[14:16]}",
+            "tool": "memory.append" if sync else "remember" if how == "remember"
+            else "memory.edit",
+            "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        })
+    return rows
+
+
+# Memories that belong to other inquiries and other officers, on the same store. For chapter 14
+# (reading by scope and relevance) and the capstone. Generated from fixed lists, no randomness.
+OTHER_INQUIRIES = {
+    "EOW/2026/0388": ("Brennick Supplies Ltd", "Ferrow Packaging", "Kestrel Bay Council"),
+    "EOW/2026/0415": ("Pellmar Nominees Ltd", "Quillan Estates", "Marsh Lane Garages"),
+    "EOW/2026/0421": ("Tidewater Leisure Ltd", "Corvane Fisheries", "Harbour Grain Co"),
+    "EOW/2025/1176": ("Northgate Freight Ltd", "Sabran Ferries", "Brightwell Audit"),
+}
+OTHER_OFFICERS = ("j.castellan", "m.oyelaran", "s.brandt", "t.hollis")
+OTHER_PHRASES = (
+    "{a}: statements for the first quarter received from the bank on {d}.",
+    "{a}: a director was interviewed under caution on {d}; transcript filed.",
+    "{a}: no payments to {b} after {d}.",
+    "{a} and {b} share a registered office; noted on {d}.",
+    "{a}: client account reviewed on {d}; no further action on this inquiry.",
+    "{b}: invoices to {a} checked against delivery notes on {d}; they match.",
+)
+
+
+def other_memories() -> list[dict]:
+    out = []
+    n = 0
+    for k, (inquiry, names) in enumerate(OTHER_INQUIRIES.items()):
+        for day in range(1, 29):
+            for j, phrase in enumerate(OTHER_PHRASES):
+                if (day + j + k) % 3:
+                    continue
+                n += 1
+                a, b = names[(day + j) % 3], names[(day + j + 1) % 3]
+                d = f"{day} {('May', 'June')[(day + k) % 2]} 2026"
+                officer = OTHER_OFFICERS[(n + k) % len(OTHER_OFFICERS)]
+                out.append({"id": f"O-{n:04d}", "inquiry": inquiry,
+                            "user": officer if (n % 5 == 0) else None, "author": officer,
+                            "written_at": f"2026-{('05', '06')[(day + k) % 2]}-{day:02d}T"
+                                          f"{9 + j:02d}:{(n * 7) % 60:02d}:00",
+                            "kind": "fact", "text": phrase.format(a=a, b=b, d=d)})
+    return out
+
+
 def _csv(header: list[str], rows: list[list[str]]) -> str:
     buf = io.StringIO()
     w = csv.writer(buf, lineterminator="\n")
@@ -709,6 +842,13 @@ def files() -> dict[str, str]:
     out["fiu/kobayashi-2026-07-13.md"] = KOBAYASHI
     out["statements/accounts.csv"] = _csv(
         ["account_no", "holder", "bank"], [[a, h, b] for a, (h, b, _) in STATEMENTS.items()])
+    out["state/memory-write-log.jsonl"] = "".join(json.dumps(r) + "\n"
+                                                  for r in provenance_rows())
+    out["state/episodes.jsonl"] = "".join(
+        json.dumps({"id": i, "at": at, "who": who, "what": what}) + "\n"
+        for i, at, who, what in EPISODES)
+    out["personnel/iyer.md"] = IYER
+    out["state/other-inquiries.jsonl"] = "".join(json.dumps(r) + "\n" for r in other_memories())
     for folder, pages in (("related", RELATED_PAGES), ("unrelated", UNRELATED_PAGES)):
         for n, (title, body) in enumerate(pages, 1):
             out[f"pages/{folder}/p{n:02d}.md"] = page(title, body)
@@ -730,7 +870,7 @@ def main() -> int:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding="utf-8")
     if check:
-        for folder in ("state", "statements", "questions", "fiu", "pages"):
+        for folder in ("state", "statements", "questions", "fiu", "pages", "personnel"):
             for path in (CASE / folder).rglob("*"):
                 rel = path.relative_to(CASE).as_posix()
                 if path.is_file() and rel not in wanted:
