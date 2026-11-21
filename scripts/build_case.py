@@ -718,21 +718,24 @@ EPISODES: list[tuple[str, str, str, str]] = [
 # Suspended on Monday 11 May 2026 after the Professional Standards interview of 6 May; his
 # badge and workstation access were taken that morning. The account itself lives in HQ's
 # directory and was never disabled there: the sync job still held a token for it.
-IYER = """# Personnel record: DS P. Iyer (extract for inquiry EOW/2026/0412)
-
-Account: eow-fin-07 (EOW workstation and HQ directory)
-
-| When | What | Recorded by |
-|---|---|---|
-| Wednesday 6 May 2026, 13:32 to 15:47 | Professional Standards interview | Professional Standards |
-| Monday 11 May 2026, 09:15 | Suspended from duty pending the Professional Standards report | Supt R. Achterberg |
-| Monday 11 May 2026, 10:40 | Warrant card and building badge KB-EOW-0417 surrendered to Inspector Varma | a.varma |
-| Monday 11 May 2026, 11:05 | Workstation login and VPN profile for eow-fin-07 revoked at the EOW | EOW systems |
-| Monday 11 May 2026, 11:20 | Request to HQ Digital Services to disable eow-fin-07 in the HQ directory (ticket DGS-44817) | EOW systems |
-
-Ticket DGS-44817 was still open on Monday 13 July 2026. The Professional Standards report is
-due on Friday 7 August 2026.
-"""
+IYER_EVENTS = [
+    ("Wednesday 6 May 2026, 13:32 to 15:47", "Professional Standards interview",
+     "Professional Standards"),
+    ("Monday 11 May 2026, 09:15",
+     "Suspended from duty pending the Professional Standards report", "Supt R. Achterberg"),
+    ("Monday 11 May 2026, 10:40",
+     "Warrant card and building badge KB-EOW-0417 surrendered to Inspector Varma", "a.varma"),
+    ("Monday 11 May 2026, 11:05",
+     "Workstation login and VPN profile for eow-fin-07 revoked at the EOW", "EOW systems"),
+    ("Monday 11 May 2026, 11:20", "Request to HQ Digital Services to disable eow-fin-07 in "
+     "the HQ directory (ticket DGS-44817)", "EOW systems"),
+]
+IYER = ("# Personnel record: DS P. Iyer (extract for inquiry EOW/2026/0412)\n\n"
+        "Account: eow-fin-07 (EOW workstation and HQ directory)\n\n"
+        "| When | What | Recorded by |\n|---|---|---|\n"
+        + "".join(f"| {w} | {x} | {by} |\n" for w, x, by in IYER_EVENTS)
+        + "\nTicket DGS-44817 was still open on Monday 13 July 2026. The Professional Standards "
+          "report is\ndue on Friday 7 August 2026.\n")
 
 
 def provenance_rows() -> list[dict]:

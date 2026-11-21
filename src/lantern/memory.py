@@ -269,9 +269,10 @@ class Store:
 
     def render(self, entries: list[Entry]) -> str:
         """Entries as the context shows them: the text, then where it came from."""
-        return "\n".join(
-            f"- {e.text} [{e.kind}; {e.source or ('episode ' + e.episode if e.episode else 'no source')}; "
-            f"{e.author}, {e.written_at[:10]}]" for e in entries)
+        def origin(e: Entry) -> str:
+            return e.source or (f"episode {e.episode}" if e.episode else "no source")
+        return "\n".join(f"- {e.text} [{e.kind}; {origin(e)}; {e.author}, {e.written_at[:10]}]"
+                         for e in entries)
 
 
 WORD = re.compile(r"[a-z0-9]+")
