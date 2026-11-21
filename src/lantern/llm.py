@@ -8,12 +8,14 @@ chapter is about what goes into `messages` before the call.
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
 
+from lantern import retry
 from lantern.config import load_config, model_name
 
 Message = dict[str, Any]
@@ -33,8 +35,13 @@ class Reply:
     tool_calls: list[ToolCall] = field(default_factory=list)
     prompt_tokens: int = 0
     output_tokens: int = 0
-    seconds: float = 0.0
+    seconds: float = 0.0  # generating the output only, as the provider reports it
     raw: dict[str, Any] = field(default_factory=dict)
+    latency: float = 0.0  # wall clock for the whole call: queueing, prompt processing, output
+    prompt_seconds: float = 0.0  # reading the prompt, where the provider reports it
+    cached_tokens: int = 0  # prompt tokens read from a cache (hosted providers)
+    cache_write_tokens: int = 0  # prompt tokens written to a cache (Anthropic)
+    cost: float | None = None  # in US dollars, from config.yaml prices; None when unpriced
 
     @property
     def tokens_per_second(self) -> float:
@@ -47,6 +54,40 @@ class Reply:
 
     def json(self) -> Any:
         return json.loads(self.text)
+
+
+@dataclass
+class Usage:
+    """Every model call in this process: the cost of one session, recorded by learn.record."""
+
+    calls: int = 0
+    prompt_tokens: int = 0
+    cached_tokens: int = 0
+    output_tokens: int = 0
+    cost: float = 0.0
+    priced: bool = True
+    latency: float = 0.0
+
+    def add(self, r: Reply) -> Reply:
+        self.calls += 1
+        self.prompt_tokens += r.prompt_tokens
+        self.cached_tokens += r.cached_tokens
+        self.output_tokens += r.output_tokens
+        self.latency += r.latency
+        if r.cost is None:
+            self.priced = False
+        else:
+            self.cost += r.cost
+        return r
+
+    def summary(self) -> dict[str, Any]:
+        return {"calls": self.calls, "prompt_tokens": self.prompt_tokens,
+                "cached_tokens": self.cached_tokens, "output_tokens": self.output_tokens,
+                "cost_usd": round(self.cost, 6) if self.priced else None,
+                "latency_s": round(self.latency, 2)}
+
+
+USAGE = Usage()
 
 
 def chat(
@@ -83,11 +124,18 @@ def chat(
             think=think,
         ),
     )
+    if tier() == "hosted":
+        from lantern import hosted
+
+        asked = {k: v for k, v in dict(temperature=temperature, top_k=top_k, top_p=top_p,
+                                       seed=seed, num_ctx=num_ctx).items() if v is not None}
+        return USAGE.add(hosted.send(messages, tools=tools, format=format,
+                                     max_tokens=settings["max_tokens"], asked=asked or None))
     provider = cfg["provider"]
     if provider == "ollama":
-        return _ollama(messages, model_name(model), settings, tools, format)
+        return USAGE.add(_ollama(messages, model_name(model), settings, tools, format))
     if provider == "openrouter":
-        return _openrouter(messages, openrouter_model(model), settings, tools, format)
+        return USAGE.add(_openrouter(messages, openrouter_model(model), settings, tools, format))
     if tools:
         raise SystemExit(
             "lantern.chat sends tools to Ollama or OpenRouter only. Set `provider: ollama` in "
@@ -95,7 +143,14 @@ def chat(
         )
     from lantern import cloud
 
-    return cloud.chat(provider, messages, settings, format)
+    return USAGE.add(cloud.chat(provider, messages, settings, format))
+
+
+def tier() -> str:
+    """"local" (Ollama, the default) or "hosted" (LANTERN_TIER=hosted, `make ... TIER=hosted`)."""
+    import os
+
+    return os.getenv("LANTERN_TIER", "local")
 
 
 def _prepare(
@@ -208,8 +263,9 @@ def _ollama(
 ) -> Reply:
     body = _body(messages, model, s, tools, format, stream=False)
     host = load_config()["ollama"]["host"]
+    start = time.perf_counter()
     try:
-        r = httpx.post(
+        r = retry.post(
             f"{host}/api/chat", json=body, timeout=load_config()["limits"]["request_timeout_s"]
         )
     except httpx.ConnectError as e:
@@ -239,6 +295,9 @@ def _ollama(
         output_tokens=data.get("eval_count", 0),
         seconds=data.get("eval_duration", 0) / 1e9,
         raw=data,
+        latency=time.perf_counter() - start,
+        prompt_seconds=data.get("prompt_eval_duration", 0) / 1e9,
+        cost=0.0,
     )
 
 
@@ -319,7 +378,6 @@ def _openrouter(
     format: dict[str, Any] | str | None,
 ) -> Reply:
     import os
-    import time
 
     cfg = load_config()
     key = os.getenv("OPENROUTER_API_KEY", "")
@@ -349,7 +407,7 @@ def _openrouter(
         body["response_format"] = {"type": "json_object"}
     start = time.perf_counter()
     try:
-        r = httpx.post(
+        r = retry.post(
             f"{cfg['openrouter']['base_url']}/chat/completions",
             json=body,
             headers={"Authorization": f"Bearer {key}", "X-Title": "context-lab"},
@@ -387,6 +445,9 @@ def _openrouter(
         output_tokens=usage.get("completion_tokens", 0),
         seconds=time.perf_counter() - start,
         raw={"message": msg, "usage": usage, "provider": "openrouter"},
+        latency=time.perf_counter() - start,
+        cached_tokens=(usage.get("prompt_tokens_details") or {}).get("cached_tokens", 0) or 0,
+        cost=usage.get("cost"),
     )
 
 

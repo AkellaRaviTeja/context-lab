@@ -134,9 +134,15 @@ def changed_since_head(chapter: str) -> bool | None:
 def record(**metrics: Any) -> dict[str, Any]:
     """Save this run's measurements for `make challenge`. Values must be JSON-serialisable."""
     chapter = chapter_of()
+    from lantern import llm
+
     provider = load_config()["provider"]
+    hosted = llm.tier() == "hosted"
+    if hosted:
+        provider = load_config()["hosted"]["provider"]
     # Results from another provider never replace the local run the challenges check.
-    name = chapter if provider == "ollama" else f"{chapter}-{provider}"
+    name = f"{chapter}-hosted" if hosted else chapter if provider == "ollama" \
+        else f"{chapter}-{provider}"
     out = PROGRESS / "results" / f"{name}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -144,8 +150,11 @@ def record(**metrics: Any) -> dict[str, Any]:
         "at": datetime.now().isoformat(timespec="seconds"),
         "argv": sys.argv[1:],
         "provider": provider,
+        "tier": "hosted" if hosted else "local",
+        "model": load_config()["hosted"]["model"] if hosted else llm.model_name(None),
         "changed": changed_since_head(chapter),
         "metrics": metrics,
+        "usage": llm.USAGE.summary(),
     }
     out.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
     return payload
