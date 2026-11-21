@@ -11,7 +11,7 @@ OLLAMA = $(shell docker ps --format '{{.Names}}' 2>/dev/null | grep -qx context-
 # are added with the chapter that brings them.
 .PHONY: help setup install up up-gpu down models doctor lesson lessons shots \
         check release-check lint test prose structure smoke clean \
-        quiz exercise exercise-reset hint solution challenge progress \
+        hosted-check quiz exercise exercise-reset hint solution challenge progress \
         notebooks notebooks-check notebook case capstone capstone-live
 
 help: ## Show this help
@@ -68,6 +68,11 @@ prose: ## No em or en dashes in any text file
 
 structure: ## Every lesson has the required sections, in order, and a run.py
 	uv run python scripts/check_lessons.py
+
+hosted-check: ## Live, with a key: chapter 09 end to end on the hosted model (spend: cents)
+	@test -n "$$ANTHROPIC_API_KEY" || (grep -q '^ANTHROPIC_API_KEY=.' .env 2>/dev/null) || \
+		(echo "hosted-check needs ANTHROPIC_API_KEY in .env; not run" && exit 2)
+	$(MAKE) -s lesson N=09 TIER=hosted ARGS=--no-predict
 
 smoke: ## Live tests against Ollama
 	uv run pytest -q -m live
