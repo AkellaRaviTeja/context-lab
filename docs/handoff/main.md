@@ -7,11 +7,16 @@ drafts; notebooks 2 current. `make release-check` fails on the 21 drafts and on 
 Machine: the Mac (16 GB, Apple silicon), native Ollama 0.40.15 with qwen3:8b.
 
 ## Next (do this first)
-- Chapter 03, "Who is spending the window" (`lessons/03-the-budget/`): tokens by section from
-  `lantern.context`, a budget with a reserve for the answer, and a request refused in code when
-  it would not fit. Score every change with `lantern.baseline.score` against chapter 02's run
-  (17 of 26; `.scratch/02/baseline.json` on this machine, `.progress/results/02.json`).
-- Then chapters 04 onward in order, one branch each, stacked.
+- Chapters are built in order, one branch each, stacked on the one before
+  (`feature/Chapter03TheBudget` ... ). Chapters 03 to 09 are committed; see `git branch`.
+- For each chapter: write `run.py`, run it with `--shot`, write the README and `practice/` from
+  the recorded run (`.progress/results/NN.json`), then `.scratch/finish.sh NN "message"` builds
+  the PNG and the notebook, runs `make check` and commits. `.scratch/` is not in git; the script
+  is five lines and can be rewritten.
+- Shared modules added since chapter 02: `budget` (03), `formats` (05), `placement` (06),
+  `pages` (07), `agent` and `trail` (08), `results` (09), `compaction` (10), `notes` (11).
+- `case/rebuilt/` holds what the audit proposes in place of LANTERN's state. `case/bank/` holds
+  the nine trail statements; `case/pages/` the 24 pages of chapter 07.
 
 ## How a context change is measured from here on
 `baseline.score(parts, chat=chat)` asks the 26 signed questions with `parts` as the context and
