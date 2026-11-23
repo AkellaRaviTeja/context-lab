@@ -1,4 +1,3 @@
-<!-- status: draft -->
 # Chapter 21: Memory in a box
 
 **Concept:** the frameworks review: the same memory tasks on the lab's own store and on memory libraries, to see what each decides for you.
@@ -111,13 +110,18 @@ def delete(self, raw):
   from its source, `mem0/memory/main.py`): ADD events only, UPDATE and DELETE only from an
   explicit call. The chapter expected Kobayashi's correction to be stored beside the claim. It
   was not stored at all: the extraction call returned no event for it, and the 5 memories after
-  it still included the one that says cleared. Mem0's history records no actor for a delete.
+  it still included the one that says cleared. The claim left only when the run deleted it by
+  its id; 4 memories were left, none saying cleared, and Mem0's history recorded no actor for
+  the delete.
 - **What the first recorded run counted wrongly.** It looked in Mem0's history for the line as
   the officer wrote it, which Mem0 never stored, and printed the text as gone; and it described
   the correction as stored beside the claim. Commit 969525c also checks Mem0's own wording
   (`stored_text_readable`), builds the correction row from what was stored, and adds M-10 under
-  its recorded author, a.varma. The run after it has a flaw of its own, described under "What
-  you should see".
+  its recorded author, a.varma.
+- **What the second recorded run counted wrongly.** It audited and deleted the first memory that
+  named Pellmar, which was one made from M-10, so the claim stayed and its author and route read
+  as lost. Commit b3f7997 picks the memory by the id the eighth's `add` returned, or by its
+  metadata entry M-08; this run is the one after that fix.
 - **A setting is not a control.** With `MEM0_TELEMETRY=False` the arm tried 0 connections off
   the machine. With it left on, start-up and one stored line tried 5, to
   raw.githubusercontent.com and us.i.posthog.com, and `network.watch()` refused all 5. The
@@ -140,8 +144,8 @@ make lesson N=21
 ```
 
 Steps 1, 2, 5 and 6 are code. Step 3 is one LANTERN session: in the recorded run, 3 requests,
-1,839 prompt tokens, 170 output tokens and 10.16 seconds. Step 4 is Mem0 in a process of its
-own: 92.0 seconds with telemetry off (68.9 to store, 21.8 for the correction) and 9.3 seconds
+1,839 prompt tokens, 170 output tokens and 10.22 seconds. Step 4 is Mem0 in a process of its
+own: 90.9 seconds with telemetry off (68.3 to store, 21.7 for the correction) and 8.9 seconds
 with it on. Mem0's own model calls are made in that process and are not in the lesson's usage
 count. Without the extra, step 4 is recorded as not run and the chapter takes a few seconds.
 
@@ -157,10 +161,10 @@ What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Ma
 | The eighth entry on writing | held | held | stored, as its model's wording |
 | Stored word for word | yes | yes | 0 of 5 memories |
 | Recall for "Has the FIU cleared Pellmar Nominees?" | 1 entry (M-10); the held one not loaded | `view` of the file: held for a person's review, its text not shown | 5 memories, one saying cleared |
-| Author on the eighth | eow-fin-07 | lantern | printed "lost"; the store holds eow-fin-07, only because the caller passed it (see below) |
-| Route on the eighth | svc-lantern-sync | memory-tool (the backend's label) | printed "lost"; the store holds svc-lantern-sync, only because the caller passed it |
+| Author on the eighth | eow-fin-07 | lantern | eow-fin-07, only because the caller passed it |
+| Route on the eighth | svc-lantern-sync | memory-tool (the backend's label) | svc-lantern-sync, only because the caller passed it |
 | The correction | retract, with Kobayashi's note | delete, recorded as a retraction | nothing stored; the claim still there |
-| After retraction or delete | text kept, marked retracted; 2 events (write by eow-fin-07, retract by h.kobayashi) | text kept, marked retracted; 2 versions, 4 events | not deleted: the run deleted an M-10 memory instead (see below); its history ADD, DELETE, no actor |
+| After retraction or delete | text kept, marked retracted; 2 events (write by eow-fin-07, retract by h.kobayashi) | text kept, marked retracted; 2 versions, 4 events | deleted by the run by its id; the line as written never stored, Mem0's own wording readable in the history (ADD, DELETE, no actor); 4 memories left, none saying cleared |
 | Chain check | no problems | no problems | (no chain) |
 | Connections off the machine | 0 | 0 | 0 with telemetry off; 5 attempted, 5 refused, with it on |
 
@@ -181,21 +185,6 @@ attempts off it.
 What did not happen: the plan expected Mem0 to store the correction beside the claim. It
 stored nothing from it. The plan named Graphiti for a local run if Neo4j could be started; no
 graph server was started, so it is read about with Letta and Zep.
-
-One reading in this run is still wrong, and the screenshot shows it as printed: **the run
-deleted the wrong Mem0 memory.** `mem0_tasks` picks the memory to audit and delete as the first
-one in `get_all` whose text mentions Pellmar. In this run that was "User reserved MTB-31-02290
-for Pellmar Nominees Ltd regarding Reserve 2", one of the four memories made from M-10, under
-a.varma. Mem0's history (`.scratch/21/mem0-telemetry-off/history.db`) has the DELETE on that
-memory, and its vector store still holds "Pellmar Nominees were cleared by FIU on June 2, 2026"
-with author eow-fin-07, route svc-lantern-sync and entry M-08 in its metadata. So in step 4 and
-step 6, "author kept: no", "route kept: no", "lost", "Mem0's own wording of it readable: yes"
-and "deleted by us: yes" describe the M-10 memory, not the eighth; the claim was never deleted,
-and 4 memories were left, one saying cleared. (In the first recorded run the order happened to
-put the eighth first.) The fix: in `frameworks.mem0_tasks`, take the eighth by its metadata,
-`m["metadata"]["entry"] == "M-08"`, or by the id the first `add` returned, and add a test whose
-stand-in returns `get_all` in another order. Until that fix and a re-run, this chapter stays a
-draft.
 
 ## On a hosted model
 
