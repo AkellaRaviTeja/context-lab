@@ -1,7 +1,8 @@
 # context-lab, Case File 06 (What LANTERN Remembers): built locally, hosted not run
 Updated: 2026-11-23. Branch keel-c/quality-bar-731ca6 (a worktree), stacked on main. Nothing
 pushed.
-Gate: `make check` and `make release-check` pass: ruff clean, 494 passed, prose 0 problems,
+Gate: `make check` and `make release-check` pass: ruff clean over the whole repository (the
+decision spikes excluded by name), 500 passed, prose 0 problems,
 structure 23 lessons 0 drafts, notebooks 23 current. Capstone reference solution 16 of 16
 offline (`CAPSTONE=solution uv run pytest -q capstone`); `make capstone` fails until a learner
 creates `capstone/mine/contextkit`, by design.
@@ -83,12 +84,21 @@ machine is zero changed answers on seed 7.
 - Chapter 22: A1's overfitting beat did not show. No revision beat the standing orders on
   training (7, 6 against 7), so there was nothing to overfit. A longer loop
   (`ROUNDS = 6`, the "more-rounds" challenge) is the next thing to try.
+- Chapters 01 to 04 and 06 to 09 were run again on 23 November on the current code (after the
+  grading change of 21 November): every recorded number was the same. Each README names the
+  run and the commit. Chapter 06's run now records `reordered_scored` and `reordered_changed`.
+- Review of 23 November: token counts and streams are retried; LANTERN_PROVIDER=anthropic takes
+  the native hosted path; chapters 10 and 15 try their checks on seven known-bad inputs, and
+  every challenge target must be missed by an empty run and (unless --mine) by the recorded
+  run, copied to tests/fixtures/recorded-metrics.json by scripts/snapshot_results.py.
 - Ollama's embedding runner dies on 500-text batches while qwen3:8b is loaded (chapter 14);
   64 a call with halving on failure works.
 
 ## Not done
 - Hosted runs of any chapter (no key). Behaviour at 128K and 500K tokens is not run.
 - Graphiti (needs Neo4j), Letta and Zep are surveyed from documents, not run.
+- Chapters 10 and 15 were not run again after their probes were added: no recorded run holds
+  `check_caught` or `report_caught` yet (no README quotes them).
 - The challenges that edit run.py were checked with the same functions, not run through
   `make lesson`.
 - Chapter 14's embedding note counts distinct texts (8,567) while the 86 s also covers the
