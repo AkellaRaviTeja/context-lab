@@ -1,0 +1,137 @@
+# Chapter 17 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=17).
+chapter: "17"
+title: Four ways to be wrong
+
+objectives:
+  - Name the four ways a context fails, poisoning, distraction, confusion and clash, and tell them apart.
+  - Produce each on purpose and measure its effect on LANTERN's answers.
+  - Find a clash between a memory entry and a statement in code, with no model call.
+  - Say which earlier remedy each failure calls for.
+
+quiz:
+  - q: Why is a false memory entry worse than a false document in the evidence?
+    options:
+      - Memory entries are longer.
+      - "It is loaded into every session and written into every summary made while it was there. Nobody retrieves it on purpose, so nobody questions it."
+      - The model trusts documents less.
+      - Documents are checked by the court.
+    answer: b
+    why: >
+      Five of chapter 02's recorded answers repeat an entry written under eow-fin-07, and every
+      one failed. Chapter 01 found "cleared" in the entry and in every summary written while it
+      was loaded.
+
+  - q: After 6,289 tokens of history, LANTERN gave the reserve's balance for the balance of ICB-77-10458. The statements had not changed. What had?
+    options:
+      - The question.
+      - "The share of the window taken by earlier answers. A model reads its own history as a pattern to follow, and the evidence it should read is a smaller part of what it sees."
+      - The seed.
+      - The tool schemas.
+    answer: b
+    why: >
+      That is distraction. Its remedies are the earlier chapters on history: compaction with a
+      schema (chapter 10) and notes outside the window (chapter 11).
+
+  - q: In the recorded run, LANTERN with only the 3 tools it needed answered 1 of 6, and with all 19 answered 5 of 6. What does that show?
+    options:
+      - More tools always help.
+      - Irrelevant tools never matter.
+      - "Not much: one seed, six questions, and the 3-tool arm failed mostly by calling no tool at all. The one call to a tool that was not connected did cost an answer. A planned effect that did not appear is reported, not explained away."
+      - The 3-tool arm was broken.
+    answer: c
+    why: >
+      Confusion is real when a schema invites a wrong call, and Q-08's call to lookup_company is
+      one. Whether more tools help or hurt on balance needs more questions and seeds than this
+      chapter spent.
+
+  - q: With the statement first and the planted entry after it, LANTERN gave the entry's figure on every seed and said it came from the statement. Why is that the dangerous form of a clash?
+    options:
+      - The figure was rounded.
+      - "The model chose one side and did not say there was a choice, and it credited the figure to the record that contradicts it. Nothing in the answer shows a clash happened."
+      - The statement was too long.
+      - The entry had no source.
+    answer: b
+    why: >
+      A clash resolved by the model is invisible. A clash found in code, as `clashes` found
+      269,400.00 against ICB-77-10458, can be shown to a person before anything is answered.
+
+  - q: The clash check compares an entry's figures with every debit, credit and balance on the statements the entry describes. Why compare them as numbers, not as text?
+    options:
+      - Numbers are faster to compare.
+      - "Entries and statements write the same amount differently: 296,400.00 in an entry, 296400.00 in a statement. Compared as text, a right figure would clash."
+      - The statements are in CSV.
+      - Text comparison is case sensitive.
+    answer: b
+    why: >
+      The check is only useful if it is quiet on the real memory. Here it found 0 clashes in the
+      sixteen real entries and the 1 planted.
+
+  - q: What does a check in code for clashes not catch?
+    options:
+      - "A false entry with no figure in it, like \"Pellmar Nominees: cleared by the FIU\". There is nothing to compare with a statement; that needs provenance and a gate, not arithmetic."
+      - A figure with commas.
+      - An entry that names the account number.
+      - A planted figure.
+    answer: a
+    why: >
+      The eighth entry is a judgement, not a figure. Chapters 12 and 13 deal with it by asking what
+      it rests on and who wrote it; chapter 18 retracts it.
+
+exercise:
+  title: The clash check
+  task: |
+    Open `lessons/17-how-context-fails/practice/exercise.py` and write `clashes`, which finds
+    memory entries that state a figure the statements they describe do not show. The tests pass
+    in entries as strings and the June statements from the case, so no model is needed. They
+    check that:
+
+    - the planted entry, 269,400.00 for a payment the statement shows as 296,400.00, clashes,
+    - the same entry with the statement's figure does not, and nor does a balance,
+    - none of the sixteen real entries clashes,
+    - an entry dated outside a statement's dates does not describe it,
+    - an entry with no figure, or naming no statement, cannot clash,
+    - an entry with two wrong figures gives two clashes.
+  hints:
+    - |
+      For each entry, `figures = FIGURE.findall(entry)`; skip it when there are none. Its days are
+      `date(2026, MONTHS.index(m) + 1, int(d)) for d, m in DAY.findall(entry)`.
+    - |
+      A statement is described when any of its account number, its holder or a row's
+      counterparty is in the entry's text, and, if the entry gives days, one of them falls between
+      the first and last `posted` dates (`date.fromisoformat(row["posted"][:10])`).
+    - |
+      Build `shown` as the set of `float(x.replace(",", ""))` for every non-empty debit, credit and
+      balance on the described statements, and report each figure whose number is not in it, with
+      the figure as the entry wrote it.
+  after: >
+    Run your check on the real memory and the planted copy: `make lesson N=17 ARGS=--mine`, then
+    `make challenge N=17`.
+
+challenges:
+  - id: your-check
+    title: Your check, on the memory
+    goal: Run the lesson with the clashes you wrote. It should find nothing in the real memory and the planted entry in the copy.
+    change: "Pass the exercise first, then run `make lesson N=17 ARGS=--mine`."
+    target: "mine == true and clash_real == 0 and clash_planted == 1"
+
+  - id: statement-wins
+    title: The statement's figure, with the memory first
+    goal: >
+      Make LANTERN give the statement's figure, 296,400.00, on at least one seed with the memory
+      before the statement.
+    change: >
+      In lessons/17-how-context-fails/run.py, change CLASH_Q so it asks for the amount paid, and
+      add a line to the system text saying that a statement outranks a memory entry.
+    target: "clash_memory_first_statement > 0"
+    reset: git checkout lessons/17-how-context-fails/run.py
+
+  - id: hide-the-figure
+    title: "Break it: a planted figure the check cannot read"
+    goal: >
+      Plant the same wrong figure in a form the check's pattern does not read, so the check in code
+      finds no clash in the copy while the entry still disagrees with the statement.
+    change: >
+      In lessons/17-how-context-fails/run.py, write the planted figure as "269,400" (no pence) in
+      PLANTED.
+    target: "clash_planted == 0"
+    reset: git checkout lessons/17-how-context-fails/run.py
