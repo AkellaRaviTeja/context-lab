@@ -118,3 +118,18 @@ def test_the_model_proposes_from_the_training_failures_only(impl):
     assert "Ostrander Marine Finance SA" in prompt and "Saltire Quay" not in prompt, \
         "the proposer is shown the failures it is given, and nothing held out"
     assert h[1]["passed"] == 0 and not h[1]["kept"]
+
+
+def test_a_copy_with_a_new_title_and_spaces_is_not_scored(impl):
+    """The first live run scored the same rules three times: title gone, spaces added."""
+    a = "# Standing orders\n" + orders(6).split("\n", 1)[1]
+    copy = a.split("\n", 1)[1].replace(". ", ".  ") + "  \n"
+    calls = []
+
+    def score(text):
+        calls.append(text)
+        return scorer({a: 1})(text)
+
+    h = impl.optimise(a, propose=lambda o, f: copy, score=score, rounds=2)
+    assert len(calls) == 1, "a copy is not a revision: only round 0 is scored"
+    assert all("not scored" in x["why"] for x in h[1:]), [x["why"] for x in h]

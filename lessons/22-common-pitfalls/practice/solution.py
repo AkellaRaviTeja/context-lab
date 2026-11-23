@@ -38,6 +38,16 @@ def split(questions: list[dict[str, Any]], *, train: int, held: int, seed: int
     return sorted(tr, key=order.get), sorted(ho, key=order.get)
 
 
+def rule_lines(text: str) -> list[str]:
+    """The numbered rules of a text, each with its spacing collapsed: what a revision says."""
+    return [" ".join(line.split()) for line in text.splitlines() if RULE.match(line)]
+
+
+def same_rules(a: str, b: str) -> bool:
+    """Two texts with the same rules, in the same order: a title or a space is not a change."""
+    return rule_lines(a) == rule_lines(b)
+
+
 def optimise(start: str, *, propose: Callable[[str, list[Result]], str],
              score: Callable[[str], list[Result]], rounds: int,
              start_results: list[Result] | None = None, least_rules: int = 5
@@ -47,7 +57,8 @@ def optimise(start: str, *, propose: Callable[[str, list[Result]], str],
     `score(orders)` asks the training questions with those orders and returns graded results;
     `propose(orders, failed)` writes a revision from the best orders so far and their failed
     results. A revision is kept only if it passes more than the best so far. One with fewer
-    than `least_rules` numbered rules, or the same text as the best, is not scored.
+    than `least_rules` numbered rules, or the same rules as any earlier round (spacing and
+    title aside), is not scored.
 
     Returns the history: round 0 is `start` (scored unless `start_results` is given), then
     one record a round with "orders", "passed" (None when not scored), "results", "kept" and
@@ -64,8 +75,9 @@ def optimise(start: str, *, propose: Callable[[str, list[Result]], str],
                                   "results": [], "kept": False}
         if rules(candidate) < least_rules:
             record["why"] = f"not scored: {rules(candidate)} numbered rules"
-        elif candidate.strip() == best["orders"].strip():
-            record["why"] = "not scored: the same as the best so far"
+        elif any(same_rules(candidate, h["orders"]) for h in history):
+            twin = next(h["round"] for h in history if same_rules(candidate, h["orders"]))
+            record["why"] = f"not scored: the same rules as round {twin}"
         else:
             record["results"] = score(candidate)
             record["passed"] = sum(r["passed"] for r in record["results"])

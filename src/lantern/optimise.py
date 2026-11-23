@@ -25,8 +25,9 @@ the current standing orders, then questions that LANTERN answered wrongly with t
 its answer and what a correct answer had to contain.
 
 Write a revised version of the standing orders that would make LANTERN answer questions like
-these correctly. Keep it a numbered list of rules, one rule a line, under the same title.
-Reply with the standing orders only.{must}
+these correctly. Change, add or remove at least one rule: a copy of the current orders is
+not scored. Keep it a numbered list of rules, one rule a line, under the same title.
+Reply with the standing orders only.{must}{tried}
 
 Current standing orders:
 {orders}
@@ -91,15 +92,31 @@ def clean(text: str) -> str:
 
 
 def propose(orders: str, failed: list[Result], *, chat: Callable[..., Any], seed: int = 7,
-            must_keep: tuple[str, ...] = (), max_tokens: int = 1400) -> str:
-    """One revision of the standing orders from the model, given the failures it may see."""
+            must_keep: tuple[str, ...] = (), tried: tuple[str, ...] = (),
+            temperature: float = 0.7, max_tokens: int = 1400) -> str:
+    """One revision of the standing orders from the model, given the failures it may see and
+    the rules it already tried that were not kept. The proposer samples warmer than LANTERN
+    (0.7 against 0.2): at 0.2 the first live run wrote the same copy three times."""
     lines = "\n".join(f"- {f['question']}\n  LANTERN answered: {f['answer'][:240]!r}\n"
                       f"  A correct answer {f['expected']}." for f in failed) or "(none)"
     must = ("\nThe revision must keep these words exactly: "
             + "; ".join(f'"{m}"' for m in must_keep) + ".") if must_keep else ""
-    r = chat(PROPOSE.format(orders=orders.strip(), failures=lines, must=must), seed=seed,
-             max_tokens=max_tokens)
+    before = ("\n\nAlready tried and not kept (do not write these again):\n"
+              + "\n".join(f"- {line}" for t in tried for line in rule_lines(t)
+                           if line not in rule_lines(orders))) if tried else ""
+    r = chat(PROPOSE.format(orders=orders.strip(), failures=lines, must=must, tried=before),
+             seed=seed, temperature=temperature, max_tokens=max_tokens)
     return clean(r.text)
+
+
+def rule_lines(text: str) -> list[str]:
+    """The numbered rules of a text, each with its spacing collapsed: what a revision says."""
+    return [" ".join(line.split()) for line in text.splitlines() if RULE.match(line)]
+
+
+def same_rules(a: str, b: str) -> bool:
+    """Two texts with the same rules, in the same order: a title or a space is not a change."""
+    return rule_lines(a) == rule_lines(b)
 
 
 def optimise(start: str, *, propose: Callable[[str, list[Result]], str],
@@ -111,7 +128,8 @@ def optimise(start: str, *, propose: Callable[[str, list[Result]], str],
     `score(orders)` asks the training questions with those orders and returns graded results;
     `propose(orders, failed)` writes a revision from the best orders so far and their failed
     results. A revision is kept only if it passes more than the best so far. One with fewer
-    than `least_rules` numbered rules, or the same text as the best, is not scored.
+    than `least_rules` numbered rules, or the same rules as any earlier round (spacing and
+    title aside), is not scored.
 
     Returns the history: round 0 is `start` (scored unless `start_results` is given), then
     one record a round with "orders", "passed" (None when not scored), "results", "kept" and
@@ -128,8 +146,9 @@ def optimise(start: str, *, propose: Callable[[str, list[Result]], str],
                                   "results": [], "kept": False}
         if rules(candidate) < least_rules:
             record["why"] = f"not scored: {rules(candidate)} numbered rules"
-        elif candidate.strip() == best["orders"].strip():
-            record["why"] = "not scored: the same as the best so far"
+        elif any(same_rules(candidate, h["orders"]) for h in history):
+            twin = next(h["round"] for h in history if same_rules(candidate, h["orders"]))
+            record["why"] = f"not scored: the same rules as round {twin}"
         else:
             record["results"] = score(candidate)
             record["passed"] = sum(r["passed"] for r in record["results"])
@@ -164,4 +183,4 @@ def leaked(orders: str, start: str, questions: list[dict[str, Any]]) -> list[str
 
 
 __all__ = ["PROPOSE", "best", "clean", "expected", "failures", "leaked", "optimise",
-           "propose", "rules", "split"]
+           "propose", "rule_lines", "rules", "same_rules", "split"]

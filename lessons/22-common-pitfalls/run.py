@@ -159,6 +159,7 @@ else:
     reused.append("chapter 02's baseline")
 
 prompts: list[str] = []
+tried: list[str] = []  # every revision written so far; the proposer is told not to repeat them
 seeds = iter(range(SPLIT_SEED, SPLIT_SEED + ROUNDS))
 
 
@@ -171,8 +172,10 @@ def propose(orders: str, failed: list) -> str:
     shown_failed = optimise.failures(failed, qmap)
     if PROPOSER_SEES != "train":
         shown_failed += optimise.failures(base_held, qmap)
-    return optimise.propose(orders, shown_failed, chat=proposer_chat, seed=next(seeds),
-                            must_keep=MUST_KEEP)
+    out = optimise.propose(orders, shown_failed, chat=proposer_chat, seed=next(seeds),
+                           must_keep=MUST_KEEP, tried=tuple(tried))
+    tried.append(out)
+    return out
 
 
 step("3. Propose, score, keep: on the training split only")
@@ -194,6 +197,7 @@ console.print(table)
 top = [h for h in history if h["kept"]][-1]
 best_orders = top["orders"]
 best_train = top["passed"]
+scored = sum(h["passed"] is not None for h in history[1:])  # revisions that were not copies
 if top["round"] == 0:
     best_held = base_held
 else:
@@ -290,11 +294,23 @@ learn.record(
     start_rules=optimise.rules(start),
     best_rules=optimise.rules(best_orders),
     proposer_saw_held=saw_held,
+    revisions_scored=scored,
     must_keep=len(MUST_KEEP),
     reused_recorded=len(reused),
     mine=MINE is not None,
 )
 
+if scored == 0:
+    LESSON = ("No revision was scored, so this run shows nothing about tuning; the loop needs "
+              "a proposer that writes something new.")
+elif train_gain > held_gain:
+    LESSON = (f"It gained {train_gain} on the questions it saw and {held_gain} on those it did "
+              "not: a context tuned on what it is scored against looks better than it is, and "
+              "the held-out split is the baseline that says so.")
+else:
+    LESSON = (f"It gained {train_gain} on the questions it saw and {held_gain} on those it did "
+              "not; on this run the held-out split did not fall behind, and only the held-out "
+              "split could say so.")
 finding(f"""
 {len(shown)} of the {len(BOARD)} lines on Varma's board have a recorded run of this lab
 behind them. A program asked to rewrite the standing orders wrote {ROUNDS} revisions, scored
@@ -302,8 +318,7 @@ each on {len(train_ids)} training questions, and kept the one from round {top['r
 training {k['base_train']} became {best_train}, held out {k['base_held']} became
 {k['best_held']} of {len(held_ids)}, where chapter 04's rewrite by hand passes
 {k['rewrite_held']}. It wrote {len(leaked_train)} answer(s) from the cases it saw into the
-orders, and it {'kept' if keeps else 'dropped'} "not in evidence". A context tuned on what it is
-scored against looks better than it is; the held-out split is the baseline that says so. The
+orders, and it {'kept' if keeps else 'dropped'} "not in evidence". {LESSON} The
 last line, {LEFT_TO_A_PERSON.lower()}, is left to a person.
 """)
 save_shot("22-common-pitfalls")

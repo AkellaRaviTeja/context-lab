@@ -60,3 +60,21 @@ def test_leaked_finds_answers_copied_into_the_orders():
     tuned = START + "36. The transfer of 300,000.00 has the reference PNL-TR-0618-1.\n"
     assert optimise.leaked(tuned, START, [by["Q-01"], by["Q-02"]]) == ["PNL-TR-0618-1"]
     assert optimise.leaked(START, START, [by["Q-21"]]) == [], "already in the orders"
+
+
+def test_same_rules_ignores_the_title_and_spacing_and_nothing_else():
+    a = "# Standing orders\n1. Cite the source.\n2. Say not in evidence.\n"
+    assert optimise.same_rules(a, "1.  Cite the source.  \n2. Say not in evidence.\n")
+    assert not optimise.same_rules(a, "1. Cite the source.\n2. Say not recorded.\n")
+    assert not optimise.same_rules(a, "1. Say not in evidence.\n2. Cite the source.\n")
+
+
+def test_the_proposer_is_told_what_it_already_tried_and_samples_warmer():
+    model = Scripted([say("# T\n1. A.\n")])
+    optimise.propose("# T\n1. Cite.\n", [], chat=model, seed=3,
+                     tried=("# T\n1. Cite.\n2. Quote the ledger line.\n",))
+    req = model.requests[0]
+    prompt = req["messages"][0]["content"]
+    assert "Already tried and not kept" in prompt and "2. Quote the ledger line." in prompt
+    assert "- 1. Cite." not in prompt, "a rule still in the orders is not listed as tried"
+    assert req["temperature"] == 0.7 and "at least one rule" in prompt

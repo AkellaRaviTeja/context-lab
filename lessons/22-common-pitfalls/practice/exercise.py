@@ -37,6 +37,12 @@ def split(questions: list[dict[str, Any]], *, train: int, held: int, seed: int
     raise NotImplementedError("write split")
 
 
+def rule_lines(text: str) -> list[str]:
+    """The numbered rules of a text, each with its spacing collapsed (given: not a TODO)."""
+    return [" ".join(line.split()) for line in text.splitlines()
+            if re.match(r"^\s*(\d+)\.\s+\S", line)]
+
+
 def optimise(start: str, *, propose: Callable[[str, list[Result]], str],
              score: Callable[[str], list[Result]], rounds: int,
              start_results: list[Result] | None = None, least_rules: int = 5
@@ -46,8 +52,9 @@ def optimise(start: str, *, propose: Callable[[str, list[Result]], str],
     `score(orders)` asks the training questions with those orders and returns graded results
     (dicts with "id" and "passed"); `propose(orders, failed)` writes a revision from the best
     orders so far and their failed results. A revision is kept only if it passes more than
-    the best so far. One with fewer than `least_rules` numbered rules, or the same text as the
-    best (ignoring surrounding whitespace), is not scored.
+    the best so far. One with fewer than `least_rules` numbered rules, or the same rules as any
+    earlier round (compare `rule_lines`, given below: a title or a space is not a change), is
+    not scored.
 
     Returns the history: round 0 is `start` (scored unless `start_results` is given), then
     one record a round, each a dict with "round", "orders", "passed" (None when not scored),
@@ -57,6 +64,7 @@ def optimise(start: str, *, propose: Callable[[str, list[Result]], str],
     """
     # TODO 5: round 0: score start (or use start_results); it is the best so far.
     # TODO 6: each round: propose from the best's orders and the best's failed results.
-    # TODO 7: skip scoring a malformed or unchanged revision; otherwise score it.
+    # TODO 7: skip scoring a malformed revision, or one with the same rules as any earlier
+    #         round (say which in "why"); otherwise score it.
     # TODO 8: keep it only if it passes strictly more than the best; then it is the best.
     raise NotImplementedError("write optimise")
