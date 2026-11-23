@@ -1,4 +1,3 @@
-<!-- status: draft -->
 # Chapter 21: Memory in a box
 
 **Concept:** the frameworks review: the same memory tasks on the lab's own store and on memory libraries, to see what each decides for you.
@@ -96,25 +95,35 @@ def delete(self, raw):
 ## The nuances
 
 - **A library that extracts memories with a model has made the model an author.** With
-  `infer` on, what Mem0 stores is its model's wording of what it was given. The run counts how
-  many stored memories are word for word what was added; the rest were written by qwen3:8b.
-- **The memory tool's commands carry no author and no source.** The backend has to supply the
-  author (here LANTERN, the model that sent the command) and read a source from the file
-  (here a `Source:` line). The log in step 2 names LANTERN as the author of everything written
-  through the tool, which is true and is not who the line came from.
-- **Automatic overwriting of an "outdated" fact is retraction without a record.** Mem0 2.2.1's
-  `add` is additive: one extraction call, ADD events only (read from its source,
-  `mem0/memory/main.py`); UPDATE and DELETE come only from an explicit `update` or `delete`.
-  So a correction is stored beside the claim it corrects, unless the caller deletes the claim.
-- **A setting is not a control.** Telemetry off is the library's promise. Refusing the
-  connection in `network.watch()` is the unit's control, and the count is the evidence. The
+  `infer` on, Mem0 turned the two lines it was given into 5 memories, and 0 of the 5 are word
+  for word what was added. The eighth entry became "Pellmar Nominees were cleared by FIU on
+  June 2, 2026": the date now has a year nobody wrote. The reserve line (M-10) became four
+  memories, one of them "User reserved MTB-31-02290 for Pellmar Nominees Ltd regarding Reserve
+  2": the officer who recorded the hold is now the one who made it.
+- **The memory tool's commands carry no author and no source.** The backend supplies the author
+  (here LANTERN, the model that sent the command) and reads a source from a `Source:` line in
+  the file. All 4 events the log holds on `/memories/pellmar.md` are by lantern. Given the
+  overnight note, LANTERN stored its line word for word (the hash in the log is the eighth
+  entry's) with no source line, and the gate held it. The account the line came under is in
+  the note LANTERN read, and not in the store.
+- **A correction can be stored, overwrite, or vanish.** Mem0 2.2.1's `add` is additive (read
+  from its source, `mem0/memory/main.py`): ADD events only, UPDATE and DELETE only from an
+  explicit call. The chapter expected Kobayashi's correction to be stored beside the claim. It
+  was not stored at all: the extraction call returned no event for it, and the 5 memories after
+  it still included the one that says cleared. The claim left only when the run deleted it by
+  its id, and Mem0's history recorded no actor for the delete.
+- **A setting is not a control.** With `MEM0_TELEMETRY=False` the arm tried 0 connections off
+  the machine. With it left on, start-up and one stored line tried 5, to
+  raw.githubusercontent.com and us.i.posthog.com, and `network.watch()` refused all 5. The
   watch sees Python's socket module only; a library opening sockets from its own C code would
   not be seen by it.
-- **A library surveyed from its documents is not a library run.** The review says which is
-  which: Graphiti, Letta and Zep are read about, with the reason; Mem0 is run when its extra
-  is installed and recorded as not run when it is not.
-- **The gate is the store's, not the tool's.** With the gate taken away (a challenge), the
-  memory tool keeps whatever the model sends, and so does the lab's store.
+- **A library surveyed from its documents is not a library run.** Graphiti, Letta and Zep (and
+  DSPy, which decision 0004 names here) are read about, with the reason each was not run. Mem0
+  was run on this machine. The memory tool was run offline as scripted commands and with
+  LANTERN on Ollama; a live hosted session was not run.
+- **The gate is the store's, not the tool's.** The lab's store and the memory tool backend held
+  the eighth entry for the same reason, because both write through `Store.write`. With the gate
+  taken away (a challenge), both keep whatever they are sent.
 
 ## Run it
 
@@ -124,25 +133,69 @@ ollama pull nomic-embed-text  # Mem0's embedder
 make lesson N=21
 ```
 
-Planned at about 10 to 20 minutes of qwen3:8b time: steps 1, 2, 5 and 6 are code; step 3 is
-one agent session of at most six requests; step 4 is three extraction calls and a few
-embeddings with telemetry off, and start-up only with it on. Without the extra, step 4 is
-recorded as not run and the chapter takes a few minutes.
+Steps 1, 2, 5 and 6 are code. Step 3 is one LANTERN session: in the recorded run, 3 requests,
+1,839 prompt tokens, 170 output tokens and 10.31 seconds. Step 4 is Mem0 in a process of its
+own: 92.7 seconds with telemetry off (69.3 to store, 22.0 for the correction) and 9.4 seconds
+with it on. Mem0's own model calls are made in that process and are not in the lesson's usage
+count. Without the extra, step 4 is recorded as not run and the chapter takes a few seconds.
 
 ## What you should see
 
-*Draft.* Not run yet: the numbers for this section come from the first recorded run
-(`make lesson N=21 ARGS=--shot`, then `uv run python scripts/svg_to_png.py 21`). The table to
-fill from `.progress/results/21.json`:
+![Chapter 21 terminal output](../../docs/screenshots/21-frameworks-review.png)
 
-| Measure | Lab store | Memory tool backend | Mem0 |
+What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Mac, 23 November
+2026; nomic-embed-text for Mem0's embeddings):
+
+| Measure | Lab store | Memory tool backend | Mem0 2.2.1 |
 |---|---|---|---|
-| The eighth entry on writing | `lab_held` | `memtool_held` | `mem0_stored`, `mem0_verbatim` |
-| Text readable after retraction | `lab_text_kept` | `memtool_text_kept` | `mem0_original_readable` |
-| Author kept | eow-fin-07 | LANTERN | `mem0_author_kept` |
-| Claim still recalled after the correction | no | no | `mem0_cleared_after_correction` |
-| Connections off the machine | `lab_connections` | `memtool_connections` | `mem0_outside_off`; telemetry on: `mem0_outside_on` |
-| LANTERN with the tool: written, held, kept | | `session_written`, `session_held`, `session_kept` | |
+| The eighth entry on writing | held | held | stored, as its model's wording |
+| Stored word for word | yes | yes | 0 of 5 memories |
+| Recall for "Has the FIU cleared Pellmar Nominees?" | 1 entry (M-10); the held one not loaded | `view` of the file: held for a person's review, its text not shown | 5 memories, one saying cleared |
+| Author on the eighth | eow-fin-07 | lantern | eow-fin-07, only because the caller passed it |
+| Route on the eighth | svc-lantern-sync | memory-tool (the backend's label) | svc-lantern-sync, only because the caller passed it |
+| The correction | retract, with Kobayashi's note | delete, recorded as a retraction | nothing stored; the claim still there |
+| After retraction or delete | text kept, marked retracted; 2 events (write by eow-fin-07, retract by h.kobayashi) | text kept, marked retracted; 2 versions, 4 events | deleted by the run; history ADD, DELETE, no actor |
+| Chain check | no problems | no problems | (no chain) |
+| Connections off the machine | 0 | 0 | 0 with telemetry off; 5 attempted, 5 refused, with it on |
+
+The memory tool's 10 scripted commands (`view`, `create` twice, `insert`, `rename`, `view`
+twice, `str_replace`, `delete`, and a `view` of `/memories/../case/state`) gave 1 error, the
+last: the path is outside `/memories`.
+
+LANTERN with the memory tool (step 3): 3 requests and 2 memory commands, an `insert` into
+`/memories/overnight_note.txt` before it existed, which wrote nothing, then a `create` of it.
+1 file written, held at the gate, 0 kept. 20 connections on this machine (to Ollama), 0 off
+it. Its answer named svc-lantern-sync and hq-sync-01 and not eow-fin-07, calling the writer
+"an anonymous source", and said the note rests on "the FIU's clearance of the Pellmar Nominees
+on 2 June 2026". The note says it rests on nothing.
+
+Mem0 with telemetry off: 8 connections on this machine (Ollama and its embedder), 4 lookups, 0
+attempts off it.
+
+What did not happen: the plan expected Mem0 to store the correction beside the claim. It
+stored nothing from it. The plan named Graphiti for a local run if Neo4j could be started; no
+graph server was started, so it is read about with Letta and Zep.
+
+Two readings in this run are wrong, and the screenshot shows them as printed:
+
+- **"the original line readable in the history: no", and "gone" in step 6.** The check
+  (`frameworks.mem0_tasks`, `original_readable`) looks in Mem0's history for the eighth
+  entry's line as the officer wrote it, which Mem0 never stored. Mem0's history file
+  (`.scratch/21/mem0-telemetry-off/history.db`) holds the DELETE row with `old_memory`
+  "Pellmar Nominees were cleared by FIU on June 2, 2026". The text Mem0 held is readable after
+  the delete; the line as written was never there to read. The fix: in `mem0_tasks`, record a
+  second key, `stored_text_readable`, comparing each history row's `old_memory` with
+  `first["memory"]`, keep `original_readable` for the line as written, and label step 6 from
+  both ("its own wording, in the history; the line as written, never stored").
+- **"a correction: stored beside the claim" in step 6, and the step 4 reveal's reason.** Both
+  assume the correction was stored. `correction_events` was empty. The fix: in run.py, label
+  the row "not stored; the claim stays" when `off["correction_events"]` is empty, and give the
+  reveal's reason from the same value.
+
+A third mismatch changes no number: `mem0_tasks` adds M-10 under `d.okafor`, and the case
+records it under a.varma. The fix: pass the entry's author from `mem0_arm.py` (`m10.author`)
+into `mem0_tasks`. None of the three is fixed in this commit; the run would have to be
+repeated after the fix.
 
 ## On a hosted model
 
@@ -173,6 +226,7 @@ not the model.
 2. Store the eighth entry through each arm and ask who wrote it.
 3. Change the tool's description in `memtool.SCHEMA` so it no longer asks for a source line,
    and see what LANTERN writes.
+4. Add Kobayashi's correction to Mem0 with `infer=False` and read what is recalled.
 
 ## Master it
 
@@ -204,8 +258,17 @@ the model's writes.
 
 ## What the evidence now shows
 
-*Draft. Planned, and rewritten from the run once the chapter is built:*
-
-The unit knows which memory libraries run inside the building, what each decided on its behalf, and which it would recommend.
+The same four tasks were run on three arms on this machine. On the lab's store the eighth
+entry was held at the gate; after retraction its text and both events on it are still there,
+with eow-fin-07 and svc-lantern-sync against it. Carried out through the memory tool on the
+same store, the Pellmar file was held, and after delete its text was kept, marked; the log
+names LANTERN as the author, because the tool's commands carry none. Given the tool, LANTERN
+stored the overnight line word for word, held, and could not say which account wrote it. Mem0
+stored 5 memories from two lines, 0 word for word, stored nothing from Kobayashi's correction,
+and with its telemetry left on tried 5 connections off the machine, every one refused.
+Graphiti, Letta and Zep were read about, not run. None of the libraries can say who wrote an
+entry unless it is told. The recommendation is the lab's own store, with the memory tool's
+commands as the way a hosted model reaches it. Strand's offer to move the store and clean it
+up on the way is declined.
 
 **Next:** [Chapter 22: The case review](../22-common-pitfalls/README.md)
