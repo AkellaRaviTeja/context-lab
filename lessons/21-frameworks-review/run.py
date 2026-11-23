@@ -232,12 +232,18 @@ else:
          f"{off['overwrote']}; {off['after_correction']} memories after it, one saying cleared: "
          f"{'yes' if off['after_correction_says_cleared'] else 'no'}. Deleted by us: "
          f"{'yes' if off['retracted_by_us'] else 'no'}; history {off['history_events']}; the "
-         f"original line readable in the history: {'yes' if off['original_readable'] else 'no'}"
+         f"line as written readable in the history: "
+         f"{'yes' if off['original_readable'] else 'no'}; Mem0's own wording of it readable: "
+         f"{'yes' if off.get('stored_text_readable') else 'no'}"
          f"; who deleted it recorded: {'yes' if off['who_changed_it'] else 'no'}.")
     learn.reveal(p_fix, answer=0 if off["after_correction_says_cleared"] else 1,
-                 why="Mem0 2.2.1 adds; it does not decide that a new line contradicts an old "
-                 "one. A correction stored beside the claim it corrects leaves both to be "
-                 "recalled, and the reader to choose.")
+                 why=("Mem0 2.2.1 stored nothing from the correction: its model judged the "
+                      "line not worth a memory, so the claim stayed until the run deleted it."
+                      if not off["correction_events"] else
+                      "Mem0 2.2.1 answered the correction with "
+                      f"{', '.join(off['correction_events'])}. "
+                      "A correction stored beside the claim it corrects leaves both to be "
+                      "recalled, and the reader to choose."))
 
 step("5. What was not run, and why")
 table = Table(title="Surveyed from their documents and decision 0003, not run on the case")
@@ -270,10 +276,13 @@ table.add_row("author of the entry", lab_written[0].author, ", ".join(
 table.add_row("route it came by", lab_written[0].via, "memory-tool (the backend's label)",
               m0("route_kept", "only if passed", "lost"))
 table.add_row("a correction", "retract, with a reason", "delete: " + ON_DELETE,
-              m0("after_correction_says_cleared", "stored beside the claim",
-                 "the claim gone"))
+              ("not run" if not mem0_ran else
+               "nothing stored; the claim stayed" if not off["correction_events"] else
+               m0("after_correction_says_cleared", "stored beside the claim", "the claim gone")))
 table.add_row("text after retraction", "kept, marked", "kept, marked" if text_kept else "erased",
-              m0("original_readable", "in the history", "gone"))
+              ("not run" if not mem0_ran else
+               "the line as written was never stored; Mem0's wording "
+               + ("readable in the history" if off.get("stored_text_readable") else "gone")))
 table.add_row("connections off the machine", str(len(net_lab.outside)),
               str(len(net_tool.outside)),
               str(off["network"]["outside_attempts"]) if mem0_ran else "not run")
@@ -315,6 +324,7 @@ learn.record(
     mem0_overwrote=off.get("overwrote"),
     mem0_cleared_after_correction=off.get("after_correction_says_cleared"),
     mem0_original_readable=off.get("original_readable"),
+    mem0_stored_text_readable=off.get("stored_text_readable"),
     surveyed=len(frameworks.SURVEY),
     arms_run=2 + mem0_ran,
     on_delete_forget=ON_DELETE == "forget",

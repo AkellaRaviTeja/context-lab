@@ -5,6 +5,7 @@ import json
 import subprocess
 import sys
 from dataclasses import replace
+from datetime import datetime
 from pathlib import Path
 
 from lantern import (
@@ -119,6 +120,10 @@ for w in friday["new_writes"]:
     table.add_row(w["entry"], w["at"].replace("T", " ")[:16], w["by"], w["via"], w["status"],
                   "; ".join(w["problems"])[:70])
 console.print(table)
+# the scheduler's folder starts from Thursday's report, as a real one would; without the
+# last hash there is nothing to check the chain against and a missing hash counts as whole
+(OUT / "nightly-cron").mkdir(parents=True, exist_ok=True)
+(OUT / "nightly-cron" / "last-hash").write_text(thursday["last_hash"] + "\n", encoding="utf-8")
 cron = subprocess.run([sys.executable, str(NIGHTLY), "--store", str(OUT / "memory.db"),
                        "--out", str(OUT / "nightly-cron"), "--since", "2026-08-06T18:00:00",
                        "--day", "2026-08-07"], capture_output=True, text=True, cwd=ROOT,
@@ -245,7 +250,8 @@ step("5. The budget alarm")
 spans = [json.loads(x) for x in tracing_file.read_text(encoding="utf-8").splitlines() if x]
 cfg = load_config()
 plan = budget.Budget(window=cfg["generation"]["num_ctx"], reserve=RESERVE)
-spent = budget.spend(parts_now(orders))
+# the request as sent: the reserve statement with_evidence adds, and the question
+spent = budget.spend(baseline.asking(baseline.with_evidence(parts_now(orders)), IYER))
 level = production.alarm(spent, plan, warn_at=WARN_AT)
 turn_tokens = [context.count_tokens(f"user: {questions[a['question']]['question']}\n"
                                     f"assistant: {a['answer']}\n")
@@ -283,9 +289,15 @@ prices = cfg["hosted"]["prices"]
 stable = sum(v for k, v in spent.items() if k in ("standing orders", "case memory",
                                                   "standing notes", "tool schemas"))
 uncached = (prompt * prices["input"] + output * prices["output"]) / 1e6
+# a cache write for the first request, for every change of version, and after every gap
+# longer than the cache lives; the session's requests are the answers, in order
+ttl_s = {"5m": 300, "1h": 3600}[cfg["hosted"]["features"]["ttl"]]
+stamps = [(datetime.fromisoformat(a["at"]), a["version"]) for a in answers]
+writes = 1 + sum(v != pv or (t - pt).total_seconds() > ttl_s
+                 for (pt, pv), (t, v) in zip(stamps, stamps[1:], strict=False))
 cached = layout.session_cost(stable=stable, tail=max(0, round(prompt / max(calls, 1)) - stable),
-                             output=round(output / max(calls, 1)), questions=calls, writes=1,
-                             prices=prices) if calls else 0.0
+                             output=round(output / max(calls, 1)), questions=calls, writes=writes,
+                             prices=prices, ttl=cfg["hosted"]["features"]["ttl"]) if calls else 0.0
 local_cost = (after["cost_usd"] or 0.0) - (before["cost_usd"] or 0.0)
 table = Table(title="One session: measured on qwen3:8b, and priced for "
               f"{cfg['hosted']['model']} as a calculation, not a bill")
@@ -295,7 +307,8 @@ table.add_row(f"local, {cfg['models']['default']} (measured)", str(calls),
               f"{prompt:,}", f"{output:,}", str(seconds), f"{local_cost:.4f}")
 table.add_row("hosted price, no cache (calculated)", str(calls), f"{prompt:,}", f"{output:,}",
               "", f"{uncached:.4f}")
-table.add_row(f"hosted price, {stable:,}-token prefix cached (calculated)", str(calls),
+table.add_row(f"hosted price, {stable:,}-token prefix cached, {writes} cache writes "
+              "(calculated)", str(calls),
               f"{prompt:,}", f"{output:,}", "", f"{cached:.4f}")
 console.print(table)
 chat_spans = [s for s in spans if s["name"].startswith("chat ")]
@@ -330,6 +343,7 @@ learn.record(
     nightly_problems=len(friday["problems"]),
     nightly_chain_continues=friday["chain_continues"],
     nightly_exit=cron.returncode,
+    cache_writes=writes,
     alarm_level=level.level,
     alarm_warns=level.level != "ok",
     alarm_share_pct=round(level.share * 100),

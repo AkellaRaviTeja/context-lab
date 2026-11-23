@@ -49,7 +49,8 @@ with network.watch(refuse_outside=True) as net:
         out["seconds_start"] = round(time.perf_counter() - start, 1)
         if args.telemetry == "off":
             m10 = memory.from_case().get("M-10")
-            out.update(frameworks.mem0_tasks(m, sourced=m10.text, sourced_source=m10.source))
+            out.update(frameworks.mem0_tasks(m, sourced=m10.text, sourced_source=m10.source,
+                                                 sourced_author=m10.author))
         else:
             m.add([{"role": "user", "content": frameworks.EIGHTH}], user_id="eow-fin-07",
                   run_id=frameworks.INQUIRY, infer=False)

@@ -87,7 +87,7 @@ def _says_cleared(text: str) -> bool:
     return "cleared" in t and not re.search(r"\b(not|no|never)\b[^.]{0,30}\bclear", t)
 
 
-def mem0_tasks(memory: Any, *, sourced: str, sourced_source: str,
+def mem0_tasks(memory: Any, *, sourced: str, sourced_source: str, sourced_author: str = "a.varma",
                clock: Callable[[], float] = time.perf_counter) -> dict[str, Any]:
     """The four tasks on a Mem0 `Memory` (or anything with its methods). Every number is read
     from what the library returned."""
@@ -96,8 +96,8 @@ def mem0_tasks(memory: Any, *, sourced: str, sourced_source: str,
     meta = {"entry": "M-08", "author": "eow-fin-07", "via": "svc-lantern-sync", "source": ""}
     added = results(memory.add([{"role": "user", "content": EIGHTH}], user_id="eow-fin-07",
                                run_id=INQUIRY, metadata=meta))
-    added += results(memory.add([{"role": "user", "content": sourced}], user_id="d.okafor",
-                                run_id=INQUIRY, metadata={"entry": "M-10", "author": "d.okafor",
+    added += results(memory.add([{"role": "user", "content": sourced}], user_id=sourced_author,
+                                run_id=INQUIRY, metadata={"entry": "M-10", "author": sourced_author,
                                                           "via": "lantern-ui",
                                                           "source": sourced_source}))
     out["seconds"]["store"] = round(clock() - t, 1)
@@ -153,6 +153,11 @@ def mem0_tasks(memory: Any, *, sourced: str, sourced_source: str,
                                                           + str(h.get("new_memory") or ""))
                                    or plain(EIGHTH) == plain(str(h.get("old_memory") or ""))
                                    for h in log)
+    # what Mem0 stored was its own paraphrase, not the officer's line: is that still readable?
+    kept_text = plain(str((first or {}).get("memory") or ""))
+    out["stored_text_readable"] = bool(kept_text) and any(
+        kept_text in plain(str(h.get("old_memory") or "") + " " + str(h.get("new_memory") or ""))
+        for h in log)
     out["who_changed_it"] = any(h.get("actor_id") for h in log
                                 if h.get("event") in ("UPDATE", "DELETE"))
     after = results(memory.get_all(filters={"run_id": INQUIRY}))

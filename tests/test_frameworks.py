@@ -87,3 +87,8 @@ def test_a_missing_library_is_named_as_not_run():
 def test_every_surveyed_library_says_why_it_was_not_run():
     assert {s["library"] for s in frameworks.SURVEY} >= {"Graphiti", "Letta", "Zep"}
     assert all(s["why_not_run"] for s in frameworks.SURVEY)
+
+
+def test_the_history_check_looks_for_what_was_stored_not_only_the_line_given():
+    out = run(FakeMem0())
+    assert out["stored_text_readable"], "the DELETE row holds what was stored, so it is readable"
