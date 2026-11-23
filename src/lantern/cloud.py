@@ -1,5 +1,8 @@
 """Optional cloud providers. Install with `uv sync --extra cloud` and set a key in .env.
 
+Anthropic is not here: `LANTERN_PROVIDER=anthropic` goes through `lantern.hosted`, the native
+path `TIER=hosted` uses. These two plain adapters ask for JSON in the prompt.
+
 In the story, evidence never leaves the building. In the lab these adapters let you
 compare a local model's answer with a frontier model's answer on the same prompt.
 """
@@ -28,23 +31,6 @@ def chat(
         schema = format if isinstance(format, dict) else {"type": "object"}
         system += f"\n\nReply with JSON only, matching this schema:\n{json.dumps(schema)}"
     start = time.perf_counter()
-
-    if provider == "anthropic":
-        import anthropic
-
-        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-        r = client.messages.create(
-            model=model,
-            system=system or anthropic.NOT_GIVEN,
-            messages=turns,
-            max_tokens=s["max_tokens"],
-            temperature=s["temperature"],
-            top_k=s["top_k"],
-        )
-        text = "".join(b.text for b in r.content if b.type == "text")
-        return Reply(text, model, prompt_tokens=r.usage.input_tokens,
-                     output_tokens=r.usage.output_tokens,
-                     seconds=time.perf_counter() - start)
 
     if provider == "openai":
         from openai import OpenAI
@@ -78,4 +64,5 @@ def chat(
                      output_tokens=u.candidates_token_count or 0,
                      seconds=time.perf_counter() - start)
 
-    raise SystemExit(f"Unknown provider {provider!r}. Use ollama, anthropic, openai or gemini.")
+    raise SystemExit(f"Unknown provider {provider!r}. "
+                     "Use ollama, openrouter, anthropic, openai or gemini.")

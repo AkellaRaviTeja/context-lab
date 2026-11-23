@@ -114,8 +114,8 @@ def chat(
     from lantern import tracing
 
     if not _traced and tracing.enabled():
-        hosted_tier = tier() == "hosted"
         cfg0 = load_config()
+        hosted_tier = tier() == "hosted" or cfg0["provider"] == "anthropic"
         name = cfg0["hosted"]["model"] if hosted_tier else model_name(model)
         with tracing.span(f"chat {name}", **{
                 "gen_ai.operation.name": "chat", "gen_ai.request.model": name,
@@ -142,7 +142,9 @@ def chat(
             think=think,
         ),
     )
-    if tier() == "hosted":
+    # LANTERN_PROVIDER=anthropic takes the same native path as TIER=hosted: structured output,
+    # prompt caching, an explicit timeout, and cached tokens and cost recorded per call.
+    if tier() == "hosted" or cfg["provider"] == "anthropic":
         from lantern import hosted
 
         # Every setting in force, from the call or from config.yaml, that the hosted model
@@ -252,7 +254,8 @@ def stream(
         )
     body = _body(messages, model_name(model), s, tools, None, stream=True)
     url = f"{cfg['ollama']['host']}/api/chat"
-    with httpx.stream("POST", url, json=body, timeout=cfg["limits"]["request_timeout_s"]) as r:
+    # Retried like `chat` until the first byte arrives; a stream that breaks later is not resent.
+    with retry.stream("POST", url, json=body, timeout=cfg["limits"]["request_timeout_s"]) as r:
         r.raise_for_status()
         for line in r.iter_lines():
             if not line:

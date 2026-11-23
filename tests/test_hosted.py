@@ -169,3 +169,44 @@ def test_lantern_chat_on_the_hosted_tier_goes_end_to_end_through_the_sdk(monkeyp
     assert {"seed", "temperature", "num_ctx"} <= set(r.raw["unsupported"])
     assert sent["client"]["max_retries"] >= 2 and sent["client"]["timeout"]
     assert llm.USAGE.calls == before + 1
+
+
+def test_provider_anthropic_takes_the_native_hosted_path(monkeypatch):
+    """Review of 23 November 2026: LANTERN_PROVIDER=anthropic went through a plain adapter with
+    no timeout, JSON asked for in the prompt, and no cached tokens or cost. It now goes through
+    hosted.send: native structured output, a timeout, retries, and cost on the reply."""
+    import sys
+    import types
+
+    from lantern import llm
+
+    sent = {}
+
+    class Messages:
+        def create(self, **kwargs):
+            sent.update(kwargs)
+            return types.SimpleNamespace(to_dict=lambda: FIXTURE)
+
+    class Client:
+        def __init__(self, **kwargs):
+            sent["client"] = kwargs
+            self.messages = Messages()
+            self.beta = types.SimpleNamespace(messages=Messages())
+
+    monkeypatch.setitem(sys.modules, "anthropic", types.SimpleNamespace(Anthropic=Client))
+    monkeypatch.delenv("LANTERN_TIER", raising=False)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-not-real")
+    real = hosted.load_config
+    monkeypatch.setattr(hosted, "load_config",
+                        lambda: {**real(), "synthetic": {"cloud": True}})
+    monkeypatch.setitem(llm.load_config(), "provider", "anthropic")
+    schema = {"type": "object", "properties": {"payee": {"type": "string"}},
+              "required": ["payee"]}
+    r = llm.chat("Who was paid?", format=schema)
+    assert sent["client"]["timeout"], "no explicit timeout reached the SDK client"
+    assert "output_format" in sent or "output_config" in sent, \
+        f"the schema was not sent natively: {sorted(sent)}"
+    assert "JSON" not in str(sent.get("system", "")), "the schema was asked for in the prompt"
+    assert r.cost > 0, "the reply carries no cost"
+    from lantern import cloud
+    assert "anthropic" not in cloud.chat.__code__.co_consts, "cloud.py still has its own path"
