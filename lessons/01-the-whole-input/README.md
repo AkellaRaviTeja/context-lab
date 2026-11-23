@@ -108,7 +108,9 @@ About two minutes: fifteen calls on a context of about 5,000 tokens.
 
 ![Chapter 01 terminal output](../../docs/screenshots/01-the-whole-input.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:27, code at commit da20d34; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 11 November, before the grading
+change of 21 November, gave the same numbers:
 
 - 163 lines in 11 sections. Ollama counted the request at 5,112 tokens, 62% of the 8,192-token
   window, before a word of the answer.
