@@ -61,7 +61,7 @@ quiz:
     options:
       - The correction replaced it, as an UPDATE.
       - The correction was stored beside it, and both were recalled.
-      - "Nothing was stored from the correction, and the claim stayed until the caller deleted it by its id; the history kept no record of who deleted it."
+      - "Nothing was stored from the correction, and the claim was still there to be recalled. Only a delete by the claim's own id takes it out, and Mem0's history records no actor for a delete."
       - Mem0 refused the correction because it came from another user.
     answer: c
     why: >
