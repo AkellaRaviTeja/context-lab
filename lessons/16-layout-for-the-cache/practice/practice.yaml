@@ -9,7 +9,7 @@ objectives:
   - Score a new layout on the signed questions before keeping it.
 
 quiz:
-  - q: A 5,410-token context is sent twice. Ollama reports the same prompt token count both times, yet the second takes 0.05 s against 23.59 s. What happened?
+  - q: A 5,410-token context is sent twice. Ollama reports the same prompt token count both times, yet the second takes 0.05 s against 23.78 s. What happened?
     options:
       - The second request was not sent.
       - "The server reused its work on the unchanged beginning and read nothing again. Ollama reports the whole prompt in the count whatever it reused; the saving shows only in the time."
@@ -21,7 +21,7 @@ quiz:
       reports cached tokens separately (cache_read_input_tokens), and they are billed at a
       fraction of the input price.
 
-  - q: A line 2,562 tokens into the context is changed and reading takes 12.56 s, a little over half the cold time. Why about half?
+  - q: A line 2,562 tokens into the context is changed and reading takes 12.69 s, a little over half the cold time. Why about half?
     options:
       - The server reads every other token.
       - "The server reuses the prompt up to the first token that differs and reads the rest again. About half of this prompt comes after the change."
@@ -29,7 +29,7 @@ quiz:
       - The model was busy with another lesson.
     answer: b
     why: >
-      A change at the end cost 0.34 s and a change in the first line 23.45 s. What a change costs
+      A change at the end cost 0.34 s and a change in the first line 23.76 s. What a change costs
       is what follows it, which is why the order of the sections matters.
 
   - q: The nightly sync rewrites the case memory. Why does moving the case memory later save the morning's first question time?
@@ -52,8 +52,8 @@ quiz:
     answer: b
     why: >
       A first version of this lesson did exactly that, and runs 2 and 3 of today's order took
-      the time of a fully reused prompt. With a fresh rewrite each run, today's order took 20.00,
-      19.96 and 19.95 s and stable first 6.01, 6.01 and 6.00 s. A cache measurement has to start
+      the time of a fully reused prompt. With a fresh rewrite each run, today's order took 19.60 s
+      on all three runs and stable first 5.89, 5.88 and 5.88 s. A cache measurement has to start
       cold, or show that it did.
 
   - q: Stable first, LANTERN scored 16 of 26 against 17, and Q-10 broke. Why score a change made only for speed?
