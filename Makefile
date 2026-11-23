@@ -58,7 +58,7 @@ release-check: check notebooks-check ## Every gate, notebooks current, and no le
 	uv run python scripts/check_lessons.py --release
 
 lint: ## Ruff
-	uv run ruff check src scripts lessons tests capstone
+	uv run ruff check .
 
 test: ## Unit tests (no model needed)
 	uv run pytest -q

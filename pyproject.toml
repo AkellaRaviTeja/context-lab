@@ -37,7 +37,9 @@ packages = ["src/lantern"]
 [tool.ruff]
 line-length = 100
 # Generated from run.py by scripts/build_notebooks.py; run.py is what gets linted.
-extend-exclude = ["lessons/*/lesson.ipynb"]
+# The decision spikes are kept as they ran: each .json beside them was written by that exact
+# code (docs/decisions/0001 to 0003). They are records, not lab code, so they are not linted.
+extend-exclude = ["lessons/*/lesson.ipynb", "docs/decisions/spikes"]
 target-version = "py311"
 
 [tool.ruff.lint]
