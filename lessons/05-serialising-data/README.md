@@ -84,7 +84,7 @@ def to_toon(rows, name="rows"):
   said 2 where the answer was 3. Three questions on one table is thin evidence; do not build
   on it.
 - **The winner did not pay in the context.** With both statements drawn as TOON the largest
-  request fell by 112 tokens, 2%, and two answers broke. Ten rows is too few for the shape to
+  request fell by 112 tokens, from 6,001 to 5,889, and two answers broke. Ten rows is too few for the shape to
   matter. The change is not kept.
 - **A shape must still be parsed.** A value with a comma has to be quoted in CSV and TOON, and
   a bar inside a Markdown cell breaks the table. Check your data for the separator.
@@ -97,13 +97,15 @@ def to_toon(rows, name="rows"):
 make lesson N=05
 ```
 
-About six minutes: 180 short calls, then the 26 questions once.
+Ten questions on three seeds for each of six shapes, then the 26 questions once. In the
+recorded run the 212 model calls took 237.04 seconds of model time on the shared machine.
 
 ## What you should see
 
 ![Chapter 05 terminal output](../../docs/screenshots/05-serialising-data.png)
 
-What the recorded run showed:
+What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Mac, 23 November
+2026; 212 calls, 496,265 prompt tokens and 2,916 output tokens in all):
 
 | Shape | Tokens | Against indented JSON | Right of 30 |
 |---|---|---|---|
@@ -116,8 +118,9 @@ What the recorded run showed:
 
 - Lookups: 21 of 21 in every shape. The largest payment: 0 of 3 in every shape.
 - The row count: right only as TOON.
-- Statements drawn as TOON: 15 of 26 against the baseline's 17. Fixed none. Broken Q-02 and
-  Q-10, each by a different choice of tool.
+- Statements drawn as TOON: 15 of 26 against the baseline's 17, the largest request 5,889
+  tokens against 6,001, and 7 of 8 on the evidence slice against 8 of 8. Fixed none. Broken
+  Q-02 and Q-10, each by a different choice of tool: `sum_payments` and `lookup_company`.
 
 What did not happen: the planned beat had the shapes differ in how often the model reads the
 right cell. They did not differ at all on cells. They differed on counts.
