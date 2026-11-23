@@ -1,0 +1,138 @@
+# Chapter 18 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=18).
+chapter: "18"
+title: Retraction
+
+objectives:
+  - Record what a summary was built from, and find everything built on an entry, directly or through another summary.
+  - Retract an entry and rebuild what was built on it, oldest first, from what is still kept.
+  - Tell deleting from superseding by what each leaves in the record.
+  - Forget an entry's text while keeping its place in the chain, and say what still remains.
+
+quiz:
+  - q: The eighth entry's row is deleted by hand. The store's verify() finds no problems. Why?
+    options:
+      - The deletion was logged as an event.
+      - "verify() checks the entries that are there against the log. A row that is gone is not checked; only comparing the log's writes with the rows finds it."
+      - The hash chain was rebuilt by the deletion.
+      - The entry was never in the log.
+    answer: b
+    why: >
+      `memory.vanished()` lists entries the log says were written that are no longer in the
+      store. The recorded run found one, M-08. Nothing in the store said why it had been there.
+
+  - q: The four entries are retracted, but the old summaries are still loaded. LANTERN passes the same number of Pellmar questions as on 13 July. What does that show?
+    options:
+      - The retraction was not saved.
+      - The questions are too hard for the model.
+      - "The summaries written while the entries were loaded repeat the claim in their own words. A retraction that stops at the entry corrects nothing the summaries say."
+      - The model ignores the case memory.
+    answer: c
+    why: >
+      Asked whether the FIU cleared Pellmar, LANTERN said yes and quoted a sentence as a case
+      memory entry. The sentence was the June summary's. Only the rebuild stopped it.
+
+  - q: Why does a retraction keep the entry's text instead of erasing it?
+    options:
+      - "So the record still shows what LANTERN was told, when, by whom, and why it was withdrawn."
+      - To make the store larger.
+      - So that LANTERN can still load it.
+      - A retracted entry cannot be erased.
+    answer: a
+    why: >
+      A retracted entry is never loaded again. It stays for the investigator: the false memory
+      is itself evidence, and the audit in chapter 20 reads it.
+
+  - q: Every weekly summary records every entry written before it as its basis. The last one rests on all sixteen. What follows?
+    options:
+      - Only the summaries that mention Pellmar are rebuilt.
+      - "Retracting any entry written before 10 July rebuilds all five summaries. It over-reaches, and it is safe: the store cannot tell which lines a summary used."
+      - Nothing is rebuilt, because the basis is too large.
+      - The summaries cannot be rebuilt at all.
+    answer: b
+    why: >
+      What a summary records is what was loaded when it was written, not what it drew on. A
+      narrower basis would need the summary to cite each line it used.
+
+  - q: Why are dependent entries rebuilt oldest first?
+    options:
+      - Older entries are more important.
+      - The model reads faster that way.
+      - "A summary built on another summary must be rebuilt from the new one, so the one it rests on has to be rebuilt first."
+      - The store sorts them for display only.
+    answer: c
+    why: >
+      Rebuilt in any other order, the week of 22 June would be written again from the old week
+      of 15 June, which still said cleared.
+
+  - q: Rebuilt, LANTERN answers yes to the Tidewater question because the trust's protector is named in a court order. The grader marks it a pass. What does that pass show?
+    options:
+      - The reason is correct.
+      - "That the answer starts with the expected word. The reason given is not the one the record supports."
+      - That the court order requires every payment to be flagged.
+      - Nothing; the grader is broken.
+    answer: b
+    why: >
+      The signed reason is that Tidewater is the end of the trail and no record makes its
+      payments routine. A grader that reads the first word cannot tell. Chapter 19 builds
+      graders that read further.
+
+  - q: A standing note naming DS Iyer as suspended is forgotten with the reason "DS Iyer cleared by Professional Standards". What is still in the log?
+    options:
+      - Nothing about the note.
+      - The note's full text.
+      - "The note's id, its dates, its author and the hash of its text, and his name, in the reason given for forgetting it."
+      - Only the hash of the text.
+    answer: c
+    why: >
+      forget() erases the text and keeps the note's place in the chain. The reason is recorded
+      as written, so a reason that names the person keeps the name. What to write as the reason
+      is decided in chapter 23.
+
+exercise:
+  title: Retract and rebuild
+  task: |
+    Open `lessons/18-correcting-and-forgetting/practice/exercise.py` and write
+    `retract_and_rebuild`. The tests build a small `lantern.memory.Store` with two summaries
+    built on a false entry and one that is not, and pass a rebuild function that does not call
+    a model. They check that:
+
+    - the retracted entry stays in the store, marked, with its text,
+    - both summaries built on it, directly or not, are rebuilt, and the unrelated one is not,
+    - a summary built on another summary is rebuilt after it, from the rebuilt one,
+    - a retracted entry is never part of what a rebuilt entry rests on,
+    - the old summary is superseded and the new one records its basis, time, kind and author,
+    - an entry built on two retracted entries is rebuilt once,
+    - the store's own check finds nothing wrong afterwards.
+  hints:
+    - |
+      `store.retract(i, by=by, at=at, reason=reason)` already returns every live entry built on
+      `i`. Collect them into one list, skipping any already there.
+    - |
+      Sort with `key=lambda e: (e.written_at, e.id)` and keep a dict `done` of old id to new id.
+      For each old entry, `d = done.get(d, d)` swaps in a rebuilt id before you look it up.
+    - |
+      Keep only `e is not None and e.status == "kept"`. Then
+      `new = Entry(id=f"{old.id}-r", text=rebuild(old, basis), kind=old.kind, inquiry=old.inquiry,
+      author=old.author, written_at=at, via=old.via, user=old.user,
+      derived_from=[e.id for e in basis])` and `store.supersede(old.id, new, by=by, reason=...)`.
+  after: >
+    Run the retraction and the rebuild on yours: `make lesson N=18 ARGS=--mine`, then
+    `make challenge N=18`.
+
+challenges:
+  - id: your-rebuild
+    title: Your retract-and-rebuild, on the case
+    goal: >
+      Run the lesson with the retract_and_rebuild you wrote. All five summaries must be rebuilt
+      and none of them may say cleared.
+    change: "Pass the exercise first, then run `make lesson N=18 ARGS=--mine`."
+    target: "mine == true and rebuilt == 5 and rebuilt_say_cleared == 0"
+
+  - id: only-the-eighth
+    title: "Break it: retract only the eighth"
+    goal: >
+      Retract the Pellmar line alone and leave the other three eow-fin-07 entries in force.
+      Read what the rebuilt summaries now carry, and how many of the six questions pass.
+    change: 'In lessons/18-correcting-and-forgetting/run.py set RETRACT = ("M-08",).'
+    target: "retracted == 1 and rebuilt == 5"
+    reset: git checkout lessons/18-correcting-and-forgetting/run.py
