@@ -65,16 +65,17 @@ quiz:
       Case file 02's memory file kept LANTERN's mistakes along with its findings, for months.
       Keeping working notes narrow keeps that mistake from repeating.
 
-  - q: In the restart arm the second session is given the notebook and told which statements its notes came from. What does that change?
+  - q: In the recorded restart arm the notebook held 0 flows when the first session was stopped after 8 requests, and the second session reopened 5 statements, against 4 without notes. What does that show?
     options:
-      - The model becomes more accurate at addition.
-      - "The finished statements do not have to be opened again, and the check that sends a report back counts them as opened."
-      - The task is shorter.
-      - Nothing; the second session starts from scratch either way.
-    answer: b
+      - Notebooks make an agent slower.
+      - The notebook file was lost in the restart.
+      - The check refused every note the first session wrote.
+      - "A notebook holds only what the agent wrote in it. The rule asks for a note after every statement; in eight requests LANTERN wrote none, so the second session had nothing to carry on from."
+    answer: d
     why: >
-      What the first session read survives as checked notes. Without them, the only record of
-      the first session's work was in a window that no longer exists.
+      The file survived the restart and held nothing, and no note had been refused. Notes save
+      work only when they are written, and nothing in this design makes the agent write them.
+      Chapter 10's form, filled in by code from the tool results, does not depend on that.
 
 exercise:
   title: The check on a note
@@ -114,13 +115,13 @@ challenges:
     change: "Pass the exercise first, then run `make lesson N=11 ARGS=--mine`."
     target: "mine == true and demo_kept == true and demo_refused == 2"
 
-  - id: restart-early
-    title: Restart sooner
+  - id: restart-later
+    title: Restart later
     goal: >
-      Stop the first session after 4 requests in place of 8. Does the notebook still hold a
-      flow when the workstation restarts, and does the second session reopen statements?
-    change: Set RESTART_AFTER = 4 in lessons/11-notes-and-scratchpads/run.py.
-    target: "restart_after == 4 and restart_notes_kept >= 1"
+      Stop the first session after 16 requests in place of 8. Does the notebook hold a flow
+      when the workstation restarts, and does the second session then reopen fewer statements?
+    change: Set RESTART_AFTER = 16 in lessons/11-notes-and-scratchpads/run.py.
+    target: "restart_after > 8 and restart_notes_kept > 0"
     reset: git checkout lessons/11-notes-and-scratchpads/run.py
 
   - id: trust-every-note
