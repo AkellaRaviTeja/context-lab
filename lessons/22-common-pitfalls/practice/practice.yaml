@@ -1,0 +1,153 @@
+# Chapter 22 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=22).
+chapter: "22"
+title: The case review
+
+objectives:
+  - Tie each pitfall on a list to a recorded run in which it happened, or take it off the list.
+  - Split a question set into a training split and a held-out split, by slice and by seed.
+  - Write the loop of propose, score and keep, and say why its score on what it saw is not evidence.
+  - Say what no check in the lab can see, and leave it to a person in writing.
+
+quiz:
+  - q: Suppose the loop's best revision passes more training questions than the standing orders. What does that show?
+    options:
+      - That it is better.
+      - "That it fits the questions it was scored on. Only the held-out split says whether it is better on questions it was not shown."
+      - That the model is better.
+      - Nothing; scores on questions are never evidence.
+    answer: b
+    why: >
+      The loop keeps whatever scores higher on training. A revision can win there by fitting
+      the few questions it was shown, including by writing their answers into the rules.
+
+  - q: Why must the proposer never be shown the held-out questions?
+    options:
+      - It would take longer.
+      - "Then the held-out score is a training score too, and nothing is left to say whether the loop overfitted."
+      - The held-out questions are secret.
+      - It does not matter, as long as it is not scored on them.
+    answer: b
+    why: >
+      A challenge shows it to the proposer on purpose and counts it. Shown once, the held-out
+      split stops being a baseline.
+
+  - q: Suppose a revision no longer says "not in evidence" and is kept. Which questions does that put at risk?
+    options:
+      - "The questions LANTERN was not told the answer to: they pass only when it says it was not told, and nothing in the training failures speaks for that rule."
+      - The evidence questions.
+      - None; the rule was redundant.
+      - The rules-in-conflict questions.
+    answer: a
+    why: >
+      A rule that protects cases the loop does not see has nobody arguing for it. Keeping it
+      takes a constraint someone writes down (the challenge MUST_KEEP).
+
+  - q: Why is the split made by slice rather than at random over all 26?
+    options:
+      - It is faster.
+      - "So both splits have every kind of question: a random split of 26 can leave a slice out of the held-out side, and the score could not see what the loop broke there."
+      - Because the questions are sorted.
+      - The grader needs it.
+    answer: b
+    why: >
+      Even by slice, the two rules-in-conflict questions all go to training here, which the
+      chapter states: the held-out score says nothing about them.
+
+  - q: A pitfall is on Varma's board but no recorded run of this lab shows it. What happens to it?
+    options:
+      - It stays; it is a known pitfall.
+      - It is marked as fixed.
+      - "It comes off the board, or the run that shows it is made. A line without a number is somebody else's mistake."
+      - It is moved to the hosted tier.
+    answer: c
+    why: >
+      The chapter reads the numbers from .progress/results/. A line with no recorded run is
+      shown as "not recorded" with the command that would record it.
+
+  - q: In the recorded run round 1 was not scored, and the best stayed round 0. Why was round 1 not scored?
+    options:
+      - It scored too low.
+      - "Its numbered rules were the same as round 0's. The loop compares the rules, spacing and title aside, with every earlier round, so a copy costs no model time and cannot win on noise."
+      - The proposer was shown the held-out questions.
+      - It dropped "not in evidence".
+    answer: b
+    why: >
+      An earlier run compared the exact text and scored such copies, and one lost a question on
+      a change with no content. Rounds 2 and 3 did change rules and were scored: 7 and 6 of 10
+      against 7, so neither was kept.
+
+  - q: "Who else can write to this machine at night: why does this line stay with a question mark?"
+    options:
+      - The audit missed it.
+      - "The runs show which account and which machine wrote; no check in this lab can show who sits behind an HQ service account. That is for a person to find out."
+      - It was not important.
+      - The model refused to answer.
+    answer: b
+    why: >
+      Chapter 20 names svc-lantern-sync on hq-sync-01. Who administers that account is a
+      question for people, and the chapter writes it down as left to a person.
+
+exercise:
+  title: Propose, score, keep, and a split it cannot see
+  task: |
+    Open `lessons/22-common-pitfalls/practice/exercise.py` and write two functions:
+
+    - `split(questions, train=, held=, seed=)`: from every slice, `train` ids for training and
+      `held` more held out, by a seeded shuffle of each slice, no id in both, each list in the
+      questions' order;
+    - `optimise(start, propose=, score=, rounds=)`: round 0 is the standing orders; every
+      round proposes a revision from the best so far and its failed results, scores it on the
+      training split, and keeps it only if it passes strictly more. Malformed (too few
+      numbered rules) revisions, and ones with the same numbered rules as an earlier round, are
+      not scored.
+
+    The tests use plain functions as the proposer and the scorer, and once a scripted model
+    through `lantern.optimise.propose`. No model is called.
+  hints:
+    - |
+      `by_slice = {}` then `by_slice.setdefault(q["slice"], []).append(q["id"])`; one
+      `rng = random.Random(seed)` and `rng.shuffle(ids)` for each slice in turn.
+    - |
+      Keep `best` as the record of the best round so far. Each round:
+      `failed = [r for r in best["results"] if not r["passed"]]`, then
+      `candidate = propose(best["orders"], failed)`.
+    - |
+      `rules(candidate) < least_rules`, or `rule_lines(candidate) == rule_lines(h["orders"])` for
+      any `h` in the history so far: a record with "passed" None and "why" starting "not scored".
+      Otherwise score it, and `kept = passed > best["passed"]`.
+  after: >
+    Run the chapter's loop on yours: `make lesson N=22 ARGS=--mine`, then `make challenge N=22`.
+
+challenges:
+  - id: your-loop
+    title: Your loop, on the case
+    goal: Run the lesson with your split and your loop. Three rounds, ten training questions, eight held out.
+    change: "Pass the exercise first, then run `make lesson N=22 ARGS=--mine`."
+    target: "mine == true and rounds == 3 and train == 10 and held == 8"
+
+  - id: show-the-held-out
+    title: "Break it: let the proposer see the held-out questions"
+    goal: >
+      Show the proposer the held-out questions the standing orders failed, as a careless loop
+      would, and see what happens to the held-out score.
+    change: In lessons/22-common-pitfalls/run.py, set PROPOSER_SEES = "train+held".
+    target: "proposer_saw_held >= 1"
+    reset: git checkout lessons/22-common-pitfalls/run.py
+
+  - id: keep-the-rule
+    title: A rule the loop may not drop
+    goal: >
+      Make every revision keep "not in evidence", and see whether the loop still finds a
+      revision it keeps.
+    change: "In lessons/22-common-pitfalls/run.py, set MUST_KEEP = (\"not in evidence\",)."
+    target: "must_keep >= 1 and keeps_not_in_evidence == true and kept >= 1"
+    reset: git checkout lessons/22-common-pitfalls/run.py
+
+  - id: more-rounds
+    title: Six rounds instead of three
+    goal: >
+      Give the loop more chances to find a revision that beats the orders on training, and then
+      see whether the held-out score follows it.
+    change: In lessons/22-common-pitfalls/run.py, set ROUNDS = 6.
+    target: "rounds == 6 and kept >= 1"
+    reset: git checkout lessons/22-common-pitfalls/run.py

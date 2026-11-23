@@ -123,7 +123,9 @@ About six minutes: the set is asked three times, 26 questions each.
 
 ![Chapter 02 terminal output](../../docs/screenshots/02-a-baseline.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:33, code at commit efbf65b; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 11 November, before the grading
+change of 21 November, gave the same numbers:
 
 - Baseline: 17 of 26, 65%, interval 46% to 81%. By slice: evidence 8 of 8, memory 6 of 6,
   false memory 1 of 6, not told 1 of 4, rules in conflict 1 of 2.
@@ -131,6 +133,18 @@ What the recorded run showed:
   nothing is known in other words (Q-21, Q-23, Q-24), and one states a flow backwards (Q-26).
 - Without the eighth entry: 15 of 26. Fixed: none. Broken: Q-11 and Q-22.
 - The baseline run again: 26 of 26 answers identical.
+
+## On a hosted model
+
+```bash
+make lesson N=02 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: the 26 signed questions with native tool calling for the three connected tools. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** The question set, its hash check and the grader do not change with the model. The score will: expect more of the "not told" slice to pass on a larger model, and expect the false-memory slice to stay low while the false entries are loaded, because they are presented as the inquiry's own record.
 
 ## Try this
 

@@ -51,4 +51,25 @@ cloud:
   gemini:
     model: gemini-2.5-flash
 
+# The hosted tier: `make lesson N=NN TIER=hosted`. Every model call goes to this model with its
+# native features (lantern/hosted.py). Opt in with `synthetic.cloud: true` above and
+# ANTHROPIC_API_KEY in .env. Token counts in the lesson's tables still come from Ollama's
+# tokenizer; the hosted call's own usage (input, cached, output, cost) is recorded per call.
+hosted:
+  provider: anthropic
+  model: claude-sonnet-5-5
+  # US dollars per million tokens, copied from https://platform.claude.com/docs/en/about-claude/pricing
+  # on 21 November 2026 (Claude Sonnet 5.5 row). Cache reads on this model are 0.05x input.
+  prices_checked: 2026-11-21
+  prices:
+    input: 2.00
+    output: 10.00
+    cache_write_5m: 2.50
+    cache_write_1h: 4.00
+    cache_read: 0.10
+  features:
+    cache: auto            # auto | explicit | none (chapter 16 compares them)
+    ttl: 5m                # 5m | 1h
+    effort: low            # Sonnet 5.5 cannot turn thinking off; low effort keeps it short
+
 screenshots_dir: docs/screenshots

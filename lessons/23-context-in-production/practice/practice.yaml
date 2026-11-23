@@ -1,0 +1,146 @@
+# Chapter 23 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=23).
+chapter: "23"
+title: Friday 7 August
+
+objectives:
+  - Give the context a version that changes with what LANTERN is given and not with the question, and record it with every answer.
+  - Keep a change log of the context, chained so an edit to it shows.
+  - Set a budget alarm that warns before the window is full, and say who reads it.
+  - Run the memory audit every night offline, and say what it can and cannot stop.
+
+quiz:
+  - q: Why is the question left out of the context version?
+    options:
+      - It is too short to matter.
+      - "The version names the context the answer was given under; the question is recorded beside it. Hashing it in would make every answer its own version, and two answers could not be said to share a context."
+      - Questions are private.
+      - It is not; the question is in the version.
+    answer: b
+    why: >
+      The version covers the standing orders, the loaded memory, the notes, the tool schemas
+      and the layout. Answers under the same version can be compared; a new version means
+      something in the context changed, and the change log says what.
+
+  - q: Last night's write was held at the gate. Why did this morning's version not change?
+    options:
+      - The hash is broken.
+      - The write failed.
+      - "A held entry is not given to LANTERN. The store's log changed; what LANTERN is given did not."
+      - Versions change only at midnight.
+    answer: c
+    why: >
+      The version is over the context, not over the store. The nightly audit reads the store's
+      log, which is where the held write shows.
+
+  - q: The nightly audit reports one write held at 01:58 through svc-lantern-sync. What did the audit itself do about it?
+    options:
+      - It deleted the write.
+      - "Nothing to the write: the gate held it when it was written. The audit found it in the log and put it on Varma's desk."
+      - It blocked the sync account.
+      - It released it.
+    answer: b
+    why: >
+      A nightly audit finds what was written last night; it does not stop the writing. The
+      gate stops it from being loaded; a person decides what happens next.
+
+  - q: The audit keeps the last hash of the chain in a file outside the store. Why?
+    options:
+      - "So whoever can rewrite the store and its log cannot also make the next night's check agree: a rebuilt chain will not contain last night's hash."
+      - To save space.
+      - Because SQLite cannot hold it.
+      - So the model can read it.
+    answer: a
+    why: >
+      An audit is only as good as the hands that keep its inputs (chapter 20). On LANTERN the
+      hash would live on a machine the sync account cannot write to.
+
+  - q: The budget alarm writes a warning to alarms.jsonl. When is it a control?
+    options:
+      - Always; it is written down.
+      - When it is red.
+      - When it is in the trace.
+      - "When somebody is named to read it and act, or a session is stopped by it with a reason. An alarm nobody reads is not a control."
+    answer: d
+    why: >
+      Chapter 03 refuses a context that does not fit. The alarm warns earlier, while there is
+      still room to decide what to drop.
+
+  - q: The session's cost is shown for the hosted model from the measured token counts and config.yaml's prices. What may be said about that number?
+    options:
+      - It is the bill.
+      - "It is a price calculation from this session's tokens: what the same tokens would cost at the listed prices, not a bill, and not a hosted run."
+      - It is the cost of the local run.
+      - Nothing; prices change.
+    answer: b
+    why: >
+      No hosted call was made. The hosted tokenizer would count the same text differently, and
+      caching depends on timing, so the calculation is labelled as one.
+
+  - q: After the note on DS Iyer is forgotten, the run records "suspended" as no longer in LANTERN's answer. What did LANTERN answer about copying him on the hand-over?
+    options:
+      - Yes, because he has been cleared.
+      - "Still no, on another ground: that he is not listed as a recipient in a standing note. The metric reads the word, not the decision."
+      - It refused to answer.
+      - That he is suspended.
+    answer: b
+    why: >
+      What a person is called in the context changed; what LANTERN decides about him did not
+      follow on its own. A check that looks for one word measures the word. Whether he should
+      be copied is a question for a person, recorded with the version it was answered under.
+
+exercise:
+  title: The context version
+  task: |
+    Open `lessons/23-context-in-production/practice/exercise.py` and write `context_version`.
+    The tests build LANTERN's context from the case files (`lantern.context.sections()`, no
+    model) and change one thing at a time. They check that:
+
+    - the version is "ctx-" and twelve hex digits, and the same context gives the same one,
+    - one word of the standing orders, one line of memory, a moved section or a changed tool
+      schema gives another,
+    - a new question, a longer session, or the same tool schema with its keys in another order
+      gives the same one,
+    - it is the same version as `lantern.production.context_version`.
+  hints:
+    - |
+      Two lists go into the hash: the layout, `[[s.name, s.where] for s in parts]`, and the
+      content, `[[s.name, s.where, content(s)] for s in parts if s.where not in SESSION_PARTS]`.
+    - |
+      `content(s)` is written for you: it turns the tool schemas into canonical JSON, so the
+      order of their keys does not count as a change.
+    - |
+      `hashlib.sha256(json.dumps({"layout": ..., "sections": ...}, sort_keys=True)
+      .encode("utf-8")).hexdigest()[:12]`, with "ctx-" in front.
+  after: >
+    Version the chapter's answers with yours: `make lesson N=23 ARGS=--mine`, then
+    `make challenge N=23`.
+
+challenges:
+  - id: your-version
+    title: Your version, on the morning's answers
+    goal: Run the lesson with your context_version. Two versions in the day, and the held write must not make a third.
+    change: "Pass the exercise first, then run `make lesson N=23 ARGS=--mine`."
+    target: "mine == true and versions == 2 and held_write_changes_version == false"
+
+  - id: one-word
+    title: One word of the standing orders
+    goal: Change one word of the standing orders before the session and see a new version, with a line in the change log.
+    change: "In lessons/23-context-in-production/run.py, set ORDERS_EDIT = (\"Cite the evidence\", \"Quote the evidence\")."
+    target: "orders_edited == true and versions == 3 and changelog_entries == 2"
+    reset: git checkout lessons/23-context-in-production/run.py
+
+  - id: another-night
+    title: Another write at night
+    goal: >
+      Add a second overnight write to NIGHT_WRITES, one that names a source but still comes
+      through the sync account, and read what the morning's audit says about it.
+    change: In lessons/23-context-in-production/run.py, add a second Entry to NIGHT_WRITES (a new id, via "svc-lantern-sync", with a source).
+    target: "night_writes >= 2 and nightly_held >= 2"
+    reset: git checkout lessons/23-context-in-production/run.py
+
+  - id: early-alarm
+    title: An alarm that rings this morning
+    goal: Set the alarm low enough that this morning's context already sets it off, and read its message.
+    change: In lessons/23-context-in-production/run.py, set WARN_AT = 0.4.
+    target: "warn_at_pct <= 40 and alarm_warns == true"
+    reset: git checkout lessons/23-context-in-production/run.py

@@ -10,6 +10,7 @@ dependencies = [
     "pyyaml>=6.0",
     "rich>=13.7",
     "python-dotenv>=1.0",
+    "opentelemetry-sdk>=1.27",
 ]
 
 [project.optional-dependencies]
@@ -17,8 +18,11 @@ dependencies = [
 notebooks = ["jupyterlab>=4.2", "ipykernel>=6.29"]
 # Plain cloud clients. Synthetic case material only, and only with synthetic.cloud on.
 cloud = ["anthropic>=0.40", "openai>=1.50", "google-genai>=1.0"]
-# Extras for the formats chapter (05) and the memory libraries chapter (21) are added by those
-# chapters, as docs/decisions/ records. Every other chapter needs none of them.
+# The memory libraries chapter (21, decision 0003): Mem0 on Ollama, run with telemetry off and
+# every outside connection refused. Graphiti needs a graph server and is surveyed, not run.
+memory = ["mem0ai==2.2.1", "ollama>=0.4"]
+# Extras for the formats chapter (05) are added by that chapter, as a docs/decisions/ record.
+# Every other chapter needs none of them.
 
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6", "playwright>=1.48"]
@@ -33,14 +37,16 @@ packages = ["src/lantern"]
 [tool.ruff]
 line-length = 100
 # Generated from run.py by scripts/build_notebooks.py; run.py is what gets linted.
-extend-exclude = ["lessons/*/lesson.ipynb"]
+# The decision spikes are kept as they ran: each .json beside them was written by that exact
+# code (docs/decisions/0001 to 0003). They are records, not lab code, so they are not linted.
+extend-exclude = ["lessons/*/lesson.ipynb", "docs/decisions/spikes"]
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "lessons"]
+testpaths = ["tests", "lessons", "capstone"]
 markers = ["live: needs a running Ollama with the configured models"]
 addopts = "-m 'not live' --import-mode=importlib"
 

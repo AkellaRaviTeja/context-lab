@@ -1,0 +1,138 @@
+# Chapter 16 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=16).
+chapter: "16"
+title: The same beginning
+
+objectives:
+  - Measure what a change in the context costs by where it sits, in the time the server takes to read the prompt.
+  - Order a context so that what changes least comes first, and mark where each group ends.
+  - Place cache breakpoints on a hosted request and price a session from token counts.
+  - Score a new layout on the signed questions before keeping it.
+
+quiz:
+  - q: A 5,410-token context is sent twice. Ollama reports the same prompt token count both times, yet the second takes 0.05 s against 23.78 s. What happened?
+    options:
+      - The second request was not sent.
+      - "The server reused its work on the unchanged beginning and read nothing again. Ollama reports the whole prompt in the count whatever it reused; the saving shows only in the time."
+      - The model answered from memory.
+      - The count is wrong.
+    answer: b
+    why: >
+      Prefix caching saves reading, not counted tokens, on Ollama. On a hosted model the usage
+      reports cached tokens separately (cache_read_input_tokens), and they are billed at a
+      fraction of the input price.
+
+  - q: A line 2,562 tokens into the context is changed and reading takes 12.69 s, a little over half the cold time. Why about half?
+    options:
+      - The server reads every other token.
+      - "The server reuses the prompt up to the first token that differs and reads the rest again. About half of this prompt comes after the change."
+      - The cache expired halfway.
+      - The model was busy with another lesson.
+    answer: b
+    why: >
+      A change at the end cost 0.34 s and a change in the first line 23.76 s. What a change costs
+      is what follows it, which is why the order of the sections matters.
+
+  - q: The nightly sync rewrites the case memory. Why does moving the case memory later save the morning's first question time?
+    options:
+      - The case memory gets shorter.
+      - The sync stops rewriting it.
+      - "Everything before the change is reused. Second in today's order, the change made the server read 4,576 tokens again; after the weekly sections, 1,150."
+      - Ollama caches the case memory separately.
+    answer: c
+    why: >
+      The sync's change is the same either way. The layout decides how much of the prompt lies
+      after it, and so how much has to be read again.
+
+  - q: Each of the three morning runs writes its own rewrite of the case memory before it asks. What would go wrong if the memory were rewritten once and the three runs shared it?
+    options:
+      - Nothing; the median of three hides any one odd run.
+      - "Runs 2 and 3 could find run 1's rewritten beginning still held by the server and read almost nothing again, so the median would measure the server's memory, not the cost of the sync."
+      - The token counts would be wrong.
+      - The stable first layout would place its breakpoints differently.
+    answer: b
+    why: >
+      A first version of this lesson did exactly that, and runs 2 and 3 of today's order took
+      the time of a fully reused prompt. With a fresh rewrite each run, today's order took 19.60 s
+      on all three runs and stable first 5.89, 5.88 and 5.88 s. A cache measurement has to start
+      cold, or show that it did.
+
+  - q: Stable first, LANTERN scored 16 of 26 against 17, and Q-10 broke. Why score a change made only for speed?
+    options:
+      - "Moving a section changes what the model reads next to what. Here the case memory became a user turn after the tools, and LANTERN reached for a tool that is not connected."
+      - The score is always different from run to run.
+      - Faster answers are worse answers.
+      - The layout removed the case memory.
+    answer: a
+    why: >
+      Chapter 06 measured that place matters. A layout for the cache is a change to the context,
+      and is kept only if it does not cost answers.
+
+  - q: On the hosted model, questions arrive twenty minutes apart. Why does a five-minute cache make the session dearer than no cache at all?
+    options:
+      - Cache reads cost more than input.
+      - "The prefix expires between questions, so every question writes it again, and a cache write costs more than plain input (2.50 against 2.00 dollars a million tokens)."
+      - The breakpoints are in the wrong place.
+      - The 1-hour cache is cheaper to write.
+    answer: b
+    why: >
+      $0.1382 against $0.1144 for ten questions, by the price calculation. A cache pays when what
+      it holds is read again before it expires; the 1-hour TTL costs more to write and is written
+      once.
+
+exercise:
+  title: The layout for the cache
+  task: |
+    Open `lessons/16-layout-for-the-cache/practice/exercise.py` and write `layout`, which orders
+    a context's sections by how often each changes and says where each group ends. The tests
+    pass in lists of sections, so no model is needed. They check that:
+
+    - what changes least comes first, what changes most last,
+    - sections that change equally often keep the order they were given in,
+    - a breakpoint is the index of the last section of every group but the last,
+    - there are at most four breakpoints, and none when everything changes equally often,
+    - a section with no frequency, or one not in CHANGES, raises ValueError,
+    - the list passed in is not changed.
+  hints:
+    - |
+      Check first: for every section, `changes.get(p.name)` must be one of CHANGES, or raise
+      ValueError with the section's name in the message.
+    - |
+      `sorted(parts, key=lambda p: CHANGES.index(changes[p.name]))` returns a new list, and
+      Python's sort is stable, so ties keep their order.
+    - |
+      Walk the ordered list with `for i in range(len(ordered) - 1)` and keep `i` when
+      `changes[ordered[i].name] != changes[ordered[i + 1].name]`. Return the ordered list and
+      the first MAX_BREAKPOINTS of those indexes.
+  after: >
+    Run the morning and the 26 questions on your layout: `make lesson N=16 ARGS=--mine`, then
+    `make challenge N=16`.
+
+challenges:
+  - id: your-layout
+    title: Your layout, on the morning
+    goal: Run the lesson with the layout you wrote. The hosted request should still carry four breakpoints.
+    change: "Pass the exercise first, then run `make lesson N=16 ARGS=--mine`."
+    target: "mine == true and breakpoints == 4"
+
+  - id: memory-last
+    title: The case memory after the session
+    goal: >
+      Make the sync's change cost less than the layout's 1,150 tokens on the morning, by
+      putting the case memory after the session, and see what the 26 questions say about it.
+    change: >
+      In step 2 of lessons/16-layout-for-the-cache/run.py, straight after `changes = {...}`, add
+      `changes["case memory"] = "per question"`.
+    target: "stable_reread_tokens > 0 and stable_reread_tokens < 1150"
+    reset: git checkout lessons/16-layout-for-the-cache/run.py
+
+  - id: timestamp-first
+    title: "Break it: a timestamp at the top"
+    goal: >
+      Put a timestamp that is new on every request at the top of the context, as case file 02
+      found, and watch the repeated request cost as much as the first.
+    change: >
+      At the start of send() in lessons/16-layout-for-the-cache/run.py, stamp whichever list
+      is sent: `ordered = stamped(ordered if ordered is not None else parts,
+      str(time.time_ns()))`.
+    target: "same_s > 1"
+    reset: git checkout lessons/16-layout-for-the-cache/run.py

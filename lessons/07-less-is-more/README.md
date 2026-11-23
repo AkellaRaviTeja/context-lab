@@ -112,7 +112,9 @@ About nine minutes: the evidence slice four times, then all 26 questions twice.
 
 ![Chapter 07 terminal output](../../docs/screenshots/07-less-is-more.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:50, code at commit c20764d; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 12 November, before the grading
+change of 21 November, gave the same numbers:
 
 | Pages added | Tokens added | Spare in the budget | Evidence slice |
 |---|---|---|---|
@@ -129,6 +131,18 @@ What the recorded run showed:
 What did not happen: the planned beat had the answer change as pages were added. It never
 did. The chapter's title and scene were rewritten to what the run showed.
 
+## On a hosted model
+
+```bash
+make lesson N=07 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: the same pages added in steps, with the stable part of the context cached. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** That merely related pages change answers is expected on any model; how many pages it takes is expected to be larger on a stronger model.
+
 ## Try this
 
 1. Open `.scratch/07/left-out.json`. Find a page that scored just under the threshold. Should
@@ -140,7 +154,7 @@ did. The chapter's title and scene were rewritten to what the run showed.
 ## Master it
 
 After this chapter you can test a claim about distraction on your own model in place of
-repeating it, say what unneeded material certainly costs, and build a cut-off that records
+repeating it, say what unneeded material is shown to cost, and build a cut-off that records
 every page it leaves out.
 
 **Predict, then see.** `make lesson N=07` stops three times: when the first answer goes wrong,

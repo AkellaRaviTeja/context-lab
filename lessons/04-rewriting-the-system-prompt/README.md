@@ -105,7 +105,9 @@ About four minutes: 18 calls on the clashing pairs, then the 26 questions once.
 
 ![Chapter 04 terminal output](../../docs/screenshots/04-rewriting-the-system-prompt.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:41, code at commit 9a8f6f5; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 11 November, before the grading
+change of 21 November, gave the same numbers:
 
 - 31 versions, 35 rules, 97 tokens grown to 834. Added by a.varma (18), d.okafor (11) and
   l.mensah (6). No rule was ever removed.
@@ -119,6 +121,18 @@ What the recorded run showed:
 
 What did not happen: the planned beat had the model follow whichever rule it read last. It
 followed rule 18 in every position tried.
+
+## On a hosted model
+
+```bash
+make lesson N=04 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: the rewritten standing orders as a cached system block. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** That a shorter prompt written from the failures scores no worse is expected to hold. Which questions it fixes and breaks is model-specific and should be measured, not assumed.
 
 ## Try this
 

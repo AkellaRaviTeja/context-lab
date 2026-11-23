@@ -1,0 +1,153 @@
+# Chapter 14 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=14).
+chapter: "14"
+title: What to load
+
+objectives:
+  - Scope a memory to an inquiry and an officer before ranking it, and say why the order of those steps matters.
+  - Measure recall@k for the entry a question needs, by recency, by BM25 and by embeddings.
+  - Count what leaks into a session when there is no scope, including other officers' private notes.
+  - Measure what loading costs as a store grows, and say what the measurement includes.
+
+quiz:
+  - q: By scope and recency, the entry the question needs was among the 8 loaded on 2 of 5 questions. Why does recency miss the others?
+    options:
+      - The entries were held by the write gate.
+      - "Recency loads what was written last. The entries those questions need were written earlier than the eight newest, so they were never candidates for the eight places."
+      - Eight is too few for any order.
+      - Recency ranks by the words in the question.
+    answer: b
+    why: >
+      Recency answers "what happened lately", which is a fair question for a watch and a poor
+      one for a fact recorded in April. What a session loads has to depend on what it is asked.
+
+  - q: With no scope, BM25 still found the needed entry on 5 of 5 questions. Why is the unscoped store still wrong?
+    options:
+      - It is slower.
+      - "Recall says only that the needed entry came in, not what else did. Unscoped, 61 of 208 loaded entries came from other inquiries, 14 of them another officer's private notes."
+      - BM25 is unreliable without scope.
+      - It loads the held entries.
+    answer: b
+    why: >
+      A retriever is judged on what it loads and on what it keeps out. For the FIU question all
+      8 unscoped entries were another inquiry's Pellmar notes; the session read someone else's
+      case as if it were this one.
+
+  - q: Why must scope be applied before ranking, not after?
+    options:
+      - It is faster to filter first.
+      - "Ranking finds entries about the same thing. Another inquiry's entries about Pellmar rank as well as ours, so ranking first fills the k places with them, and a filter afterwards leaves fewer than k, or none."
+      - BM25 cannot score entries from other inquiries.
+      - The order makes no difference to what is loaded.
+    answer: b
+    why: >
+      Relevance is not permission. Which entries a session may read is decided by who is asking
+      and on which inquiry, before any score is computed.
+
+  - q: A scoped session is asked with no officer named (user None). Which private notes can it load?
+    options:
+      - Every officer's private notes for this inquiry.
+      - Only the reading officer's own.
+      - "None: a private note is loaded only for the officer it belongs to, and this session belongs to no officer."
+      - Private notes from every inquiry.
+    answer: c
+    keep_order: true
+    why: >
+      The rule is shared entries plus the reader's own. With no reader, that is the shared
+      entries alone. The exercise tests both cases.
+
+  - q: At 10,250 entries BM25 still found 5 of 5. What does that show?
+    options:
+      - BM25 never loses recall as a store grows.
+      - "That these ten thousand synthetic entries did not compete with the five needed entries. They name the same companies but none is about a protector, an owner or a signature rule. Entries on the questions' own subjects would test it harder."
+      - That embeddings are unnecessary.
+      - That k should be larger.
+    answer: b
+    why: >
+      A scale test is only as hard as the entries it adds. The second challenge adds entries
+      that share the question's words and measures recall again.
+
+  - q: The embedding arm took 617 ms a question at 10,250 entries, against BM25's 110 ms. What is in the 617 ms?
+    options:
+      - The model embedding the question and every entry.
+      - "Reading the store from SQLite, scoping it, embedding the question with nomic-embed-text, and comparing its vector with every entry's in plain Python. The entries' vectors were built once, before the timer started."
+      - Only the embedding model's time.
+      - The time to write the store.
+    answer: b
+    why: >
+      A latency number means what its timer brackets. An earlier run timed the load with the
+      question's vector already cached and so left the model out; the index is still built
+      outside the timer, as a real store would build it when entries are written.
+
+  - q: The scoped store passed 16 of 26 against the whole file's 17. What does the difference say?
+    options:
+      - Scoping makes answers worse.
+      - "Little about scope itself: one question moved. Scoped, Q-22 failed when LANTERN said the question referred to a private note that none of the 8 loaded entries mentions. A change to the context is scored question by question, not only in total."
+      - The whole file should be kept.
+      - BM25 picked the wrong entries for Q-22.
+    answer: b
+    why: >
+      The four held entries never reached a scoped session, and the false-memory slice stayed
+      at 1 of 6 on all three memories, so what still misleads is elsewhere in the context.
+      Chapter 18 finds it in the summaries.
+
+exercise:
+  title: The scoped retriever
+  task: |
+    Open `lessons/14-reading-from-memory/practice/exercise.py` and write `retrieve`, what a
+    session loads from memory. The tests use plain entries and a fake embedding function, so no
+    model is needed. They check that:
+
+    - an entry that is not kept (held or retracted) is never loaded, whatever the order,
+    - with an inquiry, only its shared entries and this officer's own private notes are read,
+    - with inquiry None, every kept entry of every inquiry is a candidate,
+    - "recency" is newest first, "relevance" ranks by BM25 and drops entries scoring zero,
+    - "embedding" ranks by cosine between the query's vector and each entry's,
+    - k is applied after ordering, and a bad request raises ValueError,
+    - on LANTERN's own store, a scoped session loads nothing from another inquiry.
+  hints:
+    - |
+      Work in the docstring's order. `pool = [e for e in entries if e.status == "kept"]`, then
+      the scope, then `pool.sort(key=lambda e: (e.written_at, e.id))` so ties keep the older
+      entry first.
+    - |
+      The scope is `e.inquiry == inquiry and (e.user is None or e.user == user)`, applied only
+      when `inquiry is not None`. Raise ValueError before ranking when a ranked order has no
+      query, or "embedding" has no `embed`.
+    - |
+      For "relevance", `scores = bm25([e.text for e in pool], query)`, keep the indexes with a
+      score above 0, and sort them by `(-scores[i], pool[i].written_at)`. For "embedding", `q =
+      embed([query], "query")[0]` and `cosine(q, v)` for each `v` in
+      `embed([e.text for e in pool], "document")`. Return `pool[:k]` when k is given.
+  after: >
+    Load every session in the chapter with yours: `make lesson N=14 ARGS=--mine`, then
+    `make challenge N=14`.
+
+challenges:
+  - id: your-retriever
+    title: Your retriever, on every session
+    goal: Run the lesson with the retriever you wrote. The scoped arms should find all five needed entries and never load a held one.
+    change: "Pass the exercise first, then run `make lesson N=14 ARGS=--mine`."
+    target: "mine == true and recall_bm25 == 5 and held_loaded_scoped == 0"
+
+  - id: crowd-the-question
+    title: A store that grows on the questions' own subjects
+    goal: >
+      Grow the store with entries that share the words of a memory question, and make BM25
+      lose a needed entry from the top 8 at ten thousand entries.
+    change: >
+      In synthetic() in lessons/14-reading-from-memory/run.py, add a template such as
+      `f"{c}: protector of the trust confirmed by {who} on {d} {m} 2026."` to the list. To save
+      model time, set `MODEL_ARMS = ()`.
+    target: "recall_bm25 == 5 and recall_bm25_10k < 5"
+    reset: git checkout lessons/14-reading-from-memory/run.py
+
+  - id: forget-the-gate
+    title: "Break it: a retriever that forgets the write gate"
+    goal: >
+      Make your retriever load entries whatever their status, so that a scoped session reads
+      what chapter 13's gate held: the four eow-fin-07 entries.
+    change: >
+      In your passing practice/exercise.py, remove the step that keeps only kept entries, then
+      run `make lesson N=14 ARGS=--mine`.
+    target: "mine == true and held_loaded_scoped > 0"
+    reset: git checkout lessons/14-reading-from-memory/practice/exercise.py

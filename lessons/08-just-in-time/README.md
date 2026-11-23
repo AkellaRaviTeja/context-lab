@@ -117,7 +117,9 @@ About twelve minutes. Five traces, the last of fourteen requests.
 
 ![Chapter 08 terminal output](../../docs/screenshots/08-just-in-time.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:57, code at commit c410d04; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 12 November, before the grading
+change of 21 November, gave the same numbers:
 
 | Given | Hops found | Totals right | Requests | Tokens, all requests | Statements opened |
 |---|---|---|---|---|---|
@@ -133,6 +135,18 @@ What the recorded run showed:
 
 What did not happen: the plan expected a list and two tools to trace the trail "at a measured
 cost and with a measured loss". Left to itself the agent lost six hops of seven.
+
+## On a hosted model
+
+```bash
+make lesson N=08 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: native tool calling for the file list and the search tool, and context editing (`clear_tool_uses_20250919`) available for old results. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** That references cost fewer tokens than loading everything holds on any model. Whether the agent opens the right files in the right order is a model behaviour and should be measured.
 
 ## Try this
 

@@ -1,0 +1,11 @@
+# What the reference solution recorded live (capstone/live.py solution) on 21 November 2026,
+# on the 16 GB Apple silicon Mac, qwen3:8b on local Ollama, seed 7, while three other runs
+# shared the model server: 8 of 8 questions passed, the 4 eow-fin-07 entries held, none of
+# them loaded, the chain whole. 9 model calls, 6,895 prompt tokens, 345 output tokens.
+# Yours must hold the same four entries, load none of them, keep the chain whole, and pass at
+# least 7 of 8 (one below the recorded run, for seed-level variation in a learner's prompt).
+live:
+  held: "== 4"
+  unsourced_loaded: "== 0"
+  chain_problems: "== 0"
+  passed: ">= 7"

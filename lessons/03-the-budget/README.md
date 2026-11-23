@@ -111,7 +111,9 @@ About three minutes: a handful of calls, then the 26 questions once.
 
 ![Chapter 03 terminal output](../../docs/screenshots/03-the-budget.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:37, code at commit 350bfd1; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 11 November, before the grading
+change of 21 November, gave the same numbers:
 
 - Input 5,410 tokens, 66% of the 8,192-token window. Tool schemas 1,891 (35%), summaries 1,157
   (21%), standing orders 834 (15%), case memory 508, standing notes 378, evidence 316, the
@@ -125,6 +127,18 @@ What the recorded run showed:
 
 What did not happen: the planned beat said the evidence takes least. The question takes
 least, at 71 tokens; the evidence is the smallest of everything else but the session's talk.
+
+## On a hosted model
+
+```bash
+make lesson N=03 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: token counts from the provider's own usage, beside the local tokenizer's. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** Which sections spend the window is a property of the context and should hold. The silent cut at the window is an Ollama behaviour: Claude Sonnet 5.5 has a 1M window and returns an error, not a cut, when a request is too long.
 
 ## Try this
 

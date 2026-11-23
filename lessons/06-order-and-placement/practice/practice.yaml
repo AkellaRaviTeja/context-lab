@@ -127,10 +127,11 @@ challenges:
   - id: memory-last
     title: Move the memory instead
     goal: >
-      Put the case memory nearest the session instead of the standing orders, and score it.
-      Does it do better than the 15 of 26 the standing orders got?
+      Put the case memory nearest the session instead of the standing orders, and score all 26
+      questions. The target checks the run scored every question and changed at least one
+      answer against the baseline; whether it beats the standing orders' 15 is yours to read.
     change: Set MOVE_LAST = "case memory" in lessons/06-order-and-placement/run.py.
-    target: "moved_last == 'case memory' and reordered_passed >= 0"
+    target: "moved_last == 'case memory' and reordered_scored == 26 and reordered_changed >= 1"
     reset: git checkout lessons/06-order-and-placement/run.py
 
   - id: a-short-register

@@ -136,5 +136,5 @@ challenges:
       Set the threshold above 1 so that no page is ever admitted. The context is then the
       baseline's, and the score should be the baseline's, answer for answer.
     change: Set THRESHOLD = 1.1 in lessons/07-less-is-more/run.py.
-    target: "admitted == 0 and cut_fixed == 0 and cut_broken == 0"
+    target: "admitted == 0 and cut_passed == 17 and cut_fixed == 0 and cut_broken == 0"
     reset: git checkout lessons/07-less-is-more/run.py

@@ -1,0 +1,138 @@
+# Chapter 15 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=15).
+chapter: "15"
+title: Forty-two pages, five lines
+
+objectives:
+  - Give an agent a sub-agent that reads in a context of its own and returns a short report.
+  - Hold the report to a form: a source on every line, and a list of what was not read.
+  - Measure what isolation saves the main window and what it costs across every context.
+  - Say what the main agent cannot see in a report it accepted.
+
+quiz:
+  - q: With readers, the main context's largest request was 5,116 tokens against 7,526 for the context that read the pages itself. Where did the reading go?
+    options:
+      - "Nowhere: the readers skipped the pages."
+      - "Into the readers' own contexts. Counting every context, the trace processed 1.43 times the main context's tokens; isolation moves reading out of the main window, it does not remove it."
+      - Into the cache.
+      - Into the system prompt.
+    answer: b
+    why: >
+      The 8 readers processed 16,747 tokens the main context never saw. Isolation is a trade of
+      where tokens are spent, and each reader also starts again with its own instructions.
+
+  - q: Every report passed check_report, yet checked against the statements they carried 9 wrong totals. Why did the check not catch them?
+    options:
+      - The check was switched off.
+      - "It reads the form of a report: sources named, one to five lines, a NOT READ line. It has no pages to compare the figures with, and neither has the main agent."
+      - The readers lied about their sources.
+      - The totals were rounded.
+    answer: b
+    why: >
+      A report from a reader is testimony. The main agent can rely on it or send someone to read
+      the page again; nothing in between checks a figure without the page.
+
+  - q: The reader sent to Corvane reported a payment to Arden Logistics and cited corvane-trading.p1. What does the source on that line give the main agent?
+    options:
+      - Proof that the payment happened.
+      - "A place to look. A cited page says where the claim can be checked, not that it is right; this one repeats chapter 09's mistake."
+      - Nothing at all.
+      - The total of the payment.
+    answer: b
+    why: >
+      Sources make a report checkable by someone who opens the page. Chapter 11's notebook
+      checked a note against its statement when it was written; here nothing does.
+
+  - q: Why does the report have to list the pages it did not read?
+    options:
+      - To make the report longer.
+      - The model needs it to finish.
+      - "It is the one claim the main agent can act on without the pages: an unread page is where to send the next reader. A report silent about what it skipped looks complete when it is not."
+      - The bank requires it.
+    answer: c
+    why: >
+      The Arden reader read 1 of 24 pages and said so. A report that covered one page and claimed
+      the statement would have hidden 23 pages of payees.
+
+  - q: Every task the main agent wrote began "Find the first payment made by". Why does the wording of the task matter so much?
+    options:
+      - "The reader has nothing else: no conversation, no case, no trace. What the task leaves out, the reader cannot know it was meant to find."
+      - Long tasks cost more tokens.
+      - The reader ignores the task.
+      - The check reads the task.
+    answer: a
+    why: >
+      Isolation is a fresh context on purpose. That is its benefit for the window and its cost for
+      the work: the main agent has to write out in full what the reader is for.
+
+  - q: Asked three follow-up questions, the context that read pages itself answered 1 and the context with readers 0, sending no reader. What does that show?
+    options:
+      - Readers make a model worse at arithmetic.
+      - "Detail left in a reader's window is gone from the main context. A follow-up can be answered only by sending a reader again, and only if the main agent thinks to."
+      - The follow-up questions were unanswerable.
+      - The main context ran out of room.
+    answer: b
+    why: >
+      The one context had a Calder Reach page still in its window and gave the reference from it.
+      The context with readers had five-line reports, and answered from those and from nothing.
+
+exercise:
+  title: The check on a reader's report
+  task: |
+    Open `lessons/15-isolating-context/practice/exercise.py` and write `check_report`, the check
+    every reader's report must pass before it reaches the main context. `parse()` is written for
+    you. The tests pass in reports as plain text, so no model is needed. They check that:
+
+    - a report with sources on every line and a NOT READ line passes, whatever the case of the
+      page ids,
+    - a line with no source, or a source that is not one of the reader's pages, is refused, and
+      the problem names the page,
+    - a report with no NOT READ line is refused,
+    - a NOT READ line must name the reader's own pages or say none,
+    - a report needs one to five LINE lines,
+    - a report with several faults gets one problem for each.
+  hints:
+    - |
+      Start with `lines, not_read = parse(report)` and `allowed = {p.lower() for p in page_ids}`.
+      Collect problems in a list and return it at the end; do not stop at the first.
+    - |
+      For each line, an empty `line["sources"]` is one problem, and each source whose lower case
+      is not in `allowed` is another. `not_read is None` means there was no NOT READ line.
+    - |
+      When `not_read == []`, read the line's own text: `NOT_READ.search(report).group(1)`,
+      stripped of spaces and a full stop, in lower case, must be one of NONE_WORDS. Then refuse
+      each page in `not_read` that is not in `allowed`.
+  after: >
+    Run every reader through your check: `make lesson N=15 ARGS=--mine`, then
+    `make challenge N=15`.
+
+challenges:
+  - id: your-check
+    title: Your check, on every reader
+    goal: >
+      Run the lesson with the check_report you wrote. Step 1 tries it on seven faulty reports and
+      one sound one before any reader is sent: it must refuse all seven and accept the sound one,
+      and the main agent must then send readers under it.
+    change: "Pass the exercise first, then run `make lesson N=15 ARGS=--mine`."
+    target: "mine == true and report_caught == 7 and report_kept_good == true and readers_sent > 0"
+
+  - id: send-again
+    title: Send a reader for the follow-up
+    goal: >
+      Make the main context with readers answer a follow-up by sending a reader to the page,
+      not from its reports.
+    change: >
+      In lessons/15-isolating-context/run.py, add to MAIN a rule that a question the reports do
+      not answer is answered only by sending a reader with delegate.
+    target: "follow_readers_resent > 0 and follow_readers_right > 0"
+    reset: git checkout lessons/15-isolating-context/run.py
+
+  - id: no-not-read
+    title: "Break it: readers that need not say what they skipped"
+    goal: >
+      Accept every report as it comes and tell the readers not to list what they did not read.
+      At least one unread page then goes unmentioned, and the main context cannot tell.
+    change: >
+      In lessons/15-isolating-context/run.py, set `CHECK = lambda report, ids: []`, and in
+      delegate() pass `task + " Do not write a NOT READ line."` to isolation.read.
+    target: "hidden_unread_not_said > 0"
+    reset: git checkout lessons/15-isolating-context/run.py

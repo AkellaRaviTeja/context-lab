@@ -102,7 +102,7 @@ def test_tool_result_message():
 
 
 def test_cloud_provider_refuses_tools(monkeypatch):
-    monkeypatch.setitem(load_config(), "provider", "anthropic")
+    monkeypatch.setitem(load_config(), "provider", "openai")
     with pytest.raises(SystemExit, match="Ollama or OpenRouter only"):
         chat("x", tools=[SUM_TOOL])
 

@@ -39,6 +39,20 @@ def scene_words(text: str) -> int:
     return len(text[start:end].split())
 
 
+def capstone_problems() -> list[str]:
+    """The capstone needs its brief, its tests, its live check and its solution."""
+    cap = ROOT / "capstone"
+    need = ["README.md", "tests/test_capstone.py", "live.py", "thresholds.yaml",
+            "solution/contextkit/memory.py", "solution/contextkit/builder.py",
+            "solution/contextkit/agent.py"]
+    problems = [f"capstone: missing {f}" for f in need if not (cap / f).exists()]
+    tests = cap / "tests" / "test_capstone.py"
+    if tests.exists() and len(re.findall(r"^def test_", tests.read_text(encoding="utf-8"),
+                                         re.M)) < 8:
+        problems.append("capstone: fewer than 8 tests")
+    return problems
+
+
 def main() -> int:
     release = "--release" in sys.argv
     lessons = sorted(p for p in (ROOT / "lessons").glob("[0-9][0-9]-*") if p.is_dir())
@@ -56,6 +70,8 @@ def main() -> int:
         if is_draft:
             drafts.append(lesson.name)
         positions = []
+        if not is_draft and "## On a hosted model" not in text:
+            problems.append(f"{lesson.name}: missing section '## On a hosted model'")
         if not is_draft:
             for f in PRACTICE:
                 if not (lesson / "practice" / f).exists():
@@ -80,6 +96,7 @@ def main() -> int:
             if not link.startswith("http") and not (lesson / link).resolve().exists():
                 if not (is_draft and "screenshots/" in link):
                     problems.append(f"{lesson.name}: broken link {link}")
+    problems += capstone_problems()
     if release:
         problems += [f"{name}: still a draft" for name in drafts]
     print("\n".join(problems))

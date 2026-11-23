@@ -1,0 +1,28 @@
+{
+  "_note": "Written by hand from the response shapes in Anthropic's documentation (prompt caching, context editing, threshold compaction), not recorded from a live call. No hosted key was available when it was written.",
+  "id": "msg_fixture_01",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-5-5",
+  "content": [
+    {"type": "compaction", "content": "Summary of the work so far: Corvane Trading Ltd paid Lowmarsh Shipping Services Ltd 2,262,000.00 in 9 payments."},
+    {"type": "text", "text": "I will open Lowmarsh next."},
+    {"type": "tool_use", "id": "toolu_01A", "name": "money_out", "input": {"file": "lowmarsh-shipping.csv"}}
+  ],
+  "stop_reason": "tool_use",
+  "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 80,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 3000,
+    "iterations": [
+      {"type": "compaction", "input_tokens": 52000, "output_tokens": 900},
+      {"type": "message", "input_tokens": 1200, "output_tokens": 80}
+    ]
+  },
+  "context_management": {
+    "applied_edits": [
+      {"type": "clear_tool_uses_20250919", "cleared_tool_uses": 4, "cleared_input_tokens": 9000}
+    ]
+  }
+}

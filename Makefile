@@ -9,10 +9,10 @@ OLLAMA = $(shell docker ps --format '{{.Names}}' 2>/dev/null | grep -qx context-
 
 # Every target here has its script or tool in this repository. Targets for the memory libraries
 # are added with the chapter that brings them.
-.PHONY: help setup install up up-gpu down models doctor lesson lessons shots \
+.PHONY: help setup install up up-gpu down models doctor lesson lessons shots memory-gate nightly \
         check release-check lint test prose structure smoke clean \
-        quiz exercise exercise-reset hint solution challenge progress \
-        notebooks notebooks-check notebook case
+        hosted-check quiz exercise exercise-reset hint solution challenge progress \
+        notebooks notebooks-check notebook case capstone capstone-live
 
 help: ## Show this help
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -41,9 +41,9 @@ doctor: ## Check Ollama, models and config
 case: ## Regenerate the case material from its seed (scripts/build_case.py)
 	uv run python scripts/build_case.py
 
-lesson: ## Run one lesson: make lesson N=09, on OpenRouter: PROVIDER=openrouter
-	@test -n "$(N)" || (echo "usage: make lesson N=01 [PROVIDER=openrouter]" && exit 2)
-	@$(if $(PROVIDER),LANTERN_PROVIDER=$(PROVIDER)) uv run python lessons/$(N)-*/run.py $(ARGS)
+lesson: ## Run one lesson: make lesson N=09; hosted model: TIER=hosted; traces: TRACE=1
+	@test -n "$(N)" || (echo "usage: make lesson N=01 [TIER=hosted] [PROVIDER=openrouter]" && exit 2)
+	@$(if $(PROVIDER),LANTERN_PROVIDER=$(PROVIDER)) $(if $(TIER),LANTERN_TIER=$(TIER)) $(if $(TRACE),LANTERN_TRACE=.scratch/traces/$(N).jsonl) uv run python lessons/$(N)-*/run.py $(ARGS)
 
 lessons: ## Run every lesson in order (stops at the first draft)
 	@for d in lessons/[0-9][0-9]-*/; do n=$$(basename $$d | cut -c1-2); $(MAKE) -s lesson N=$$n || exit 1; done
@@ -58,7 +58,7 @@ release-check: check notebooks-check ## Every gate, notebooks current, and no le
 	uv run python scripts/check_lessons.py --release
 
 lint: ## Ruff
-	uv run ruff check src scripts lessons tests
+	uv run ruff check .
 
 test: ## Unit tests (no model needed)
 	uv run pytest -q
@@ -69,8 +69,19 @@ prose: ## No em or en dashes in any text file
 structure: ## Every lesson has the required sections, in order, and a run.py
 	uv run python scripts/check_lessons.py
 
+hosted-check: ## Live, with a key: chapter 09 end to end on the hosted model (spend: cents)
+	@test -n "$$ANTHROPIC_API_KEY" || (grep -q '^ANTHROPIC_API_KEY=.' .env 2>/dev/null) || \
+		(echo "hosted-check needs ANTHROPIC_API_KEY in .env; not run" && exit 2)
+	$(MAKE) -s lesson N=09 TIER=hosted ARGS=--no-predict
+
 smoke: ## Live tests against Ollama
 	uv run pytest -q -m live
+
+nightly: ## Offline: chapter 23's nightly memory audit; exits 1 on any problem
+	uv run python lessons/23-context-in-production/nightly.py
+
+memory-gate: ## Live: chapter 19's memory suite on the rebuilt store; fails on a recorded pass now failing
+	uv run python lessons/19-evaluating-memory/gate.py
 
 # ---- practice: every chapter's practice/ folder (see scripts/learn.py) ----
 quiz: ## The chapter check, with why after each answer: make quiz N=05
@@ -106,3 +117,10 @@ notebook: ## Open a chapter's notebook in JupyterLab: make notebook N=05
 
 clean: ## Remove caches and the scratch area
 	rm -rf .pytest_cache .ruff_cache .scratch
+
+# ---- capstone: capstone/README.md ----
+capstone: ## Grade your capstone/mine/contextkit offline (16 tests, no model)
+	@CAPSTONE=mine uv run pytest -q capstone
+
+capstone-live: ## Your capstone on the real memory and the local model: WHICH=solution for the reference
+	@$(if $(TIER),LANTERN_TIER=$(TIER)) uv run python capstone/live.py $(or $(WHICH),mine)

@@ -12,9 +12,7 @@ from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from typing import Any
 
-import httpx
-
-from lantern import case
+from lantern import case, retry
 from lantern.config import load_config, model_name
 
 SUMMARIES = ("month-2026-06.md", "week-2026-06-15.md", "week-2026-06-22.md",
@@ -22,7 +20,7 @@ SUMMARIES = ("month-2026-06.md", "week-2026-06-15.md", "week-2026-06-22.md",
 # Where each section travels in the request: inside the system message, as tool schemas, as
 # earlier turns of the conversation, or as the last user turn.
 SYSTEM, TOOLS, HISTORY, QUESTION = "system", "tools", "history", "question"
-CHUNK = 12000  # characters counted in one call; well inside the counting window of 16,384
+CHUNK = 12000  # characters counted in one call: about 4,000 tokens, inside the 8,192 window
 
 
 @dataclass(frozen=True)
@@ -134,10 +132,13 @@ def count_tokens(text: str, model: str | None = None) -> int:
         # counted in pieces that end on a line. The sum is within a token or two a piece.
         return sum(count_tokens(x, model) for x in pieces_of(text, CHUNK))
     cfg = load_config()
-    r = httpx.post(
+    # Retried like every model call: one 503 from a busy Ollama must not end a chapter's run.
+    r = retry.post(
         f"{cfg['ollama']['host']}/api/generate",
         json={"model": model_name(model), "prompt": text, "raw": True, "stream": False,
-              "options": {"num_predict": 1, "num_ctx": 16384}},
+              # The chat's own num_ctx: a different value makes Ollama reload the model, and with
+              # OLLAMA_MAX_LOADED_MODELS=1 every count would evict the chat model and back.
+              "options": {"num_predict": 1, "num_ctx": cfg["generation"]["num_ctx"]}},
         timeout=cfg["limits"]["request_timeout_s"],
     )
     r.raise_for_status()

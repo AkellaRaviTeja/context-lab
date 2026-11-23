@@ -22,9 +22,14 @@ just-in-time loading, tool results, compaction, notes, memory with provenance, i
 layout, retraction and an audit. By chapter 23 you can say what LANTERN believes, where each
 belief came from, and who wrote the ones that came from nowhere.
 
-> **Status: in progress.** Chapters 01 and 02 are built from their recorded runs. Chapters 03 to
-> 23 are drafts: each has its scene and its plan, and none has its lesson yet. `make check` passes;
-> `make release-check` fails until no draft remains.
+> **Status: built locally; hosted numbers not run.** All 23 chapters are built from their
+> recorded runs on qwen3:8b through local Ollama, on a 16 GB Apple silicon Mac, and the
+> [capstone](capstone/README.md) has its tests and a reference solution with a recorded live
+> score. Each chapter's "On a hosted model" section and `make lesson N=NN TIER=hosted` use Claude
+> Sonnet 5.5's own features (prompt caching with breakpoints and TTLs, context editing,
+> compaction, the memory tool). No hosted key was available, so those paths are tested against
+> fixtures only and no hosted number is printed anywhere; behaviour at 128K tokens and beyond is
+> not run. Cache prices are calculated from the published price page (checked 21 November 2026).
 
 ## What you will learn
 
@@ -36,7 +41,7 @@ belief came from, and who wrote the ones that came from nowhere.
 | [04](lessons/04-rewriting-the-system-prompt/README.md) | The system prompt as a maintained document | Four months of standing orders |
 | [05](lessons/05-serialising-data/README.md) | Serialisation | Thirty-one payments, five ways |
 | [06](lessons/06-order-and-placement/README.md) | Order and placement | The middle |
-| [07](lessons/07-less-is-more/README.md) | Distraction | Merely related |
+| [07](lessons/07-less-is-more/README.md) | Distraction | More to go on |
 | [08](lessons/08-just-in-time/README.md) | Just-in-time context | A list, not the files |
 | [09](lessons/09-tool-results/README.md) | Tool results in the history | What stays behind |
 | [10](lessons/10-compaction-with-a-schema/README.md) | Compaction with a schema | Who paid whom |
@@ -44,7 +49,7 @@ belief came from, and who wrote the ones that came from nowhere.
 | [12](lessons/12-kinds-of-memory/README.md) | Kinds of memory | A fact with no episode |
 | [13](lessons/13-writing-to-memory/README.md) | Writing to memory | Who may write |
 | [14](lessons/14-reading-from-memory/README.md) | Reading from memory | What to load |
-| [15](lessons/15-isolating-context/README.md) | Isolating context | Forty statements, five lines |
+| [15](lessons/15-isolating-context/README.md) | Isolating context | Forty-two pages, five lines |
 | [16](lessons/16-layout-for-the-cache/README.md) | Layout for the cache | The same beginning |
 | [17](lessons/17-how-context-fails/README.md) | How context fails | Four ways to be wrong |
 | [18](lessons/18-correcting-and-forgetting/README.md) | Correcting and forgetting | Retraction |
@@ -55,8 +60,12 @@ belief came from, and who wrote the ones that came from nowhere.
 | [23](lessons/23-context-in-production/README.md) | Context in production | Friday 7 August |
 
 Each chapter's README has the same shape as Case Files 01 to 05: **the scene**, **the concept**,
-**how it works**, **the nuances**, **run it**, **what you should see**, **try this**, **master
-it**, and **what the evidence now shows**.
+**how it works**, **the nuances**, **run it**, **what you should see**, **on a hosted model**,
+**try this**, **master it**, and **what the evidence now shows**.
+
+After chapter 23, the [capstone](capstone/README.md) asks you to build a context builder and a
+memory store from a blank folder: `make capstone` grades yours offline, and `make capstone-live`
+scores it against the model.
 
 Case File 01 taught what a context window is and how a briefing is assembled; Case File 02
 compaction at its simplest, a memory file and token cost; Case File 03 the eval harness; Case
@@ -119,6 +128,12 @@ make case           regenerate the case material from scripts/build_case.py
 make check          lint, unit tests, prose and structure gates (drafts allowed)
 make release-check  the same, and fail while any chapter is still a draft
 make smoke          live tests against Ollama
+make lesson N=16 TIER=hosted   a chapter on Claude Sonnet 5.5 (needs a key; not run here)
+make hosted-check   chapter 09 end to end on the hosted model (needs a key)
+make memory-gate    chapter 19's memory suite; fails when the rebuilt store regresses
+make nightly        chapter 23's nightly memory audit, offline
+make capstone       grade your capstone in capstone/mine, offline
+make capstone-live  score a capstone against the model (WHICH=solution for the reference)
 ```
 
 ## The series

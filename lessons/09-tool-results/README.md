@@ -103,7 +103,9 @@ About twenty-five minutes: four long traces, three of them carrying whole statem
 
 ![Chapter 09 terminal output](../../docs/screenshots/09-tool-results.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 18:09, code at commit a753a4b; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 12 November, before the grading
+change of 21 November, gave the same numbers:
 
 | Treatment | Hops found | Totals right | Requests | Largest request | Opened | Stopped |
 |---|---|---|---|---|---|---|
@@ -118,6 +120,18 @@ What the recorded run showed:
 What did not happen: the plan had each treatment "scored on tokens and on flows found" as if
 all three were workable. Two of the three failed, and the one that worked is not a treatment
 of the result at all.
+
+## On a hosted model
+
+```bash
+make lesson N=09 TIER=hosted
+```
+
+Runs the chapter on Claude Sonnet 5.5 (`config.yaml`, `hosted:`) with its native features: context editing (`clear_tool_uses_20250919`, with `keep` and `trigger`) as the provider's own way to clear old tool results, beside the chapter's hand-written clearing. Settings it does not take (temperature, top_k, seed, num_ctx) are reported when the run starts, not sent.
+
+Not run: no hosted key was available when this section was written, so there are no hosted numbers beside the local ones yet. The hosted path is tested offline against the documented request and response shapes (`tests/test_hosted.py`).
+
+**Expected, not measured.** Trimming at the tool should win on any model: it changes what enters the window. The model's failure to add thirty-seven lines is expected to be smaller on a hosted model, but the lab's rule (do the arithmetic with a tool) stands either way.
 
 ## Try this
 

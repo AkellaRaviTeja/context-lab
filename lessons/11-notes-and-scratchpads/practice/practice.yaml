@@ -1,0 +1,136 @@
+# Chapter 11 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=11).
+chapter: "11"
+title: Its own notes
+
+objectives:
+  - Give an agent a notebook it writes with tools and that is kept outside the window.
+  - Refuse a note that does not name its source, or that disagrees with it, before it is kept.
+  - Read the notes back after a compaction or a restart, and measure what that saves.
+  - Say why working notes for one task are not a memory.
+
+quiz:
+  - q: Why is a note refused when it has no source?
+    options:
+      - The file format needs the field.
+      - "Without a source nothing can be compared with it. A note nobody can check is a claim, and the agent will believe it later as if it were evidence."
+      - It saves tokens.
+      - The model writes better notes with a source.
+    answer: b
+    why: >
+      The source is what makes the check possible. Varma's question was who can write in it;
+      the answer that satisfied her was that every line can be checked.
+
+  - q: The notebook compares a note with the digest of the statement it names. What does that check not catch?
+    options:
+      - A wrong total.
+      - A payee the statement never paid.
+      - "A flow the agent never wrote down. The check judges what is written; it cannot see what was left out."
+      - A payer who does not hold the statement.
+    answer: c
+    why: >
+      Chapter 10's check compared the form with the ledger of every tool result, so it could
+      name a missing flow. A notebook the agent writes is only as complete as its writing.
+      The rule in the system prompt asks for a note after every statement; nothing forces it.
+
+  - q: Why is a wrong note more dangerous than a wrong document in the evidence?
+    options:
+      - Notes are longer.
+      - "The agent wrote it, and reads it back as its own earlier finding. It has no reason to doubt it, and after a compaction the statement it came from is no longer in front of it."
+      - Notes are stored on disk.
+      - Documents are checked by a person.
+    answer: b
+    why: >
+      Chapter 09's summary had Corvane paying Arden, and the agent read its own summary as the
+      statement. A note checked when it is written cannot carry that mistake forward.
+
+  - q: After a compaction the notebook is put back in front of the agent. Why not leave it to the agent to read it with a tool?
+    options:
+      - Tools are slow.
+      - "Straight after a compaction the agent does not know what it has lost. It will not ask for notes it does not know it needs."
+      - The notebook is too large for a tool result.
+      - The model cannot call tools after a compaction.
+    answer: b
+    why: >
+      What the agent should have in front of it after a compaction is decided in code, not by
+      the model that has just lost the context to decide with.
+
+  - q: The notebook is kept in a file for one run. What is the difference between that and a memory?
+    options:
+      - "None: both are text on disk."
+      - "A note serves one task and is thrown away with it. What should outlive the task is a memory, and who may write that, with what proof, is a separate decision (chapter 13)."
+      - A memory is always in a database.
+      - Notes cannot be read by a person.
+    answer: b
+    why: >
+      Case file 02's memory file kept LANTERN's mistakes along with its findings, for months.
+      Keeping working notes narrow keeps that mistake from repeating.
+
+  - q: In the recorded restart arm the notebook held 0 flows when the first session was stopped after 8 requests, and the second session reopened 5 statements, against 4 without notes. What does that show?
+    options:
+      - Notebooks make an agent slower.
+      - The notebook file was lost in the restart.
+      - The check refused every note the first session wrote.
+      - "A notebook holds only what the agent wrote in it. The rule asks for a note after every statement; in eight requests LANTERN wrote none, so the second session had nothing to carry on from."
+    answer: d
+    why: >
+      The file survived the restart and held nothing, and no note had been refused. Notes save
+      work only when they are written, and nothing in this design makes the agent write them.
+      Chapter 10's form, filled in by code from the tool results, does not depend on that.
+
+exercise:
+  title: The check on a note
+  task: |
+    Open `lessons/11-notes-and-scratchpads/practice/exercise.py` and write `problem_with`, the
+    check `Notebook.note_flow` runs before it keeps a note. `number()` is written for you. The
+    tests pass in a statement's digest and holder as plain functions, so no model is needed.
+    They check that:
+
+    - a note that agrees with its statement is kept, whatever way the total is written,
+    - a note with no source, or with a source not on file, is refused,
+    - a flow read from someone else's statement is refused,
+    - a payee the statement never paid is refused,
+    - a total or a count that differs is refused, and the reason quotes both,
+    - a count of 9.5 or None, or a total of "n/a" or a list, is refused without a crash.
+  hints:
+    - |
+      Work down the list in the docstring and return at the first problem. `owner =
+      holder_of(source)`; `None` means not on file, and anything other than `payer` is somebody
+      else's statement.
+    - |
+      `paid = {p["payee"]: p for p in digest(source)["paid_out_to"]}`. A payee not in `paid`
+      is refused. Then `n, t = number(payments), number(total)`, and refuse when either is
+      None or `n != int(n)`.
+    - |
+      `abs(t - float(paid[payee]["total"])) > 0.005` is a wrong total; `int(n) !=
+      paid[payee]["payments"]` a wrong count. Quote the digest's figure first and the note's
+      as it was written. Return None at the end.
+  after: >
+    Run every note LANTERN writes through your check: `make lesson N=11 ARGS=--mine`, then
+    `make challenge N=11`.
+
+challenges:
+  - id: your-check
+    title: Your check, on every note
+    goal: Run the lesson with the problem_with you wrote. The demonstration should still keep one note and refuse two.
+    change: "Pass the exercise first, then run `make lesson N=11 ARGS=--mine`."
+    target: "mine == true and demo_kept == true and demo_refused == 2"
+
+  - id: restart-later
+    title: Restart later
+    goal: >
+      Stop the first session after 16 requests in place of 8. Does the notebook hold a flow
+      when the workstation restarts, and does the second session then reopen fewer statements?
+    change: Set RESTART_AFTER = 16 in lessons/11-notes-and-scratchpads/run.py.
+    target: "restart_after > 8 and restart_notes_kept > 0"
+    reset: git checkout lessons/11-notes-and-scratchpads/run.py
+
+  - id: trust-every-note
+    title: "Break it: a notebook that keeps everything"
+    goal: >
+      Make the notebook keep every note, unchecked, and run the lesson. The demonstration
+      keeps the note with no source and the note that has Arden as Corvane's payee.
+    change: >
+      In book_at() in lessons/11-notes-and-scratchpads/run.py, set
+      `book.problem_with = lambda *a, **k: None` before returning the book.
+    target: "demo_kept == true and demo_refused == 0 and notes_refused == 0"
+    reset: git checkout lessons/11-notes-and-scratchpads/run.py

@@ -1,0 +1,143 @@
+# Chapter 19 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=19).
+chapter: "19"
+title: The memory suite
+
+objectives:
+  - Write memory cases of four kinds, recall, retraction, not told and planted, with answers known in advance.
+  - Grade answers in code with graders that have been tried against answers written to fool them.
+  - Show that a suite fails on a bad memory before trusting it to pass a good one.
+  - Gate a store on the verdicts it earned, and say what such a gate cannot see.
+
+quiz:
+  - q: Why run the suite on the memory of 13 July, which everyone already knows is bad?
+    options:
+      - To have a baseline score to beat.
+      - "A suite that never fails has not been shown to detect anything. On the old memory it passed 0 of 4 retraction cases and 0 of 1 planted: it can see the failure it is for."
+      - Because the rebuilt store is not ready.
+      - To check the model is loaded.
+    answer: b
+    why: >
+      A test is evidence only when it can fail. Running it against a known failure is how you
+      learn that it would.
+
+  - q: A grader fails any answer to "Has the FIU cleared Pellmar?" that contains the word "cleared". What does it get wrong?
+    options:
+      - Nothing; the word is the claim.
+      - It is too slow.
+      - "It fails a denial in words, such as \"Pellmar was not cleared\", and passes an answer that affirms the claim without the word. It reads a word, not what the answer says."
+      - It cannot handle capital letters.
+    answer: c
+    why: >
+      In the recorded run it disagreed with the negation grader on 5 of 15 graded answers. On
+      the rebuilt store it failed T-2, T-4 and P-1, which deny the claim in words ("No mention
+      of ... licensing status", "not identified as ordinary client money").
+
+  - q: A first run of this chapter's graders failed the refusal "Not in evidence. [E-01]" on a not-told check. Why?
+    options:
+      - It affirmed that Pellmar was cleared.
+      - "The abstention grader read every number in the answer, and the digits of the entry id E-01 counted as a figure the question did not give. The answer was right; the grader was wrong."
+      - It cited the wrong entry.
+      - Not in evidence is not an accepted wording.
+    answer: b
+    why: >
+      A grader written to catch a refusal that slips in a figure also caught a refusal that
+      cites its source. The fix blanks entry ids before the figures are read, with a test built
+      from the recorded answer. In the recorded run after the fix, the same refusal passed.
+
+  - q: The first run recorded T-1 as a fail on the rebuilt store, on a grader fault. With the store's gate taken away, T-1 then said Pellmar was cleared. What could make memory-gate see?
+    options:
+      - The new failure; the gate checks every case.
+      - "Nothing for T-1. The gate fails only on a case that passed when its verdicts were recorded, so a wrong fail in the record hides any real failure later."
+      - Only the planted line, because it is held.
+      - Everything, once the model is changed.
+    answer: b
+    why: >
+      After the graders were fixed, T-1 passed on the rebuilt store and was recorded as a pass.
+      With the gate taken away it said "Yes, the FIU cleared Pellmar Nominees Ltd on 3 August"
+      again, and this time the gate counted it: 2 regressions, T-1 and P-1. A gate is only as
+      good as the verdicts it recorded.
+
+  - q: The suite asks each case on the rebuilt store with the 8 closest entries by BM25. What does a pass say?
+    options:
+      - The model is correct.
+      - The store holds the right entries.
+      - "That the store, the retrieval and the model together gave a good answer. A change to any one of them can move a verdict, which is why the suite runs on all three together."
+      - That the entry is true.
+    answer: c
+    why: >
+      The planted case passed on the rebuilt store because the write gate held the line, so the
+      retrieval never offered it. With the gate taken away the same model repeated it.
+
+  - q: Why is make memory-gate a target of its own and not part of make check?
+    options:
+      - It is too slow to run at all.
+      - "It calls the model, about fourteen requests, and make check is offline. A live gate is run when the store, the retrieval or the model changes."
+      - It needs a hosted key.
+      - It writes to LANTERN's memory.
+    answer: b
+    why: >
+      The offline gates check the graders and the code; the live gate checks what the model now
+      says from the store. Both are needed, at different times.
+
+exercise:
+  title: A grader that "not cleared" cannot fool
+  task: |
+    Open `lessons/19-evaluating-memory/practice/exercise.py` and write `denies`, the grader for
+    retraction and planted cases: True when an answer does not affirm a retracted claim.
+    `abstains` is imported for you. The tests are answers written to fool a grader, so no model
+    is needed. They check that:
+
+    - an opening "No." or "No," passes and an opening "Yes," fails, but "No escalation" and
+      "No doubt" are not denials,
+    - "not cleared" is not "cleared", and the word on its own affirms,
+    - a negation after the word does not count, and every use of the word needs its own,
+    - a negation counts back to the start of its clause, up to ten words, so "No mention of
+      Ostrander Marine Finance SA's licensing" denies,
+    - a stem such as "licen" catches "licensed" and "licence",
+    - a refusal passes, and an empty answer fails.
+  hints:
+    - |
+      Lower-case the answer, blank out NOT_A_NEGATION, and split it with
+      `re.split(r"[.;:!?]", text)`. For each clause, `found = re.findall(r"[a-z']+", part)`;
+      extend `clause` with `[len(words)] * len(found)` before extending `words`. An empty
+      `words` is False.
+    - |
+      `re.match(r"\s*(no|yes)\b\s*[.,;:!]", text)` finds an answer that opens "No." or "Yes,";
+      return whether it was "no". Then `uses = [i for i, w in enumerate(words) if
+      w.startswith(claim.lower())]`, and with no uses return `abstains(answer)`.
+    - |
+      For each use `i`, look at `words[s:i]` where `s = max(clause[i], i - 10,
+      previous_use + 1)`, and require `NEGATION.search(" ".join(...))`. Every use must pass.
+  after: >
+    Grade every retraction and planted case with yours: `make lesson N=19 ARGS=--mine`, then
+    `make challenge N=19`.
+
+challenges:
+  - id: your-grader
+    title: Your grader, on every retraction and planted case
+    goal: Run the lesson with the denies you wrote. The planted case should still pass on the rebuilt store and be caught with the gate taken away.
+    change: "Pass the exercise first, then run `make lesson N=19 ARGS=--mine`."
+    target: "mine == true and new_planted == 1 and gate_caught > 0"
+
+  - id: six-words-back
+    title: "Break it: the first run's look-back"
+    goal: >
+      Put back the first run's fault: a negation counts only six words back. A refusal that
+      opens a long clause with "No mention of" then reads as an affirmation on the rebuilt store.
+    change: >
+      In your passing practice/exercise.py, change the ten-word look-back to six
+      (`i - 6`), then run `make lesson N=19 ARGS=--mine`.
+    target: "mine == true and new_recall == 6 and new_retraction < 4"
+    reset: git checkout lessons/19-evaluating-memory/practice/exercise.py
+
+  - id: weak-grader
+    title: "Break it: a grader that reads the word"
+    goal: >
+      Grade with the weak grader, which fails any answer containing the claim's word. The rebuilt
+      store's denials in words then fail: the plant's, and the retraction cases that name the
+      claim to deny it.
+    change: >
+      In lessons/19-evaluating-memory/run.py, set
+      `DENIES = lambda answer, claim: claim not in answer.lower()`.
+    target: "new_recall == 6 and new_planted == 0 and new_retraction < 4"
+    reset: git checkout lessons/19-evaluating-memory/run.py
