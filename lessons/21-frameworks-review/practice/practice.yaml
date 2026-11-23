@@ -1,0 +1,135 @@
+# Chapter 21 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=21).
+chapter: "21"
+title: Memory in a box
+
+objectives:
+  - Run the same memory tasks (store, recall, retract, audit) on the lab's store and on a library, and compare what each decided.
+  - Write a client-side backend for the memory tool that carries its commands out on a store with a gate and a log.
+  - Count the connections a library opens, and refuse the ones that leave the machine.
+  - Say for each library whether it was run or only read about, and why.
+
+quiz:
+  - q: The memory tool (memory_20250818) gives the model six commands on files under /memories. Who decides what a delete does?
+    options:
+      - The model.
+      - Anthropic's servers.
+      - "The application's backend: the tool defines the commands, the client carries them out wherever it keeps memory."
+      - Nobody; a delete always erases.
+    answer: c
+    why: >
+      The memory tool is client-side. The backend in this chapter retracts on delete, so the
+      file leaves /memories and its text stays in the store, marked. A backend over a folder
+      of files would erase it.
+
+  - q: The model creates a memory file holding the eighth entry's line. The lab's backend holds it. Why?
+    options:
+      - The model is not trusted to write at all.
+      - "The file names no source, and the store's gate holds any write that names none, whoever sends it."
+      - The file is too long.
+      - The memory tool refuses facts about people.
+    answer: b
+    why: >
+      The backend writes through `Store.write`, so the gate of chapter 13 runs on the model's
+      writes as on everyone else's. The tool's commands carry no field for a source; a
+      "Source:" line in the file is the convention this backend reads.
+
+  - q: A library extracts memories from what it is given with a model (Mem0 with infer on). What has changed about who wrote an entry?
+    options:
+      - Nothing; the user who called add is the author.
+      - "The model is now an author: what is stored is the model's wording, which may differ from what anyone said."
+      - The library's maintainers are the authors.
+      - The embedding model is the author.
+    answer: b
+    why: >
+      The chapter counts how many stored memories are word for word what was added. Anything
+      else was written by the extraction model, and the store has no field that says so unless
+      the caller adds one.
+
+  - q: Mem0's telemetry is switched off with MEM0_TELEMETRY=False, and the run also refuses every outside connection. Why both?
+    options:
+      - The setting does not work.
+      - "A setting is a promise by the library; refusing the connection is a control the unit keeps. Only the second is evidence that nothing left."
+      - The refusal makes it faster.
+      - Telemetry carries no case data, so neither matters.
+    answer: b
+    why: >
+      Decision 0003 measured attempts to us.i.posthog.com with telemetry left on. The run counts
+      what each arm tried, so the chapter can say the number was zero and not only that the
+      setting was off.
+
+  - q: Kobayashi's correction is added to Mem0 as a new memory. The eighth entry's claim is still recalled beside it. What is the pitfall?
+    options:
+      - "A correction stored beside the claim it corrects is not a retraction: both are recalled, and the reader has to choose."
+      - Mem0 lost the correction.
+      - The correction should have been longer.
+      - There is none; more memories are better.
+    answer: a
+    why: >
+      Chapter 18 retracts with a reason and keeps the record. A library that only adds, or that
+      overwrites without a record, leaves one of those two out.
+
+  - q: Graphiti, Letta and Zep appear in the review but were not run. What may the chapter say about them?
+    options:
+      - That they failed.
+      - That they are worse than the lab's store.
+      - "What their documents and decision 0003 say, labelled as read about, with the reason each was not run."
+      - Nothing at all.
+    answer: c
+    why: >
+      A library surveyed from its documents is not a library run. The review says which is
+      which, so a reader does not take a description for a measurement.
+
+exercise:
+  title: The memory tool's backend
+  task: |
+    Open `lessons/21-frameworks-review/practice/exercise.py` and write the six commands of
+    `MemoryTool`: `view`, `create`, `str_replace`, `insert`, `delete` and `rename`. The paths,
+    versions, entries and replies are written for you. The tests run it on a fresh
+    `lantern.memory.Store` with the lab's default gate. They check that:
+
+    - a file with a `Source:` line is kept and one with none is held,
+    - a kept file is shown with numbered lines, and a held one is not shown,
+    - every edit is a new version that supersedes the last,
+    - `str_replace` needs exactly one match and `rename` will not overwrite,
+    - `delete` retracts (the text stays in the store), or with `on_delete="forget"` erases
+      every version,
+    - every change is an event in the store's log, by the tool's author.
+  hints:
+    - |
+      Every command starts with `path = self.path(raw)` and, for an existing file,
+      `e = self._must(path)`. A ToolError you raise becomes "Error: ..." for the model.
+    - |
+      A new file is `self.store.write(self._entry(path, file_text))`; a changed one is
+      `self._replace(e, new_text, "str_replace")`. Both return the entry: pass it to
+      `self._said(entry, "File created at /memories/x.md.")`.
+    - |
+      Delete: `targets = [self.live(path)] if self.live(path) else self.files(path)`; then
+      `self.store.retract(e.id, by=self.author, at=self.clock(), reason=...)`, or for forget
+      every `v` in `self.versions(path)` with `v.status != "forgotten"`.
+  after: >
+    Run the chapter on yours: `make lesson N=21 ARGS=--mine`, then `make challenge N=21`.
+
+challenges:
+  - id: your-backend
+    title: Your backend, on the case
+    goal: Run the lesson with the backend you wrote. It must hold the Pellmar file, keep its text after delete, and leave the chain intact.
+    change: "Pass the exercise first, then run `make lesson N=21 ARGS=--mine`."
+    target: "mine == true and memtool_held == 1 and memtool_text_kept == true and memtool_chain_problems == 0"
+
+  - id: delete-erases
+    title: "Break it: a delete that erases"
+    goal: >
+      Make the memory tool's delete do what a folder of files would do, and see what the audit
+      can still read about the eighth entry afterwards.
+    change: In lessons/21-frameworks-review/run.py, set ON_DELETE = "forget".
+    target: "on_delete_forget == true and memtool_text_kept == false"
+    reset: git checkout lessons/21-frameworks-review/run.py
+
+  - id: no-gate
+    title: "Break it: no gate on the model's writes"
+    goal: >
+      Take the gate away from both stores, as a library that stores whatever it is given
+      would, and count what is held.
+    change: "In lessons/21-frameworks-review/run.py, set GATE = lambda e, s: []."
+    target: "gate_off == true and memtool_held == 0 and lab_held == 0"
+    reset: git checkout lessons/21-frameworks-review/run.py
