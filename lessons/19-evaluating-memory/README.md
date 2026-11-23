@@ -135,7 +135,7 @@ make lesson N=19
 make memory-gate     # live: the suite again on the rebuilt store, against memory-gate.json
 ```
 
-Three runs of 14 short questions. In the recorded run the 42 model calls took 103.56 seconds
+Three runs of 14 short questions. In the recorded run the 42 model calls took 103.59 seconds
 of model time on the shared machine. `make memory-gate` is not part of `make check`: it calls
 the model, about fourteen short requests.
 
@@ -144,7 +144,7 @@ the model, about fourteen short requests.
 ![Chapter 19 terminal output](../../docs/screenshots/19-evaluating-memory.png)
 
 What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Mac, 23 November
-2026, 12:39 to 12:41; 42 calls, 26,732 prompt tokens and 1,233 output tokens in all):
+2026, 13:44 to 13:46; 42 calls, 26,732 prompt tokens and 1,233 output tokens in all):
 
 | Kind | 13 July | Rebuilt | Gate taken away |
 |---|---|---|---|
@@ -161,8 +161,8 @@ What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Ma
 - The weaker grader disagreed with the negation grader on 5 of 15 graded answers.
 - `memory-gate.json` records the rebuilt store's verdicts: all 14 pass. Every answer is in
   `.scratch/19/suite.json`.
-- In the case-by-case table a failed cell lists every check that was false, and the verdict
-  itself is one of them: "fail: denies, passed" means the denial check failed, and so the case.
+- In the case-by-case table a failed cell names the checks that failed: "fail: denies".
+
 
 What did not happen: the plan had the suite join case file 03's regression gate. It is a
 `make` target of its own, `make memory-gate`, because it calls the model. The first run of
