@@ -1,4 +1,3 @@
-<!-- status: draft -->
 # Chapter 23: Friday 7 August
 
 **Concept:** context in production: versioned context, a change log, a budget alarm, and the memory audit as a nightly job.
@@ -99,22 +98,36 @@ def context_version(parts):
 ## The nuances
 
 - **An answer without its context version cannot be reproduced; the version is part of the
-  finding.** A finding that says what LANTERN answered must also say what it was given.
-- **The version covers what LANTERN is given, not what the store holds.** A held write leaves
-  the version as it was: the store's log changed, the context did not. That is right, and it
-  is why the nightly audit reads the log and not the context.
-- **An alarm nobody reads is not a control.** The alarm here writes a line; somebody must be
-  named to read it, or a session must stop on it with a reason.
+  finding.** All 5 answers this morning are in `answers.jsonl` with the version they were given
+  under: four under ctx-828ad9f22790, the last under ctx-37dcd045d0ba.
+- **The version covers what LANTERN is given, not what the store holds.** The overnight write
+  was held, and the version was ctx-828ad9f22790 last night and this morning. The store's log
+  changed; the context did not. That is why the nightly audit reads the log and not the
+  context.
+- **Forgetting is a change to the context.** Forgetting the note on DS Iyer (N-07) made a new
+  version, and the change log has the line: 12:10, a.varma, ctx-828ad9f22790 to
+  ctx-37dcd045d0ba, "cleared by Professional Standards at noon".
+- **Forgetting the word is not changing the answer.** Before, LANTERN said "No. DS Iyer is
+  suspended and should not be copied on any hand-over." After, it still said "No", now because
+  he "is not listed as a recipient in the standing note for the morning report". The run
+  records whether the word "suspended" is in the answer (yes before, no after), not whether
+  the decision changed. It did not.
+- **A pass is still not a right reason.** Q-17 passed: "No. The record shows that the FIU has
+  not cleared Pellmar Nominees", and the record it named was the standing note of 2026-06-19 on
+  DS Iyer. Q-21 failed: LANTERN called `lookup_company`, which is not connected, and gave the
+  tool's error as its answer, not "not in evidence".
 - **A nightly audit finds what was written last night. It does not stop the writing.** The
-  gate stopped the overnight write from being loaded; the audit put it in front of a person.
-  Who sits behind the sync account is still that person's question.
+  gate held M-17 when it was written, for three reasons: no source and no episode, a machine
+  account, and eow-fin-07 closed on 2026-05-11. The audit put it in front of a person. Who sits
+  behind the sync account is still that person's question.
 - **The last hash lives elsewhere.** A store and its log can be rebuilt by whoever administers
-  them; a rebuilt chain will not hold the hash the last run kept outside it. Here it is a
-  file beside the reports; on LANTERN it would be on a machine the sync account cannot write.
-- **Forgetting is a change to the context.** Clearing Iyer is not only a fact in the world;
-  it is a new version, with a name against it in the change log.
-- **A price calculation is not a bill.** The hosted figures are the measured local tokens at
-  the listed prices; the hosted tokenizer counts differently and caching depends on timing.
+  them; a rebuilt chain will not hold the hash the last run kept outside it. Here it is a file
+  beside the reports; on LANTERN it would be on a machine the sync account cannot write.
+- **An alarm nobody reads is not a control.** The alarm wrote one line to `alarms.jsonl`, level
+  ok. Somebody must be named to read it, or a session must stop on it with a reason.
+- **A price calculation is not a bill.** The hosted figures are the local tokens, as Ollama
+  counted them for qwen3:8b, at the listed Sonnet 5.5 prices; the hosted tokenizer counts
+  differently and caching depends on timing.
 
 ## Run it
 
@@ -123,27 +136,77 @@ make lesson N=23
 uv run python lessons/23-context-in-production/nightly.py   # the nightly job on its own
 ```
 
-Planned at about 5 to 10 minutes of qwen3:8b time: five answers (each with up to three tool
-rounds) and the token counts for the budget; everything else is code. The nightly job makes
-no model call and no network connection; a cron line for it is in its docstring.
+Steps 1 and 2, the change log in step 4 and the alarm in step 5 are code (the alarm's token
+counts use qwen3:8b's tokenizer through Ollama). Step 3 and the second Iyer question are 6
+model calls: in the recorded run, 30,887
+prompt tokens, 248 output tokens and 54.2 seconds. The nightly job makes no model call and no
+network connection; a cron line for it is in its docstring.
 
 ## What you should see
 
-*Draft.* Not run yet: the numbers for this section come from the first recorded run
-(`make lesson N=23 ARGS=--shot`, then `uv run python scripts/svg_to_png.py 23`). The table to
-fill from `.progress/results/23.json`:
+![Chapter 23 terminal output](../../docs/screenshots/23-context-in-production.png)
 
-| Measure | Recorded as |
+What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Mac, 23 November
+2026; 6 calls, 30,887 prompt tokens and 248 output tokens in all):
+
+| Measure | Result |
 |---|---|
-| Versions in the day; the held write made a new one | `versions`; `held_write_changes_version` |
-| Answers recorded, each with its version | `answers_recorded`, `answers_with_version` |
-| Signed questions passed in the session | `session_passed` of `session_asked` |
-| "Suspended" in the answer about Iyer, before and after | `iyer_suspended_before`, `iyer_suspended_after` |
-| Nightly: new writes, held, problems, chain holds last hash, job's exit | `nightly_new_writes`, `nightly_held`, `nightly_problems`, `nightly_chain_continues`, `nightly_exit` |
-| Alarm: level, share of the input budget, turns until it warns | `alarm_level`, `alarm_share_pct`, `turns_until_alarm` |
-| Trace: spans, model-call spans, their input tokens | `spans`, `chat_spans`, `span_input_tokens` |
-| Session: requests, prompt and output tokens, seconds | `session_requests`, `session_prompt_tokens`, `session_output_tokens`, `session_seconds` |
-| Priced for Sonnet 5.5, a calculation: uncached, cached | `hosted_uncached_usd`, `hosted_cached_usd` |
+| 06:00 audit: entries in the store | 259 |
+| Logged case entries that still read as written | 16 of 16 |
+| Written since Thursday 18:00 | 1 (M-17, 01:58, eow-fin-07 through svc-lantern-sync) |
+| Held for a person | 1 |
+| Chain holds Thursday's last hash (0c7bc1499c9a) | yes |
+| Problems; `nightly.py` exit | 0; 0 |
+| Context version, last night and this morning | ctx-828ad9f22790, both |
+| Context version after 12:10 | ctx-37dcd045d0ba |
+| Versions in the day | 2 |
+| Answers recorded, each with its version | 5 of 5 |
+| Signed questions passed (Q-17, Q-12, Q-21) | 2 of 3 (Q-21 failed) |
+| "Suspended" in the answer about Iyer | yes before, no after; "No" both times |
+| N-07 after `forget()` | forgotten, text empty; store chain and change log: no problems |
+| Change log entries | 1 |
+| Alarm | ok: 4,668 of 7,792 tokens, 60% of the input budget; largest account tool schemas (1,891) |
+| Turns until it warns at 80% | 21, at about 77 tokens a turn |
+| Trace | 13 spans: 6 model calls, 5 answers, 2 sessions |
+| Input tokens on the chat spans, and in `llm.USAGE` | 30,887 and 30,887 |
+
+The context by account (qwen3:8b's tokenizer): standing orders 834, case memory 853, standing
+notes 448, tool schemas 1,891, session evidence 316, session talk 255, the question 71.
+
+One session, priced (prices from config.yaml, checked 2026-11-21):
+
+| | Requests | Prompt tokens | Output tokens | Seconds | US dollars |
+|---|---|---|---|---|---|
+| local, qwen3:8b (measured) | 6 | 30,887 | 248 | 54.2 | 0.0000 |
+| Claude Sonnet 5.5 price, no cache (a calculation, not a bill) | 6 | 30,887 | 248 | | 0.0643 |
+| Claude Sonnet 5.5 price, 4,026-token prefix cached (a calculation, not a bill) | 6 | 30,887 | 248 | | 0.0280 |
+
+What did not happen: the plan's Iyer beat was LANTERN's answer changing once the note was
+forgotten. The word "suspended" went; the answer stayed "No", on another ground.
+
+Three readings in this run are weaker than they print, and the code needs a fix for each.
+None is fixed in this commit; the run would have to be repeated after the fix.
+
+- **The cached price assumes one cache write.** `layout.session_cost(..., writes=1)` prices
+  all 6 requests as reading one cached prefix. The prefix changed at 12:10 (the standing notes
+  lost N-07, a new version), so the 12:15 request writes a new one; and in the day's times the
+  gaps from 09:10 to 09:20 and from 09:20 to 12:15 are longer than the 5-minute cache. The
+  $0.0280 is the most favourable case, one cache write for the whole day, not this session's
+  price. The fix: count one write per
+  distinct `version` in `answers`, and one more for every gap longer than the TTL between
+  requests' `at` times.
+- **The alarm counts a context the session did not send.** `budget.spend(parts_now(orders))`
+  counts the sections with the 13 July sample session (316 evidence, 255 talk, 71 question).
+  Every request this morning was built with `baseline.with_evidence`, which adds the reserve's
+  statement, and then asked its own question. So the 60% and the 21 turns are for a smaller
+  context than the one sent. The fix: count `baseline.with_evidence(baseline.asking(parts_now(
+  orders), IYER))`, the request as sent.
+- **The scheduler's run checked no last hash.** `nightly.py` was run with
+  `--out .scratch/23/nightly-cron`, a folder the lesson empties first, so it found no
+  `last-hash` and the chain check had nothing to compare (`production.nightly` counts no last
+  hash as continuing). Its exit 0 shows the job finds the write; it does not show the check
+  against Thursday. The fix: write Thursday's `last_hash` to `nightly-cron/last-hash` before
+  starting it.
 
 ## On a hosted model
 
@@ -154,7 +217,8 @@ make lesson N=23 TIER=hosted
 On the hosted tier every answer goes to Claude Sonnet 5.5 with native tool calling and prompt
 caching on the stable prefix (`hosted.features.cache: auto`): the standing orders, the memory,
 the notes and the tool schemas are the same for every question in the session, so after the
-first request they would be read from the cache. The spans then carry Anthropic's own usage
+first request they would be read from the cache, until the version changes or the cache
+expires. The spans then carry Anthropic's own usage
 (`lantern.cached_tokens`, `lantern.cost_usd`), and the cost table's calculation could be set
 against a measured cost. The version, the change log, the alarm and the nightly audit are code
 and run the same on either tier.
@@ -163,8 +227,9 @@ Not run: no hosted key was available when this chapter was built; there are no h
 beside the local ones yet.
 
 Expectations, not measurements: a larger model will likely pass more of the three signed
-questions and answer the Iyer question from the note more consistently; that is a small-model
-effect. That a held write does not change the version, that forgetting the note does, that the
+questions, answer Q-21 "not in evidence" when a tool is not connected instead of passing on the
+tool's error, cite the right record for Q-17, and give one reason for the Iyer answer instead of
+reaching for another note; those are small-model effects. That a held write does not change the version, that forgetting the note does, that the
 audit finds the overnight write and that the chain check fails on a rewritten log should hold
 on any model: none of them involves the model.
 
@@ -193,7 +258,7 @@ make hint N=23
 make lesson N=23 ARGS=--mine
 ```
 
-**Check yourself.** `make quiz N=23`: six questions.
+**Check yourself.** `make quiz N=23`: seven questions.
 
 **Break it.** `make challenge N=23`: your version on the morning's answers; one word of the
 standing orders; another write at night; an alarm that rings this morning.
@@ -202,8 +267,21 @@ standing orders; another write at night; an alarm that rings this morning.
 
 ## What the evidence now shows
 
-*Draft. Planned, and rewritten from the run once the chapter is built:*
+Every answer this morning is recorded with its context version: 5 answers, under
+ctx-828ad9f22790 and ctx-37dcd045d0ba. Overnight one more write came in under eow-fin-07
+through svc-lantern-sync, citing nothing; the gate held it, the 06:00 audit reported it, the
+chain still held Thursday's hash, and the version did not change, because a held entry is not
+given to LANTERN. At 12:10 Professional Standards cleared DS Iyer. The note naming him as
+suspended was forgotten under a change log line by a.varma, and LANTERN no longer calls him
+suspended, though it still says not to copy him. Strand's second offer to clean up the store
+is declined: the store is the record of who taught LANTERN what, and every false memory in it
+came through his team's sync account, svc-lantern-sync, from hq-sync-01. The context uses 60%
+of its input budget as counted. One session took 6 requests and 30,887 prompt tokens on
+qwen3:8b; priced for Claude Sonnet 5.5, a calculation and not a bill, $0.0643 uncached and at
+least $0.0280 with the prefix cached.
 
-LANTERN's context is versioned, logged, budgeted and audited every night, and the account that wrote the false memories is known to be a machine account that belongs to headquarters.
+On Monday the same sync delivers a new LANTERN workstation and model bundle. The model file's
+hash is not the one its publisher lists.
 
-**Next:** Case File 07, local-models-lab: what exactly is running on LANTERN.
+**Next:** Case File 07, The Machine in the Customs House, in local-models-lab. This case
+file's index is in the [README](../../README.md).

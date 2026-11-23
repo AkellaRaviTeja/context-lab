@@ -76,6 +76,18 @@ quiz:
       No hosted call was made. The hosted tokenizer would count the same text differently, and
       caching depends on timing, so the calculation is labelled as one.
 
+  - q: After the note on DS Iyer is forgotten, the run records "suspended" as no longer in LANTERN's answer. What did LANTERN answer about copying him on the hand-over?
+    options:
+      - Yes, because he has been cleared.
+      - "Still no, on another ground: that he is not listed as a recipient in a standing note. The metric reads the word, not the decision."
+      - It refused to answer.
+      - That he is suspended.
+    answer: b
+    why: >
+      What a person is called in the context changed; what LANTERN decides about him did not
+      follow on its own. A check that looks for one word measures the word. Whether he should
+      be copied is a question for a person, recorded with the version it was answered under.
+
 exercise:
   title: The context version
   task: |
