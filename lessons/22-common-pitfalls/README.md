@@ -92,8 +92,7 @@ for n in range(1, rounds + 1):
 - **Every line on the board has a number behind it.** 7 of 7 lines matched a recorded run of
   this lab, read from `.progress/results/`, not run again. A pitfall list copied from
   elsewhere is a list of other people's mistakes; this one is the unit's own. The chapter 16
-  line is that chapter's run as it was recorded when this one ran (12:50), before chapter 16
-  was run again.
+  line is that chapter's latest recorded run (13:46 to 13:55).
 - **The overfitting beat did not show on this run, because no revision beat the orders.**
   Round 1 returned the same numbered rules as round 0 and was not scored. Round 2 added three
   rules and passed 7 of 10, the same as the orders, so it was dropped; round 3 added two and
@@ -136,7 +135,7 @@ make lesson N=22
 Steps 1, 2, 4 and 5 are code. Step 3 is three proposals and a scoring of the ten training
 questions for each revision that is not a copy; chapter 02's baseline and chapter 04's rewrite were read from this
 machine's recorded results, not asked again. In the recorded run the 28 model calls took
-259.45 seconds of model time on the shared machine. On a machine without those recorded
+256.2 seconds of model time on the shared machine. On a machine without those recorded
 results they are asked too: about 26 more calls.
 
 ## What you should see
@@ -144,7 +143,7 @@ results they are asked too: about 26 more calls.
 ![Chapter 22 terminal output](../../docs/screenshots/22-common-pitfalls.png)
 
 What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Mac, 23 November
-2026, 13:40 to 13:44; 28 calls, 151,248 prompt tokens and 3,758 output tokens in all):
+2026, 14:26 to 14:30; 28 calls, 151,248 prompt tokens and 3,758 output tokens in all):
 
 | Line on the board | Chapter | What the recorded run shows | Recorded |
 |---|---|---|---|
@@ -152,7 +151,7 @@ What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Ma
 | Memory nobody can audit | 20 | 4 of 16 entries rest on nothing; only the write log says who wrote them: all 4 through the HQ sync account | 2026-11-21 |
 | A prompt that only grows | 04 | 31 versions; 97 tokens in March, 834 now, 35 rules, 2 pairs that disagree | 2026-11-11 |
 | A context tuned without a baseline | 02 | the baseline is 17 of 26, 95% interval 46 to 81%: a few questions either way is inside it (and step 3 of this chapter) | 2026-11-11 |
-| A cache broken by a date | 16 | a change at the start of the context: 23.45 s to read it again, against 0.05 s for the same context unchanged | 2026-11-23 |
+| A cache broken by a date | 16 | a change at the start of the context: 23.76 s to read it again, against 0.05 s for the same context unchanged | 2026-11-23 |
 | A fact with no episode | 12 | 4 of 16 entries name neither a record nor an episode | 2026-11-21 |
 | Who else can write to this machine at night | 20 | 4 writes through svc-lantern-sync from hq-sync-01 at 01:58; who administers that account is not in any run | 2026-11-21 |
 
