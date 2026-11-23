@@ -41,30 +41,51 @@ HEADER = ("# LANTERN case memory: inquiry EOW/2026/0412\n\nThe entries loaded fo
           "question, chosen from the store. Each shows its kind, its source, who wrote it and "
           "when.\n\n")
 
+BATCH = 64  # texts per embedding call
+
 OUT.mkdir(parents=True, exist_ok=True)
+VECTORS = OUT / "vectors.jsonl"
 vectors: dict[tuple[str, str], list[float]] = {}
+if VECTORS.exists():  # from an earlier run that stopped; the time to embed them is not counted
+    for line in VECTORS.read_text().splitlines():
+        if line.strip():
+            row = json.loads(line)
+            vectors[(row["kind"], row["text"])] = row["v"]
 embed_seconds = 0.0
+resumed = len(vectors)  # vectors read back from an earlier run, not embedded in this one
+
+
+def _embed_batch(host: str, batch: list[str]) -> list[list[float]]:
+    """One /api/embed call. On a failure, wait and send it again in halves: the embedding
+    runner shares the machine with qwen3:8b and other labs, and a large batch can end it."""
+    body = {"model": EMBED_MODEL, "input": batch}
+    for attempt in range(3):
+        r = retry.post(f"{host}/api/embed", json=body, timeout=600)
+        if r.status_code == 200:
+            return r.json()["embeddings"]
+        time.sleep(30 * (attempt + 1))
+    if len(batch) > 1:
+        half = len(batch) // 2
+        return _embed_batch(host, batch[:half]) + _embed_batch(host, batch[half:])
+    raise SystemExit(f"Ollama /api/embed answered {r.status_code}: {r.text[:300]}")
 
 
 def embed(texts: list[str], kind: str) -> list[list[float]]:
-    """nomic-embed-text through Ollama's /api/embed, with its task prefixes, cached by text."""
+    """nomic-embed-text through Ollama's /api/embed, with its task prefixes, cached by text in
+    memory and on disk (.scratch/14/vectors.jsonl), so a run that stops resumes."""
     global embed_seconds
     prefix = "search_query: " if kind == "query" else "search_document: "
     todo = list(dict.fromkeys(t for t in texts if (kind, t) not in vectors))
     host = load_config()["ollama"]["host"]
-    for i in range(0, len(todo), 500):
-        batch = todo[i:i + 500]
+    for i in range(0, len(todo), BATCH):
+        batch = todo[i:i + BATCH]
         start = time.perf_counter()
-        body = {"model": EMBED_MODEL, "input": [prefix + t for t in batch]}
-        r = retry.post(f"{host}/api/embed", json=body, timeout=600)
-        if r.status_code == 400:  # seen once while another lab's model was loading: once more
-            time.sleep(30)
-            r = retry.post(f"{host}/api/embed", json=body, timeout=600)
-        if r.status_code != 200:
-            raise SystemExit(f"Ollama /api/embed answered {r.status_code}: {r.text[:300]}")
+        got = _embed_batch(host, [prefix + t for t in batch])
         embed_seconds += time.perf_counter() - start
-        for t, v in zip(batch, r.json()["embeddings"], strict=True):
-            vectors[(kind, t)] = v
+        with VECTORS.open("a") as f:
+            for t, v in zip(batch, got, strict=True):
+                vectors[(kind, t)] = v
+                f.write(json.dumps({"kind": kind, "text": t, "v": v}) + "\n")
     return [vectors[(kind, t)] for t in texts]
 
 
@@ -201,7 +222,8 @@ for r in scale:
                   f"{r['relevance']['ms']:,.0f} ms", f"{r['embedding']['recall']} of 5",
                   f"{r['embedding']['ms']:,.0f} ms")
 console.print(table)
-note(f"Embedding {len(vectors):,} texts with {EMBED_MODEL} took {embed_seconds:.0f} s in all. "
+note(f"Embedding {len(vectors) - resumed:,} texts with {EMBED_MODEL} took {embed_seconds:.0f} s "
+     f"in this run ({resumed:,} more were read back from an earlier run). "
      "Load is read from SQLite, scope, rank and cut, per question; the embedding arm also "
      "embeds the question and compares it with every entry in plain Python.")
 big = scale[-1]
