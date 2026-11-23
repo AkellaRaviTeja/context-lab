@@ -69,6 +69,8 @@ def test_count_tokens_asks_with_the_chats_own_window(monkeypatch):
     sent = {}
 
     class R:
+        status_code = 200
+
         def raise_for_status(self):
             pass
 
@@ -79,8 +81,37 @@ def test_count_tokens_asks_with_the_chats_own_window(monkeypatch):
         sent.update(json)
         return R()
 
-    monkeypatch.setattr(context.httpx, "post", post)
+    import httpx
+
+    monkeypatch.setattr(httpx, "post", post)
     context.count_tokens.cache_clear()
     assert context.count_tokens("a short text for the window test") == 3
     assert sent["options"]["num_ctx"] == load_config()["generation"]["num_ctx"]
     context.count_tokens.cache_clear()
+
+
+def test_count_tokens_retries_a_busy_ollama(monkeypatch):
+    """Review of 23 November 2026: count_tokens posted once with no retry, so a single 503 from
+    a busy Ollama ended chapters 01, 03 to 06 and 09 part way through."""
+    import httpx
+
+    from lantern import context, retry
+
+    answers = [httpx.Response(503, request=httpx.Request("POST", "http://x")),
+               httpx.Response(200, json={"prompt_eval_count": 7},
+                              request=httpx.Request("POST", "http://x"))]
+    calls, waits = [], []
+
+    def post(url, **kwargs):
+        calls.append(url)
+        return answers[len(calls) - 1]
+
+    monkeypatch.setattr(httpx, "post", post)
+    monkeypatch.setattr(retry.time, "sleep", waits.append)
+    context.count_tokens.cache_clear()
+    try:
+        assert context.count_tokens("a text counted after one refusal") == 7, \
+            "the 503 was not retried"
+    finally:
+        context.count_tokens.cache_clear()
+    assert len(calls) == 2 and len(waits) == 1, f"expected one retry, saw {calls} {waits}"
