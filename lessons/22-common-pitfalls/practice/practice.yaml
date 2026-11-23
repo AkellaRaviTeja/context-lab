@@ -64,17 +64,17 @@ quiz:
       The chapter reads the numbers from .progress/results/. A line with no recorded run is
       shown as "not recorded" with the command that would record it.
 
-  - q: In the recorded run all three revisions were the standing orders without their title and with trailing spaces, and each was scored and scored 6 of 10 against 7. What went wrong?
+  - q: In the recorded run round 1 was not scored, and the best stayed round 0. Why was round 1 not scored?
     options:
-      - The proposer overfitted the training questions.
-      - "The loop's \"same as the best\" check compared the exact text, so a copy that differed only in its title and spaces was scored as a revision. The check should compare the numbered rules."
-      - The held-out questions leaked into the prompt.
-      - The scorer graded the copy more strictly.
+      - It scored too low.
+      - "Its numbered rules were the same as round 0's. The loop compares the rules, spacing and title aside, with every earlier round, so a copy costs no model time and cannot win on noise."
+      - The proposer was shown the held-out questions.
+      - It dropped "not in evidence".
     answer: b
     why: >
-      A loop that scores a copy spends model time and invites noise: the copy lost Q-22, where
-      LANTERN invented a private note, on a change with no content. The three prompts were
-      also identical, because nothing was kept between rounds, so three seeds gave one reply.
+      An earlier run compared the exact text and scored such copies, and one lost a question on
+      a change with no content. Rounds 2 and 3 did change rules and were scored: 7 and 6 of 10
+      against 7, so neither was kept.
 
   - q: "Who else can write to this machine at night: why does this line stay with a question mark?"
     options:
@@ -98,7 +98,8 @@ exercise:
     - `optimise(start, propose=, score=, rounds=)`: round 0 is the standing orders; every
       round proposes a revision from the best so far and its failed results, scores it on the
       training split, and keeps it only if it passes strictly more. Malformed (too few
-      numbered rules) or unchanged revisions are not scored.
+      numbered rules) revisions, and ones with the same numbered rules as an earlier round, are
+      not scored.
 
     The tests use plain functions as the proposer and the scorer, and once a scripted model
     through `lantern.optimise.propose`. No model is called.
@@ -111,9 +112,9 @@ exercise:
       `failed = [r for r in best["results"] if not r["passed"]]`, then
       `candidate = propose(best["orders"], failed)`.
     - |
-      `rules(candidate) < least_rules` or `candidate.strip() == best["orders"].strip()`: a
-      record with "passed" None and "why" starting "not scored". Otherwise
-      `kept = passed > best["passed"]`.
+      `rules(candidate) < least_rules`, or `rule_lines(candidate) == rule_lines(h["orders"])` for
+      any `h` in the history so far: a record with "passed" None and "why" starting "not scored".
+      Otherwise score it, and `kept = passed > best["passed"]`.
   after: >
     Run the chapter's loop on yours: `make lesson N=22 ARGS=--mine`, then `make challenge N=22`.
 
@@ -142,14 +143,11 @@ challenges:
     target: "must_keep >= 1 and keeps_not_in_evidence == true and kept >= 1"
     reset: git checkout lessons/22-common-pitfalls/run.py
 
-  - id: no-copies
-    title: Do not score a copy
+  - id: more-rounds
+    title: Six rounds instead of three
     goal: >
-      Make your loop refuse a revision whose numbered rules are the same as the best's, even
-      when its title or spacing differ, so the recorded run's three copies are not scored.
-    change: >
-      In optimise() in your passing practice/exercise.py, compare the numbered rules of the
-      candidate and the best, each stripped of spaces, instead of the whole text; then run
-      `make lesson N=22 ARGS=--mine`.
-    target: "mine == true and candidates_scored < 3"
-    reset: git checkout lessons/22-common-pitfalls/practice/exercise.py
+      Give the loop more chances to find a revision that beats the orders on training, and then
+      see whether the held-out score follows it.
+    change: In lessons/22-common-pitfalls/run.py, set ROUNDS = 6.
+    target: "rounds == 6 and kept >= 1"
+    reset: git checkout lessons/22-common-pitfalls/run.py

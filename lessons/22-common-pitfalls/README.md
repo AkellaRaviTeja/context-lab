@@ -63,8 +63,9 @@ flowchart LR
    failed, each with LANTERN's answer and what the grader needed, and writes a revision
    (`optimise.propose`). The revision is scored on the training split with `baseline.score`
    and kept only if it passes more; a revision with fewer than five numbered rules, or the
-   same text as the best, is not scored. Each round's proposal has its own seed (22, 23 and
-   24). Then the best is scored once on the held-out split, beside
+   same numbered rules as any earlier round (spacing and title aside), is not scored. The
+   proposer samples at temperature 0.7 with its own seed each round (22, 23 and 24), and is
+   told the rules it already tried that were not kept. Then the best is scored once on the held-out split, beside
    today's standing orders and chapter 04's rewrite by hand. Where chapter 02's baseline and
    chapter 04's rewrite were recorded on this machine (`.scratch/02/baseline.json`,
    `.scratch/04/rewrite.json`) their results are read, not asked again: the same questions,
@@ -90,37 +91,41 @@ for n in range(1, rounds + 1):
 
 - **Every line on the board has a number behind it.** 7 of 7 lines matched a recorded run of
   this lab, read from `.progress/results/`, not run again. A pitfall list copied from
-  elsewhere is a list of other people's mistakes; this one is the unit's own.
-- **The proposer did not propose.** All three revisions were the same text: the standing
-  orders with the title line gone and two spaces added at the end of rules 1 to 34. Nothing
-  in any rule changed. The three prompts were identical, because nothing was kept between
-  rounds, and three seeds at temperature 0.2 gave the same reply. This run therefore measured
-  a loop with nothing to choose between, not an optimiser.
-- **The loop scored a copy as a revision.** Its "same as the best" check compares the exact
-  text, and the copy differed in its title and its spaces, so each round asked the ten
-  training questions again: 6 of 10 each time, against 7, and each was dropped. The check
-  needs to compare the numbered rules, not the bytes.
-- **A change that changes nothing still moved a question.** The one training question the copy
-  lost was Q-22: with the standing orders as they are LANTERN said "Not in evidence."; with the
-  copy it said "The question refers to a private note made by Simon Clarke", which nothing in
-  its context says. One question in ten moved on a whitespace change. That is the noise
-  chapter 02's interval (46 to 81% on 26 questions) describes, and it is why a gain of one
-  question is not a finding.
-- **Nothing reached the held-out split.** The best was round 0, today's standing orders, so
-  the held-out score is chapter 02's recorded baseline on those questions: 4 of 8, with none
-  fixed and none broken. Chapter 04's rewrite by hand passed 5 of 8; the one it adds is Q-23.
-  "Not in evidence" was kept, and no answer from the training questions was written into the
-  rules, because no rule was written at all.
-- **The loop's guard against overfitting held, and was not tested.** The proposer was shown
-  0 of the 8 held-out questions. Whether a revision that fits the ten training questions
-  holds on the rest is the question this chapter asks, and this run produced no revision to
-  ask it of.
+  elsewhere is a list of other people's mistakes; this one is the unit's own. The chapter 16
+  line is that chapter's run as it was recorded when this one ran (12:50), before chapter 16
+  was run again.
+- **The overfitting beat did not show on this run, because no revision beat the orders.**
+  Round 1 returned the same numbered rules as round 0 and was not scored. Round 2 added three
+  rules and passed 7 of 10, the same as the orders, so it was dropped; round 3 added two and
+  passed 6. The best stayed round 0, the standing orders as they are, and its held-out score
+  is chapter 02's baseline on those questions: 4 of 8, none fixed and none broken. A loop can
+  only overfit through a revision it keeps.
+- **The proposer wrote at the failures it was shown.** The three training failures were Q-20,
+  Q-24 and Q-26. Round 2's new rules were "If a tool is not connected, say "not in evidence"",
+  "State amounts without currency symbols" and "Use the full names of entities, including
+  Ltd, and do not rephrase them": rules aimed at Q-24's answer about an unconnected tool and
+  Q-26's grader, which forbids a currency and a rephrased name. None of the three moved a
+  training question.
+- **A new rule can break what it was not written for.** Round 3 added the first two of those
+  rules and lost Q-10, which the orders passed: LANTERN answered "The tool to look up company
+  information is not connected in this session. Nothing was checked." for a question the case
+  memory answers. That is one question in ten, the kind of move chapter 02's interval (46 to
+  81% on 26 questions) says is not a finding either way.
+- **Why the held-out split is the evidence.** The loop keeps whatever scores more on the ten
+  questions it is scored on, and the proposer reads what each failed answer had to contain.
+  A revision that wins there can win by fitting those ten, even by writing their answers into
+  the rules; only questions the proposer never saw can say whether it is better. Here the
+  proposer was shown 0 of the 8 held-out questions, and no answer from the training questions
+  was written into any rule.
+- **An earlier run scored copies.** Before the fix, every revision was the orders with their
+  title gone and trailing spaces, and the loop scored each because it compared the bytes; it
+  now compares the numbered rules with every earlier round.
 - **Small splits move in whole questions.** On 8 held-out questions one answer is 12.5 points.
   The two rules-in-conflict questions both went to training, so the held-out score says
   nothing about that slice.
-- **The hand rewrite has seen more than the loop.** Chapter 04's rewrite was written from the
-  baseline's failures over all 26 questions, so on the held-out questions it is not a clean
-  comparison either.
+- **The hand rewrite has seen more than the loop.** Chapter 04's rewrite, 5 of 8 held out, was
+  written from the baseline's failures over all 26 questions, so on the held-out questions it
+  is not a clean comparison either.
 
 ## Run it
 
@@ -128,10 +133,10 @@ for n in range(1, rounds + 1):
 make lesson N=22
 ```
 
-Steps 1, 2, 4 and 5 are code. Step 3 is three proposals and three scorings of the ten
-training questions; chapter 02's baseline and chapter 04's rewrite were read from this
-machine's recorded results, not asked again. In the recorded run the 42 model calls took
-260.6 seconds of model time on the shared machine. On a machine without those recorded
+Steps 1, 2, 4 and 5 are code. Step 3 is three proposals and a scoring of the ten training
+questions for each revision that is not a copy; chapter 02's baseline and chapter 04's rewrite were read from this
+machine's recorded results, not asked again. In the recorded run the 28 model calls took
+259.45 seconds of model time on the shared machine. On a machine without those recorded
 results they are asked too: about 26 more calls.
 
 ## What you should see
@@ -139,7 +144,7 @@ results they are asked too: about 26 more calls.
 ![Chapter 22 terminal output](../../docs/screenshots/22-common-pitfalls.png)
 
 What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Mac, 23 November
-2026, 13:19 to 13:24; 42 calls, 232,848 prompt tokens and 4,557 output tokens in all):
+2026, 13:40 to 13:44; 28 calls, 151,248 prompt tokens and 3,758 output tokens in all):
 
 | Line on the board | Chapter | What the recorded run shows | Recorded |
 |---|---|---|---|
@@ -157,9 +162,9 @@ out Q-04, Q-06, Q-09, Q-12, Q-16, Q-19, Q-21, Q-23; 0 shared.
 | Round | Rules | Words | Passed (training) | Decision |
 |---|---|---|---|---|
 | 0 | 35 | 622 | 7 of 10 | the standing orders as they are |
-| 1 | 35 | 616 | 6 of 10 | dropped: 6 against 7 |
-| 2 | 35 | 616 | 6 of 10 | dropped: 6 against 7 |
-| 3 | 35 | 616 | 6 of 10 | dropped: 6 against 7 |
+| 1 | 35 | 616 | | not scored: the same rules as round 0 |
+| 2 | 38 | 647 | 7 of 10 | dropped: 7 against 7 |
+| 3 | 37 | 633 | 6 of 10 | dropped: 6 against 7 |
 
 | Standing orders | Training (10) | Held out (8) |
 |---|---|---|
@@ -167,20 +172,16 @@ out Q-04, Q-06, Q-09, Q-12, Q-16, Q-19, Q-21, Q-23; 0 shared.
 | the loop's best (round 0) | 7 | 4 |
 | chapter 04's rewrite, by hand | | 5 |
 
-- Revisions scored 3, kept 0. Rules before 35, after 35; 0 new or reworded.
+- Revisions scored 2, kept 0. The best (round 0): rules before 35, after 35; 0 new or reworded.
 - Answers from the training questions written into the best: none. "Not in evidence": kept.
 - Held-out questions shown to the proposer: 0 of 8.
 - Every revision, prompt and answer is in `.scratch/22/history.json`.
 
 What did not happen: the plan was to show what an optimiser learns that holds only on the
-cases it saw, and whether its best prompt drops "not in evidence". The proposer wrote no
-revision, so neither was shown. The run's closing note says "a context tuned on what it is
-scored against looks better than it is"; that sentence is fixed text in `run.py`, and this
-run did not show it. Two fixes are needed before the beat can be measured: the loop should
-compare a candidate's numbered rules with the best's, not its bytes, so a copy is not scored;
-and the proposer should be told which revisions were already dropped, so a later round can
-differ from an earlier one. The finding's sentence should be printed only when the training
-gain exceeds the held-out gain.
+cases it saw, and whether its best prompt drops "not in evidence". No revision passed more
+training questions than the orders, so none was kept, and there was no tuned prompt to test
+on the held-out split or to check for "not in evidence". The run's finding says what it
+measured: a gain of 0 on the questions the loop saw and 0 on those it did not.
 
 ## On a hosted model
 
@@ -198,7 +199,7 @@ Not run: no hosted key was available when this chapter was built; there are no h
 beside the local ones yet.
 
 Expectations, not measurements: a larger proposer will likely change rules where qwen3:8b
-returned a copy, write shorter, cleaner revisions and copy fewer answers into the rules, and a larger answering model leaves fewer
+returned a copy in an earlier run, write shorter, cleaner revisions and copy fewer answers into the rules, and a larger answering model leaves fewer
 training failures to fix, so the loop has less to find; those are partly small-model effects.
 That a score on the questions the loop was shown overstates the gain, that held-out
 questions must never reach the proposer, and that a rule nothing in the training set needs
@@ -224,7 +225,7 @@ whether its best revision still says "not in evidence".
 **Build it.** Write `split` and `optimise` in [`practice/exercise.py`](practice/exercise.py):
 
 ```bash
-make exercise N=22          # 9 offline tests
+make exercise N=22          # 10 offline tests
 make hint N=22
 make lesson N=22 ARGS=--mine
 ```
@@ -232,7 +233,7 @@ make lesson N=22 ARGS=--mine
 **Check yourself.** `make quiz N=22`: seven questions.
 
 **Break it.** `make challenge N=22`: your loop on the case; the proposer shown the held-out
-questions; a rule the loop may not drop; and a loop that will not score a copy.
+questions; a rule the loop may not drop; and six rounds instead of three.
 
 `make progress` shows every chapter.
 
@@ -240,11 +241,12 @@ questions; a rule the loop may not drop; and a loop that will not score a copy.
 
 Every line on Varma's board is tied to a recorded run of this lab, 7 of 7, and the last of
 them, who else can write to this machine at night, is written down as left to a person. A
-program asked to rewrite the standing orders returned the same orders three times, without
-their title and with trailing spaces; each copy scored 6 of 10 on training against 7 and was
-dropped, so the best stayed the standing orders as they are, 4 of 8 held out, where chapter
-04's rewrite by hand passes 5. The loop never saw a held-out question, and it never produced a
-revision to test on one. What this run shows about tuning a context is smaller than planned
-and still worth keeping: a change with no content moved one answer in ten.
+program asked to rewrite the standing orders wrote three revisions; one repeated the orders'
+rules and was not scored, one passed 7 of 10 training questions and one 6, against the orders'
+7, so neither was kept. The best stayed the standing orders as they are, 4 of 8 held out, where
+chapter 04's rewrite by hand passes 5. Its new rules aimed at the failures it was shown and
+one of them broke a question it was not aimed at. On this run tuning gained nothing on either
+split; had it gained on training, only the held-out split could have said whether the gain
+was real.
 
 **Next:** [Chapter 23: Friday 7 August](../23-context-in-production/README.md)
