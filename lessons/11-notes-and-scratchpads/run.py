@@ -5,7 +5,7 @@ import json
 from lantern import agent, compaction, context, learn, trail
 from lantern.config import ROOT, load_config
 from lantern.llm import chat
-from lantern.notes import RULE, Notebook
+from lantern.notes import RULE, Notebook, holder
 from lantern.ui import Table, chapter, console, evidence, finding, note, reply, save_shot, step
 
 chapter(
@@ -45,7 +45,7 @@ def book_at(name: str) -> Notebook:
     book = Notebook.open(path)
     if MINE:
         book.problem_with = lambda *a: MINE.problem_with(*a, digest=trail.digest,
-                                                         holder_of=trail.holder_of)
+                                                         holder_of=holder)
     return book
 
 
@@ -139,8 +139,8 @@ p_restart = learn.predict(
     f"The workstation restarts after {RESTART_AFTER} requests. A new session begins with "
     "nothing but the task, or with the task and the notebook. How many statements does each "
     "second session open that the first had already opened?",
-    ["Both reopen everything", "Without notes it reopens them; with notes it opens none again",
-     "Neither reopens anything"])
+    ["The session without notes reopens more", "Both reopen the same number",
+     "The session with notes reopens more"])
 table = Table(title=f"Stopped after {RESTART_AFTER} requests, then started again")
 for col in ("arm", "hops found", "totals right", "requests", "tokens, all requests",
             "statements opened", "notes", "stopped"):
@@ -161,8 +161,7 @@ again_b = len(set(opened_b1) & set(opened_b2))
 note(f"Without notes the second session reopened {again_a} of the {len(set(opened_a1))} "
      f"statements the first had read. With the notebook, which held {kept_at_restart} flows "
      f"at the restart, it reopened {again_b}.")
-learn.reveal(p_restart, answer=0 if again_a and again_b >= again_a else 1 if again_a > again_b
-             else 2,
+learn.reveal(p_restart, answer=0 if again_a > again_b else 1 if again_a == again_b else 2,
              why="Notes are context the agent wrote for itself and can read again. They are "
              "for one task: what should outlive the task is a memory, and that is decided "
              "differently.")

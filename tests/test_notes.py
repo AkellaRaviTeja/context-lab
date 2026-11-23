@@ -48,3 +48,13 @@ def test_questions_are_open_until_closed(tmp_path):
     assert book.close_question(id="1", answer="Tidewater Holdings Trust") == {"closed": True}
     assert "open question" not in book.text()
     assert book.close_question(id=9)["closed"] is False
+
+
+def test_figures_from_a_model_are_read_as_numbers_and_bad_ones_refused(tmp_path):
+    book = Notebook.open(tmp_path / "notes.json")
+    assert book.note_flow(**{**GOOD, "payments": "9", "total": 2262000})["kept"] is True
+    assert book.flows[0]["payments"] == 9 and book.flows[0]["total"] == "2262000.00"
+    for bad in ({"payments": 9.5}, {"payments": None}, {"total": ["2262000.00"]},
+                {"total": "n/a"}):
+        assert "whole number" in book.note_flow(**{**GOOD, **bad})["refused"], bad
+    assert len(book.flows) == 1

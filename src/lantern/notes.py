@@ -9,6 +9,7 @@ compared with what that statement's tool result said before it is kept.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -52,8 +53,8 @@ class Notebook:
             self.refused.append(problem)
             self.save()
             return {"kept": False, "refused": problem}
-        note = {"payer": payer, "payee": payee, "payments": int(payments),
-                "total": f"{_number(total):.2f}", "source": source}
+        note = {"payer": payer, "payee": payee, "payments": int(number(payments)),
+                "total": f"{number(total):.2f}", "source": source}
         self.flows = [f for f in self.flows if (f["payer"], f["payee"]) != (payer, payee)]
         self.flows.append(note)
         self.save()
@@ -62,26 +63,8 @@ class Notebook:
     def problem_with(self, payer: str, payee: str, payments: Any, total: Any, source: str
                      ) -> str | None:
         """Why a flow cannot be kept, or None. The source's own digest is the test."""
-        if not source:
-            return "a note needs its source: the file the flow was read from"
-        files = {a["file"] for a in trail.accounts()}
-        if source not in files:
-            return f"no statement named {source!r} is on file"
-        paid = {p["payee"]: p for p in trail.digest(source)["paid_out_to"]}
-        if trail.holder_of(source) != payer:
-            return f"{source} is the statement of {trail.holder_of(source)}, not of {payer}"
-        if payee not in paid:
-            return f"{source} shows no payment to {payee}"
-        try:
-            if abs(_number(total) - float(paid[payee]["total"])) > 0.005:
-                return (f"{source} gives {paid[payee]['total']} to {payee}, the note says "
-                        f"{total}")
-            if int(payments) != paid[payee]["payments"]:
-                return (f"{source} shows {paid[payee]['payments']} payments to {payee}, the "
-                        f"note says {payments}")
-        except (TypeError, ValueError):
-            return "payments must be a whole number and total a figure"
-        return None
+        return problem_with(payer, payee, payments, total, source, digest=trail.digest,
+                            holder_of=holder)
 
     def note_question(self, question: str = "", **_: Any) -> dict[str, Any]:
         self.questions.append({"id": len(self.questions) + 1, "question": question,
@@ -129,5 +112,51 @@ class Notebook:
                          "close_question": self.close_question}
 
 
-def _number(value: Any) -> float:
-    return float(str(value).replace(",", ""))
+def holder(file: str) -> str | None:
+    """Whose statement `file` is, or None when no statement by that name is on file."""
+    return next((a["holder"] for a in trail.accounts() if a["file"] == file), None)
+
+
+def number(value: Any) -> float | None:
+    """A figure as a number, or None. A model may write 9, "9", 9.0 or "2,262,000.00"; None, a
+    list or "n/a" is no figure."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.replace(",", "").strip())
+        except ValueError:
+            return None
+    return None
+
+
+def problem_with(payer: str, payee: str, payments: Any, total: Any, source: str, *,
+                 digest: Callable[[str], dict[str, Any]],
+                 holder_of: Callable[[str], str | None]) -> str | None:
+    """Why a flow cannot be kept, or None when it can. The source's own digest is the test.
+
+    `holder_of(file)` is the account holder of a statement, or None when there is no such
+    statement; `digest(file)` is what the statement tool returned for it. The checks run in
+    order and the first that fails is the reason.
+    """
+    if not source:
+        return "a note needs its source: the file the flow was read from"
+    owner = holder_of(source)
+    if owner is None:
+        return f"no statement named {source!r} is on file"
+    if owner != payer:
+        return f"{source} is the statement of {owner}, not of {payer}"
+    paid = {p["payee"]: p for p in digest(source)["paid_out_to"]}
+    if payee not in paid:
+        return f"{source} shows no payment to {payee}"
+    n, t = number(payments), number(total)
+    if n is None or t is None or n != int(n):
+        return "payments must be a whole number and total a figure"
+    if abs(t - float(paid[payee]["total"])) > 0.005:
+        return f"{source} gives {paid[payee]['total']} to {payee}, the note says {total}"
+    if int(n) != paid[payee]["payments"]:
+        return (f"{source} shows {paid[payee]['payments']} payments to {payee}, the note says "
+                f"{payments}")
+    return None
