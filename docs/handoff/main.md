@@ -1,5 +1,5 @@
 # context-lab, Case File 06 (What LANTERN Remembers): built locally, hosted not run
-Updated: 2026-11-23. Branch keel-c/quality-bar-731ca6 (a worktree), 56 commits on main. Nothing
+Updated: 2026-11-23. Branch keel-c/quality-bar-731ca6 (a worktree), stacked on main. Nothing
 pushed.
 Gate: `make check` and `make release-check` pass: ruff clean, 494 passed, prose 0 problems,
 structure 23 lessons 0 drafts, notebooks 23 current. Capstone reference solution 16 of 16
