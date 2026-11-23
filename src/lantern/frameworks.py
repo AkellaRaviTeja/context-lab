@@ -96,6 +96,7 @@ def mem0_tasks(memory: Any, *, sourced: str, sourced_source: str, sourced_author
     meta = {"entry": "M-08", "author": "eow-fin-07", "via": "svc-lantern-sync", "source": ""}
     added = results(memory.add([{"role": "user", "content": EIGHTH}], user_id="eow-fin-07",
                                run_id=INQUIRY, metadata=meta))
+    eighth_ids = {a.get("id") for a in added if a.get("id")}  # what the eighth entry became
     added += results(memory.add([{"role": "user", "content": sourced}], user_id=sourced_author,
                                 run_id=INQUIRY, metadata={"entry": "M-10", "author": sourced_author,
                                                           "via": "lantern-ui",
@@ -118,7 +119,10 @@ def mem0_tasks(memory: Any, *, sourced: str, sourced_source: str, sourced_author
     out["recalled_says_cleared"] = any(_says_cleared(f.get("memory", "")) for f in found)
 
     every = results(memory.get_all(filters={"run_id": INQUIRY}))
-    first = next((m for m in every if "pellmar" in plain(m.get("memory", ""))), None)
+    # the eighth entry's memory: by the id its add returned, or the entry it was tagged with;
+    # never "the first that mentions Pellmar", which another line can also be
+    first = next((m for m in every if m.get("id") in eighth_ids
+                  or ((m.get("metadata") or {}).get("entry") == "M-08")), None)
     kept_meta = (first or {}).get("metadata") or {}
     out["author_kept"] = kept_meta.get("author") == "eow-fin-07" or \
         (first or {}).get("user_id") == "eow-fin-07"

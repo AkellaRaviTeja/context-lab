@@ -92,3 +92,22 @@ def test_every_surveyed_library_says_why_it_was_not_run():
 def test_the_history_check_looks_for_what_was_stored_not_only_the_line_given():
     out = run(FakeMem0())
     assert out["stored_text_readable"], "the DELETE row holds what was stored, so it is readable"
+
+
+class ReversedMem0(FakeMem0):
+    """get_all in another order, as Mem0's vector store may return it."""
+
+    def get_all(self, *, filters=None, top_k=20):
+        return {"results": list(reversed(self.rows.values()))}
+
+
+def test_the_audited_memory_is_the_eighth_entry_whatever_order_get_all_returns():
+    # Recorded in chapter 21's second run: an M-10 memory that names Pellmar came first and
+    # was deleted in place of the eighth entry.
+    fake = ReversedMem0()
+    ticks = iter(range(100))
+    out = frameworks.mem0_tasks(fake, sourced="Reserve MTB-31-02290 held for Pellmar Nominees.",
+                                sourced_source="MTB-ORD-0001", clock=lambda: float(next(ticks)))
+    assert out["author_kept"] and out["route_kept"], "the eighth entry's metadata was audited"
+    left = [r["metadata"].get("entry") for r in fake.rows.values()]
+    assert "M-08" not in left and "M-10" in left, f"the eighth was deleted, not M-10: {left}"
