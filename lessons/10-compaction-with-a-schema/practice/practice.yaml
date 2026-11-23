@@ -1,0 +1,148 @@
+# Chapter 10 practice. Read by scripts/learn.py (make quiz / exercise / hint / challenge N=10).
+chapter: "10"
+title: Who paid whom
+
+objectives:
+  - Compact a conversation into a form with named fields that must survive.
+  - Check a compacted state in code against a ledger of tool results kept outside the window, and refuse it with reasons.
+  - Explain why a summary of a summary loses more than the first summary did.
+  - Say why a compacted state that keeps every fact still needs a check on the report built from it.
+
+quiz:
+  - q: The first paragraph kept 5 of the 6 flows the tools had returned; the second kept 1 of 8. Why did the second lose so much more?
+    options:
+      - The second compaction had a smaller token limit.
+      - "It was written from the first paragraph and the turns since. The model decided again what mattered, from less, and nothing checked what it dropped."
+      - The model ran out of output tokens.
+      - The later statements were harder to read.
+    answer: b
+    why: >
+      Each free summary is a new document written by the model. A summary of a summary keeps
+      only what both rounds chose to keep. Compacting from the source, or into a checked form,
+      avoids the second choice.
+
+  - q: Why does the check compare the form with a ledger kept in code, and not with the conversation?
+    options:
+      - The ledger is faster to search.
+      - The conversation is in a different format.
+      - The model cannot read the ledger.
+      - "After a compaction the tool results are no longer in the conversation. The ledger is the only record left to compare with, and the model cannot change it."
+    answer: d
+    why: >
+      What the check compares against must survive the compaction it checks. A ledger outside
+      the window does; the turns it replaces do not.
+
+  - q: In the recorded run no form was refused, every form held every flow, and the report held 0 of 7 hops. What does that show?
+    options:
+      - "Keeping a fact in the context and using it are separate. The check proves the facts survived; it says nothing about what the agent reports from them."
+      - The check is broken.
+      - The schema had the wrong fields.
+      - The model cannot read JSON.
+    answer: a
+    why: >
+      The report listed four bank charges copied from its own form and none of the hops. A
+      second check, on the report, was what brought the hops back.
+
+  - q: A flow to a bank is not required in the form. Why is a flow to a bank still refused when no tool returned it?
+    options:
+      - Banks are never payees.
+      - "Bank charges are not hops, so leaving them out is allowed. An invented flow is a claim no tool made, whoever the payee is, and the check exists to refuse those."
+      - The form has no room for banks.
+      - To keep the form short.
+    answer: b
+    why: >
+      Before the fix of 21 November an invented flow to a bank went through because banks were
+      skipped entirely. The rule now separates what may be left out from what may be made up.
+
+  - q: The form filled in by code cannot drop a payer. What can it not do?
+    options:
+      - Hold totals.
+      - List the files read.
+      - "Record an open question or a reason for opening an account. Nothing in a tool result is a question, so a form built from tool results has none."
+      - Be read by the model.
+    answer: c
+    why: >
+      The model's first form held one open question about Osprey Point. Code keeps the figures
+      exactly and keeps nothing a model would have had to think of.
+
+  - q: "Why does the check compare totals as numbers, and match a total in a report as a whole figure?"
+    options:
+      - It is faster than comparing strings.
+      - "1,873,000.00 and 1873000.00 are the same total and must pass; 2262000 found inside 22620000 is a different total and must not."
+      - Models always write totals with commas.
+      - To ignore the pence.
+    answer: b
+    why: >
+      A check that compares text refuses a correct form for its commas, and one that searches
+      for digits inside longer numbers accepts a wrong one. The whole-figure match was added
+      after the review of 21 November.
+
+  - q: With the report also checked against the ledger, the run reached 6 of 7 hops but stopped at the turn limit after being sent back 8 times. What is the cost of that check?
+    options:
+      - None; it only reads the report.
+      - It makes the model slower at each request.
+      - "Each send-back is another request. The checked arm used 23,228 tokens, about as many as the trace that was never compacted, and ran out of turns before the last hop."
+      - It makes the compaction lose more.
+    answer: c
+    why: >
+      Compaction kept every request under 1,800 tokens. The report check bought the hops back
+      with requests, not with room.
+
+exercise:
+  title: The check on a compacted state
+  task: |
+    Open `lessons/10-compaction-with-a-schema/practice/exercise.py` and write `number` and
+    `check`, the function `compaction.with_schema` runs on every form the model fills in.
+    `seen_flows` is written for you. The tests pass in forms and a ledger as plain dicts, so no
+    model is needed. They check that:
+
+    - a complete form has no problems,
+    - a flow with an empty field is named by its number, and does not count as held,
+    - a dropped flow is reported with the file it came from,
+    - a total is compared as a number, and a count must be the tool's,
+    - a flow no tool returned is refused, a bank included, while a real bank charge passes,
+    - every file in the ledger must be in `accounts_read`,
+    - figures that are not strings are checked, and a form that is not a dict is reported, not a crash.
+  hints:
+    - |
+      Return `["the form is not a JSON object"]` at once when `state` is not a dict. Index
+      `want = {(f["payer"], f["payee"]): f for f in seen_flows(ledger)}`, and every pair the
+      ledger holds, banks included, as `returned`.
+    - |
+      Walk `state.get("flows", [])` with `enumerate(..., 1)`. A flow with any of the five fields
+      in `(None, "", [])` is a problem and is skipped; the rest go into `got` by (payer, payee).
+    - |
+      For each key in `want`: absent from `got` is missing; `number(g["total"]) !=
+      number(f["total"])` is a wrong total; `number(g["payments"]) != f["payments"]` a wrong
+      count. Then every key in `got` not in `returned` is invented. Last, the files in the
+      ledger that `accounts_read` leaves out, sorted.
+  after: >
+    Run every form LANTERN fills in through your check: `make lesson N=10 ARGS=--mine`, then
+    `make challenge N=10`.
+
+challenges:
+  - id: your-check
+    title: Your check, on every form
+    goal: Run the lesson with the check you wrote, and see the model's forms compacted under it.
+    change: "Pass the exercise first, then run `make lesson N=10 ARGS=--mine`."
+    target: "mine == true and form_compactions > 0"
+
+  - id: compact-more-often
+    title: Compact more often
+    goal: >
+      Lower the threshold so the trace is compacted more often, and count what the paragraph
+      keeps once it has been summarised several times over.
+    change: Set THRESHOLD = 1000 in lessons/10-compaction-with-a-schema/run.py.
+    target: "threshold < 1500 and paragraph_compactions > 2"
+    reset: git checkout lessons/10-compaction-with-a-schema/run.py
+
+  - id: no-report-check
+    title: "Break it: keep every fact and check nothing else"
+    goal: >
+      Take the report check away from the last arm. The form still holds every flow; see how
+      many hops the report holds without being sent back.
+    change: >
+      In step 5 of lessons/10-compaction-with-a-schema/run.py, change `report_checked=True` to
+      `report_checked=False`.
+    target: "both_found < 3"
+    reset: git checkout lessons/10-compaction-with-a-schema/run.py
