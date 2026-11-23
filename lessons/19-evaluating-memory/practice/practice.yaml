@@ -28,30 +28,34 @@ quiz:
       - It cannot handle capital letters.
     answer: c
     why: >
-      In the recorded run it disagreed with the negation grader on 6 of 15 graded answers, in
-      both directions: it failed T-4 and P-1, which deny the claim in words.
+      In the recorded run it disagreed with the negation grader on 5 of 15 graded answers. On
+      the rebuilt store it failed T-2, T-4 and P-1, which deny the claim in words ("No mention
+      of ... licensing status", "not identified as ordinary client money").
 
-  - q: On the rebuilt store, T-1 answered "Not in evidence. [E-01]" and failed. Why?
+  - q: A first run of this chapter's graders failed the refusal "Not in evidence. [E-01]" on a not-told check. Why?
     options:
       - It affirmed that Pellmar was cleared.
-      - "The abstention grader reads every number in the answer, and the digits of the entry id E-01 count as a figure the question did not give. The answer was right; the grader was wrong."
+      - "The abstention grader read every number in the answer, and the digits of the entry id E-01 counted as a figure the question did not give. The answer was right; the grader was wrong."
       - It cited the wrong entry.
       - Not in evidence is not an accepted wording.
     answer: b
     why: >
-      T-3 and N-2 failed the same way, on [M-01] and [M-13]. A grader written to catch a refusal
-      that slips in a figure also catches a refusal that cites its source.
+      A grader written to catch a refusal that slips in a figure also caught a refusal that
+      cites its source. The fix blanks entry ids before the figures are read, with a test built
+      from the recorded answer. In the recorded run after the fix, the same refusal passed.
 
-  - q: With the store's gate taken away, T-1 answered "Yes, the FIU cleared Pellmar Nominees Ltd on 3 August [M-17]." Why did make memory-gate not count it?
+  - q: The first run recorded T-1 as a fail on the rebuilt store, on a grader fault. With the store's gate taken away, T-1 then said Pellmar was cleared. What could make memory-gate see?
     options:
-      - The gate does not run T-1.
-      - "The gate fails only on a case that passed when its verdicts were recorded. T-1 had failed then, on a grader fault, so a real failure later is invisible to it."
-      - The answer passed the grader.
-      - The planted line was held.
+      - The new failure; the gate checks every case.
+      - "Nothing for T-1. The gate fails only on a case that passed when its verdicts were recorded, so a wrong fail in the record hides any real failure later."
+      - Only the planted line, because it is held.
+      - Everything, once the model is changed.
     answer: b
     why: >
-      A gate that compares against recorded passes is only as good as the verdicts it recorded.
-      A wrong fail in the record is a blind spot, and it was the plant that walked through it.
+      After the graders were fixed, T-1 passed on the rebuilt store and was recorded as a pass.
+      With the gate taken away it said "Yes, the FIU cleared Pellmar Nominees Ltd on 3 August"
+      again, and this time the gate counted it: 2 regressions, T-1 and P-1. A gate is only as
+      good as the verdicts it recorded.
 
   - q: The suite asks each case on the rebuilt store with the 8 closest entries by BM25. What does a pass say?
     options:
@@ -83,21 +87,27 @@ exercise:
     `abstains` is imported for you. The tests are answers written to fool a grader, so no model
     is needed. They check that:
 
-    - a plain "No" passes and a plain "Yes" fails,
+    - an opening "No." or "No," passes and an opening "Yes," fails, but "No escalation" and
+      "No doubt" are not denials,
     - "not cleared" is not "cleared", and the word on its own affirms,
     - a negation after the word does not count, and every use of the word needs its own,
+    - a negation counts back to the start of its clause, up to ten words, so "No mention of
+      Ostrander Marine Finance SA's licensing" denies,
     - a stem such as "licen" catches "licensed" and "licence",
     - a refusal passes, and an empty answer fails.
   hints:
     - |
-      `words = re.findall(r"[a-z']+", answer.lower().replace("’", "'"))`. An empty list is
-      False. Then decide on `words[0]` being "no" or "yes".
+      Lower-case the answer, blank out NOT_A_NEGATION, and split it with
+      `re.split(r"[.;:!?]", text)`. For each clause, `found = re.findall(r"[a-z']+", part)`;
+      extend `clause` with `[len(words)] * len(found)` before extending `words`. An empty
+      `words` is False.
     - |
-      `uses = [i for i, w in enumerate(words) if w.startswith(claim.lower())]`. With no uses,
-      return `abstains(answer)`.
+      `re.match(r"\s*(no|yes)\b\s*[.,;:!]", text)` finds an answer that opens "No." or "Yes,";
+      return whether it was "no". Then `uses = [i for i, w in enumerate(words) if
+      w.startswith(claim.lower())]`, and with no uses return `abstains(answer)`.
     - |
-      For each use `i`, look at `words[s:i]` where `s = max(0, i - 6, previous_use + 1)`, and
-      require `NEGATION.search(" ".join(...))`. Every use must pass.
+      For each use `i`, look at `words[s:i]` where `s = max(clause[i], i - 10,
+      previous_use + 1)`, and require `NEGATION.search(" ".join(...))`. Every use must pass.
   after: >
     Grade every retraction and planted case with yours: `make lesson N=19 ARGS=--mine`, then
     `make challenge N=19`.
@@ -109,25 +119,25 @@ challenges:
     change: "Pass the exercise first, then run `make lesson N=19 ARGS=--mine`."
     target: "mine == true and new_planted == 1 and gate_caught > 0"
 
-  - id: refusals-with-a-source
-    title: Accept a refusal that cites its source
+  - id: six-words-back
+    title: "Break it: the first run's look-back"
     goal: >
-      Make the graders accept "Not in evidence. [E-01]" as a refusal, so that the rebuilt store's
-      refusals on the retraction cases pass.
+      Put back the first run's fault: a negation counts only six words back. A refusal that
+      opens a long clause with "No mention of" then reads as an affirmation on the rebuilt store.
     change: >
-      In grade() in lessons/19-evaluating-memory/suite.py, remove entry ids such as [E-01] and
-      [M-13] (`re.sub(r"\[[A-Z]-\d+\]", "", answer)`) from the text given to `denies` and
-      `abstains`, and keep the full answer for `cites`.
-    target: "new_retraction >= 3 and new_passed > 10"
-    reset: git checkout lessons/19-evaluating-memory/suite.py
+      In your passing practice/exercise.py, change the ten-word look-back to six
+      (`i - 6`), then run `make lesson N=19 ARGS=--mine`.
+    target: "mine == true and new_retraction < 4"
+    reset: git checkout lessons/19-evaluating-memory/practice/exercise.py
 
   - id: weak-grader
     title: "Break it: a grader that reads the word"
     goal: >
       Grade with the weak grader, which fails any answer containing the claim's word. The rebuilt
-      store's denial of the plant then fails, and the gate has nothing to catch.
+      store's denials in words then fail: the plant's, and the retraction cases that name the
+      claim to deny it.
     change: >
       In lessons/19-evaluating-memory/run.py, set
       `DENIES = lambda answer, claim: claim not in answer.lower()`.
-    target: "new_planted == 0 and gate_caught == 0"
+    target: "new_planted == 0 and new_retraction < 4"
     reset: git checkout lessons/19-evaluating-memory/run.py

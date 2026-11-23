@@ -1,5 +1,5 @@
 {
-  "recorded": "2026-11-23T11:48:53",
+  "recorded": "2026-11-23T12:41:35",
   "model": "qwen3:8b",
   "cases": {
     "R-1": true,
@@ -8,12 +8,12 @@
     "R-4": true,
     "R-5": true,
     "R-6": true,
-    "T-1": false,
-    "T-2": false,
-    "T-3": false,
+    "T-1": true,
+    "T-2": true,
+    "T-3": true,
     "T-4": true,
     "N-1": true,
-    "N-2": false,
+    "N-2": true,
     "N-3": true,
     "P-1": true
   }
