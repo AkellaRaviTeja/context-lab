@@ -314,7 +314,8 @@ else:
 finding(f"""
 {len(shown)} of the {len(BOARD)} lines on Varma's board have a recorded run of this lab
 behind them. A program asked to rewrite the standing orders wrote {ROUNDS} revisions, scored
-each on {len(train_ids)} training questions, and kept the one from round {top['round']}: on
+{scored} of them on {len(train_ids)} training questions (the others repeated rules already
+tried), and kept the one from round {top['round']}: on
 training {k['base_train']} became {best_train}, held out {k['base_held']} became
 {k['best_held']} of {len(held_ids)}, where chapter 04's rewrite by hand passes
 {k['rewrite_held']}. It wrote {len(leaked_train)} answer(s) from the cases it saw into the
