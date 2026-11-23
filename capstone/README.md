@@ -56,6 +56,13 @@ fills your store from `case/state/memory-write-log.jsonl` through your policy, a
 questions in `live_questions.jsonl`, and compares with `thresholds.yaml`: the numbers the
 reference solution recorded on the 16 GB Apple silicon Mac with qwen3:8b.
 
+What the reference recorded (`make capstone-live WHICH=solution`, 21 November 2026, qwen3:8b,
+local Ollama on the 16 GB Mac, with other runs sharing the server): 8 of 8 questions passed;
+the four eow-fin-07 entries (M-08, M-12, M-14, M-16) held by the policy and never loaded; the
+chain verified; 9 model calls, 6,895 prompt tokens and 345 output tokens. On "Has the FIU
+cleared Pellmar Nominees?" and the two other questions the false entries used to answer, it
+said "not in evidence", because the only lines that said otherwise were held.
+
 The reference solution is in `capstone/solution/`. Read it after your own passes, as with the
 chapter solutions; `make test` runs the same tests against it so the tests stay honest.
 
