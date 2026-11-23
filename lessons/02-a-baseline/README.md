@@ -123,7 +123,9 @@ About six minutes: the set is asked three times, 26 questions each.
 
 ![Chapter 02 terminal output](../../docs/screenshots/02-a-baseline.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:33, code at commit efbf65b; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 11 November, before the grading
+change of 21 November, gave the same numbers:
 
 - Baseline: 17 of 26, 65%, interval 46% to 81%. By slice: evidence 8 of 8, memory 6 of 6,
   false memory 1 of 6, not told 1 of 4, rules in conflict 1 of 2.
