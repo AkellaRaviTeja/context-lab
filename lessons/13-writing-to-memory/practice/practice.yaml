@@ -64,7 +64,7 @@ quiz:
       The log keeps the hash of each text as written, chained event to event. The same hand that
       edits the file can rebuild the chain, unless the last hash is kept somewhere it cannot reach.
 
-  - q: In the recorded session the model proposed two lines, and the first version of the gate held both because "no document was read". What was wrong?
+  - q: A gate is built at the start of a session with `dict(read)`, a copy of the documents read so far. The model reads two statements, then proposes two lines citing them. Both are held because they cite "no document read in this session". What is wrong?
     options:
       - The model cited the wrong account.
       - The statements were empty.
@@ -72,8 +72,8 @@ quiz:
       - The model did not call the statement tool.
     answer: c
     why: >
-      A gate that checks against a snapshot taken too early holds everything. The fix is one
-      line; the exercise has a test for it.
+      A gate that checks against a snapshot taken too early holds everything, and a gate that
+      holds everything is switched off. The fix is one line; the exercise has a test for it.
 
 exercise:
   title: The write gate
