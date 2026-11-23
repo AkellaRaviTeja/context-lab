@@ -9,7 +9,7 @@ OLLAMA = $(shell docker ps --format '{{.Names}}' 2>/dev/null | grep -qx context-
 
 # Every target here has its script or tool in this repository. Targets for the memory libraries
 # are added with the chapter that brings them.
-.PHONY: help setup install up up-gpu down models doctor lesson lessons shots memory-gate \
+.PHONY: help setup install up up-gpu down models doctor lesson lessons shots memory-gate nightly \
         check release-check lint test prose structure smoke clean \
         hosted-check quiz exercise exercise-reset hint solution challenge progress \
         notebooks notebooks-check notebook case capstone capstone-live
@@ -76,6 +76,9 @@ hosted-check: ## Live, with a key: chapter 09 end to end on the hosted model (sp
 
 smoke: ## Live tests against Ollama
 	uv run pytest -q -m live
+
+nightly: ## Offline: chapter 23's nightly memory audit; exits 1 on any problem
+	uv run python lessons/23-context-in-production/nightly.py
 
 memory-gate: ## Live: chapter 19's memory suite on the rebuilt store; fails on a recorded pass now failing
 	uv run python lessons/19-evaluating-memory/gate.py
