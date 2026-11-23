@@ -111,7 +111,9 @@ About three minutes: a handful of calls, then the 26 questions once.
 
 ![Chapter 03 terminal output](../../docs/screenshots/03-the-budget.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:37, code at commit 350bfd1; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 11 November, before the grading
+change of 21 November, gave the same numbers:
 
 - Input 5,410 tokens, 66% of the 8,192-token window. Tool schemas 1,891 (35%), summaries 1,157
   (21%), standing orders 834 (15%), case memory 508, standing notes 378, evidence 316, the
