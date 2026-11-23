@@ -66,16 +66,17 @@ quiz:
       A scale test is only as hard as the entries it adds. The second challenge adds entries
       that share the question's words and measures recall again.
 
-  - q: The embedding arm took 597 ms a question at 10,250 entries. What is in that number?
+  - q: The embedding arm took 617 ms a question at 10,250 entries, against BM25's 110 ms. What is in the 617 ms?
     options:
       - The model embedding the question and every entry.
-      - "Reading the store from SQLite, scoping it and comparing the question's vector with every entry's in plain Python. The entries' vectors were built once and not timed, and the question's vector was already cached from step 1, so no call to the embedding model was timed."
+      - "Reading the store from SQLite, scoping it, embedding the question with nomic-embed-text, and comparing its vector with every entry's in plain Python. The entries' vectors were built once, before the timer started."
       - Only the embedding model's time.
       - The time to write the store.
     answer: b
     why: >
-      A latency number means what its timer brackets. A session with a new question adds one
-      /api/embed call to that 597 ms; the run did not time it.
+      A latency number means what its timer brackets. An earlier run timed the load with the
+      question's vector already cached and so left the model out; the index is still built
+      outside the timer, as a real store would build it when entries are written.
 
   - q: The scoped store passed 16 of 26 against the whole file's 17. What does the difference say?
     options:
