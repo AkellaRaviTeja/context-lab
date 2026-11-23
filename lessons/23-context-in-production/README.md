@@ -127,7 +127,14 @@ def context_version(parts):
   ok. Somebody must be named to read it, or a session must stop on it with a reason.
 - **A price calculation is not a bill.** The hosted figures are the local tokens, as Ollama
   counted them for qwen3:8b, at the listed Sonnet 5.5 prices; the hosted tokenizer counts
-  differently and caching depends on timing.
+  differently and caching depends on timing. The calculation counts 3 cache writes: the first
+  request, the gap from 09:10 to 09:20 (longer than the 5-minute cache), and the new version at
+  12:15.
+- **What the first recorded run counted wrongly.** It priced the day with one cache write
+  ($0.0280), counted the alarm on a context without the reserve's statement (60%, 21 turns), and
+  ran the scheduled job with no last hash to check. The fix in run.py (commit 969525c) counts
+  a write per version change and per gap over the TTL, counts the request as sent, and starts
+  the job from Thursday's hash; the numbers here are from the run after it.
 
 ## Run it
 
@@ -139,7 +146,7 @@ uv run python lessons/23-context-in-production/nightly.py   # the nightly job on
 Steps 1 and 2, the change log in step 4 and the alarm in step 5 are code (the alarm's token
 counts use qwen3:8b's tokenizer through Ollama). Step 3 and the second Iyer question are 6
 model calls: in the recorded run, 30,887
-prompt tokens, 248 output tokens and 54.2 seconds. The nightly job makes no model call and no
+prompt tokens, 248 output tokens and 54.0 seconds. The nightly job makes no model call and no
 network connection; a cron line for it is in its docstring.
 
 ## What you should see
@@ -156,7 +163,8 @@ What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Ma
 | Written since Thursday 18:00 | 1 (M-17, 01:58, eow-fin-07 through svc-lantern-sync) |
 | Held for a person | 1 |
 | Chain holds Thursday's last hash (0c7bc1499c9a) | yes |
-| Problems; `nightly.py` exit | 0; 0 |
+| Problems | 0 |
+| `nightly.py` as a scheduler runs it, started from Thursday's last hash | chain continues, exit 0 |
 | Context version, last night and this morning | ctx-828ad9f22790, both |
 | Context version after 12:10 | ctx-37dcd045d0ba |
 | Versions in the day | 2 |
@@ -165,48 +173,25 @@ What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Ma
 | "Suspended" in the answer about Iyer | yes before, no after; "No" both times |
 | N-07 after `forget()` | forgotten, text empty; store chain and change log: no problems |
 | Change log entries | 1 |
-| Alarm | ok: 4,668 of 7,792 tokens, 60% of the input budget; largest account tool schemas (1,891) |
-| Turns until it warns at 80% | 21, at about 77 tokens a turn |
+| Alarm, on the request as sent | ok: 5,430 of 7,792 tokens, 70% of the input budget; largest account tool schemas (1,891) |
+| Turns until it warns at 80% | 11, at about 77 tokens a turn |
 | Trace | 13 spans: 6 model calls, 5 answers, 2 sessions |
 | Input tokens on the chat spans, and in `llm.USAGE` | 30,887 and 30,887 |
 
 The context by account (qwen3:8b's tokenizer): standing orders 834, case memory 853, standing
-notes 448, tool schemas 1,891, session evidence 316, session talk 255, the question 71.
+notes 448, tool schemas 1,891, session evidence 1,078 (the reserve's statement included), session
+talk 289, the question 37.
 
 One session, priced (prices from config.yaml, checked 2026-11-21):
 
 | | Requests | Prompt tokens | Output tokens | Seconds | US dollars |
 |---|---|---|---|---|---|
-| local, qwen3:8b (measured) | 6 | 30,887 | 248 | 54.2 | 0.0000 |
+| local, qwen3:8b (measured) | 6 | 30,887 | 248 | 54.0 | 0.0000 |
 | Claude Sonnet 5.5 price, no cache (a calculation, not a bill) | 6 | 30,887 | 248 | | 0.0643 |
-| Claude Sonnet 5.5 price, 4,026-token prefix cached (a calculation, not a bill) | 6 | 30,887 | 248 | | 0.0280 |
+| Claude Sonnet 5.5 price, 4,026-token prefix cached, 3 cache writes (a calculation, not a bill) | 6 | 30,887 | 248 | | 0.0473 |
 
 What did not happen: the plan's Iyer beat was LANTERN's answer changing once the note was
 forgotten. The word "suspended" went; the answer stayed "No", on another ground.
-
-Three readings in this run are weaker than they print, and the code needs a fix for each.
-None is fixed in this commit; the run would have to be repeated after the fix.
-
-- **The cached price assumes one cache write.** `layout.session_cost(..., writes=1)` prices
-  all 6 requests as reading one cached prefix. The prefix changed at 12:10 (the standing notes
-  lost N-07, a new version), so the 12:15 request writes a new one; and in the day's times the
-  gaps from 09:10 to 09:20 and from 09:20 to 12:15 are longer than the 5-minute cache. The
-  $0.0280 is the most favourable case, one cache write for the whole day, not this session's
-  price. The fix: count one write per
-  distinct `version` in `answers`, and one more for every gap longer than the TTL between
-  requests' `at` times.
-- **The alarm counts a context the session did not send.** `budget.spend(parts_now(orders))`
-  counts the sections with the 13 July sample session (316 evidence, 255 talk, 71 question).
-  Every request this morning was built with `baseline.with_evidence`, which adds the reserve's
-  statement, and then asked its own question. So the 60% and the 21 turns are for a smaller
-  context than the one sent. The fix: count `baseline.with_evidence(baseline.asking(parts_now(
-  orders), IYER))`, the request as sent.
-- **The scheduler's run checked no last hash.** `nightly.py` was run with
-  `--out .scratch/23/nightly-cron`, a folder the lesson empties first, so it found no
-  `last-hash` and the chain check had nothing to compare (`production.nightly` counts no last
-  hash as continuing). Its exit 0 shows the job finds the write; it does not show the check
-  against Thursday. The fix: write Thursday's `last_hash` to `nightly-cron/last-hash` before
-  starting it.
 
 ## On a hosted model
 
@@ -275,10 +260,10 @@ given to LANTERN. At 12:10 Professional Standards cleared DS Iyer. The note nami
 suspended was forgotten under a change log line by a.varma, and LANTERN no longer calls him
 suspended, though it still says not to copy him. Strand's second offer to clean up the store
 is declined: the store is the record of who taught LANTERN what, and every false memory in it
-came through his team's sync account, svc-lantern-sync, from hq-sync-01. The context uses 60%
-of its input budget as counted. One session took 6 requests and 30,887 prompt tokens on
-qwen3:8b; priced for Claude Sonnet 5.5, a calculation and not a bill, $0.0643 uncached and at
-least $0.0280 with the prefix cached.
+came through his team's sync account, svc-lantern-sync, from hq-sync-01. The request as sent uses 70%
+of its input budget, and the alarm warns after 11 more turns. One session took 6 requests and 30,887 prompt tokens on
+qwen3:8b; priced for Claude Sonnet 5.5, a calculation and not a bill, $0.0643 uncached and
+$0.0473 with the prefix cached and 3 cache writes.
 
 On Monday the same sync delivers a new LANTERN workstation and model bundle. The model file's
 hash is not the one its publisher lists.
