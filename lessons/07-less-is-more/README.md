@@ -112,7 +112,9 @@ About nine minutes: the evidence slice four times, then all 26 questions twice.
 
 ![Chapter 07 terminal output](../../docs/screenshots/07-less-is-more.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:50, code at commit c20764d; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 12 November, before the grading
+change of 21 November, gave the same numbers:
 
 | Pages added | Tokens added | Spare in the budget | Evidence slice |
 |---|---|---|---|
