@@ -69,6 +69,12 @@ evidence("lantern.compaction.SCHEMA, as the model is asked to fill it in",
          '"accounts_read": [file], "open_questions": [text]}')
 note("Every flow needs all five fields. The check compares each one with the tool result it "
      "came from, kept in a ledger outside the window, and names what is missing or wrong.")
+PROBED = compaction.probe(compaction.check)
+note(f"Before any model fills it in, the check is tried on {PROBED['probes']} broken forms "
+     f"whose fault is known, and on one right form. It refused {PROBED['caught']} of the "
+     f"{PROBED['probes']}" + (f" (missed: {', '.join(PROBED['missed'])})" if PROBED["missed"]
+                             else "") + (" and kept the right one." if PROBED["kept_good"]
+                                         else " and refused the right one too."))
 
 step("2. A paragraph, as in April")
 p_para = learn.predict(
@@ -191,6 +197,9 @@ learn.record(
     both_tokens=both["run"].total_prompt_tokens,
     both_largest=both["run"].largest_request,
     both_stopped=both["run"].stopped.split(":")[0],
+    check_probes=PROBED["probes"],
+    check_caught=PROBED["caught"],
+    check_kept_good=PROBED["kept_good"],
     mine=MINE is not None,
 )
 

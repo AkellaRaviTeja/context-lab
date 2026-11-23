@@ -300,3 +300,46 @@ def report_covers(ledger: dict[str, dict[str, Any]], skip: tuple[str, ...] = ()
                             f"{f['total']}" for f in left)
                 + ". Give the whole report again, every FLOW line, ending with DONE.")
     return check
+
+
+# ---- probes: forms whose answer is known, for a check written by hand ----------------------
+
+PROBE_LEDGER = {
+    "a.csv": {"holder": "Corvane Trading", "paid_out_to": [
+        {"payee": "Arden Logistics", "payments": 3, "total": "84,000.00"},
+        {"payee": "Harbour Bank", "payments": 1, "total": "12.50"}]},
+    "b.csv": {"holder": "Arden Logistics", "paid_out_to": [
+        {"payee": "Tidewater Holdings", "payments": 2, "total": "80,000.00"}]},
+}
+_GOOD = [{"payer": "Corvane Trading", "payee": "Arden Logistics", "payments": 3,
+          "total": "84,000.00", "source": "a.csv"},
+         {"payer": "Arden Logistics", "payee": "Tidewater Holdings", "payments": 2,
+          "total": "80000", "source": "b.csv"}]
+
+
+def _form(flows: list[dict[str, Any]], read: tuple[str, ...] = ("a.csv", "b.csv")) -> dict:
+    return {"flows": flows, "accounts_read": list(read), "open_questions": []}
+
+
+PROBES: list[tuple[str, Any]] = [
+    ("not a JSON object", "Corvane paid Arden 84,000.00"),
+    ("a flow left out", _form(_GOOD[:1])),
+    ("a total changed", _form([_GOOD[0], {**_GOOD[1], "total": "8,000.00"}])),
+    ("a count changed", _form([{**_GOOD[0], "payments": 2}, _GOOD[1]])),
+    ("a flow with no source", _form([_GOOD[0], {**_GOOD[1], "source": ""}])),
+    ("a flow no tool returned", _form([*_GOOD, {"payer": "Tidewater Holdings",
+                                                 "payee": "Pellmar & Co", "payments": 1,
+                                                 "total": "80,000.00", "source": "b.csv"}])),
+    ("an account left out of accounts_read", _form(_GOOD, read=("a.csv",))),
+]
+
+
+def probe(check: Callable[[Any, dict[str, dict[str, Any]]], list[str]]) -> dict[str, Any]:
+    """Run `check` on a right form (it must be kept) and on PROBES (each must be refused).
+
+    The numbers say whether a check works before any model fills in a form: a check that
+    keeps everything catches none of the probes, one that refuses everything keeps no form."""
+    caught = [name for name, form in PROBES if check(form, PROBE_LEDGER)]
+    return {"probes": len(PROBES), "caught": len(caught),
+            "missed": [n for n, _ in PROBES if n not in caught],
+            "kept_good": not check(_form(_GOOD), PROBE_LEDGER)}

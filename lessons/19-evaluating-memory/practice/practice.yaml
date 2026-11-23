@@ -127,7 +127,7 @@ challenges:
     change: >
       In your passing practice/exercise.py, change the ten-word look-back to six
       (`i - 6`), then run `make lesson N=19 ARGS=--mine`.
-    target: "mine == true and new_retraction < 4"
+    target: "mine == true and new_recall == 6 and new_retraction < 4"
     reset: git checkout lessons/19-evaluating-memory/practice/exercise.py
 
   - id: weak-grader
@@ -139,5 +139,5 @@ challenges:
     change: >
       In lessons/19-evaluating-memory/run.py, set
       `DENIES = lambda answer, claim: claim not in answer.lower()`.
-    target: "new_planted == 0 and new_retraction < 4"
+    target: "new_recall == 6 and new_planted == 0 and new_retraction < 4"
     reset: git checkout lessons/19-evaluating-memory/run.py

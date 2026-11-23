@@ -2,6 +2,7 @@
 
 import ast
 import importlib.util
+import json
 import re
 from pathlib import Path
 
@@ -156,16 +157,86 @@ def test_mine_loads_an_exercise_that_defines_a_dataclass(tmp_path, monkeypatch):
     assert learn.mine() is None
 
 
+RECORDED = json.loads((ROOT / "tests" / "fixtures" / "recorded-metrics.json")
+                      .read_text(encoding="utf-8"))
+
+
+def _conditions(target):
+    return [cli.CONDITION.match(part).groups() for part in re.split(r"\s+and\s+", target.strip())]
+
+
+def _empty(target):
+    """The result of a run that measured nothing: every named metric zero, false or empty, as a
+    careless or broken run records it, with `mine` set so the --mine condition is met."""
+    out = {}
+    for name, _op, raw in _conditions(target):
+        want = yaml.safe_load(raw)
+        out[name] = False if isinstance(want, bool) else "" if isinstance(want, str) else 0
+    return {**out, "mine": True}
+
+
 @pytest.mark.parametrize("path", PRACTICE, ids=lambda p: p.parent.parent.name)
 def test_no_challenge_target_passes_whatever_the_run(path):
     """A condition every count meets (>= 0, > -1) checks nothing: the review of 21 November
-    2026 found two. Each condition must be one an unchanged or careless run can miss."""
+    2026 found two. The review of 23 November 2026 found eight more that a run which measured
+    nothing meets (`clash_planted == 0`, `both_found < 3`): each target must be missed by an
+    empty result, and, unless it is a --mine target, by the unchanged recorded run."""
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    chapter = path.parent.parent.name[:2]
+    recorded = RECORDED.get(chapter, {}).get("metrics")
+    assert recorded, f"{chapter}: no recorded metrics; run scripts/snapshot_results.py"
     for c in data.get("challenges", []):
-        for part in re.split(r"\s+and\s+", c["target"].strip()):
-            name, op, raw = cli.CONDITION.match(part).groups()
+        conditions = _conditions(c["target"])
+        for name, op, raw in conditions:
             want = yaml.safe_load(raw)
             if isinstance(want, bool) or not isinstance(want, int | float):
                 continue
             vacuous = (op == ">=" and want <= 0) or (op == ">" and want < 0)
-            assert not vacuous, f"{path}: {c['id']}: {part!r} is met by any count"
+            assert not vacuous, f"{path}: {c['id']}: {name} {op} {raw} is met by any count"
+        met, _ = cli.evaluate(c["target"], _empty(c["target"]))
+        assert not met, \
+            f"{chapter} {c['id']}: {c['target']!r} is met by a run that measured nothing"
+        if any(name == "mine" for name, _, _ in conditions):
+            continue
+        met, lines = cli.evaluate(c["target"], recorded)
+        assert not met, f"{chapter} {c['id']}: the unchanged recorded run already meets it: {lines}"
+
+
+def _solution(lesson):
+    spec = importlib.util.spec_from_file_location(
+        f"solution_{lesson}", ROOT / "lessons" / lesson / "practice" / "solution.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+COMPONENTS = [
+    ("10-compaction-with-a-schema", "compaction", "check", "check_", lambda s, ledger: []),
+    ("15-isolating-context", "isolation", "check_report", "report_", lambda r, pages: []),
+]
+
+
+@pytest.mark.parametrize("lesson,module,attr,prefix,noop", COMPONENTS,
+                         ids=[c[0][:2] for c in COMPONENTS])
+def test_a_no_op_component_misses_the_mine_target(lesson, module, attr, prefix, noop):
+    """Review of 23 November 2026: `mine == true and form_compactions > 0` (10) and
+    `mine == true and readers_sent > 0` (15) were met by a check that accepts everything. The
+    target now needs the run's probe numbers, which only a working check reaches."""
+    import importlib as il
+
+    probe = il.import_module(f"lantern.{module}").probe
+    data = yaml.safe_load((ROOT / "lessons" / lesson / "practice" / "practice.yaml")
+                          .read_text(encoding="utf-8"))
+    target = next(c["target"] for c in data["challenges"] if c["id"] == "your-check")
+    recorded = RECORDED[lesson[:2]]["metrics"]
+
+    def metrics(check):
+        p = probe(check)
+        return {**recorded, "mine": True, f"{prefix}caught": p["caught"],
+                f"{prefix}probes": p["probes"], f"{prefix}kept_good": p["kept_good"]}
+
+    assert not cli.evaluate(target, metrics(noop))[0], "a check that accepts everything passes"
+    assert not cli.evaluate(target, metrics(lambda *a: ["refused"]))[0], \
+        "a check that refuses everything passes"
+    met, lines = cli.evaluate(target, metrics(getattr(_solution(lesson), attr)))
+    assert met, f"the reference solution misses its own target: {lines}"

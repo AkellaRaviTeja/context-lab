@@ -108,9 +108,12 @@ exercise:
 challenges:
   - id: your-check
     title: Your check, on every reader
-    goal: Run the lesson with the check_report you wrote. Every reader the main agent sends should still report.
+    goal: >
+      Run the lesson with the check_report you wrote. Step 1 tries it on seven faulty reports and
+      one sound one before any reader is sent: it must refuse all seven and accept the sound one,
+      and the main agent must then send readers under it.
     change: "Pass the exercise first, then run `make lesson N=15 ARGS=--mine`."
-    target: "mine == true and readers_sent > 0"
+    target: "mine == true and report_caught == 7 and report_kept_good == true and readers_sent > 0"
 
   - id: send-again
     title: Send a reader for the follow-up

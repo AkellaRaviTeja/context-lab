@@ -122,7 +122,7 @@ challenges:
     change: >
       In step 2 of lessons/16-layout-for-the-cache/run.py, straight after `changes = {...}`, add
       `changes["case memory"] = "per question"`.
-    target: "stable_reread_tokens < 1150"
+    target: "stable_reread_tokens > 0 and stable_reread_tokens < 1150"
     reset: git checkout lessons/16-layout-for-the-cache/run.py
 
   - id: timestamp-first

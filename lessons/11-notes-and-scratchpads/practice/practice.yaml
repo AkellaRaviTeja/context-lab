@@ -132,5 +132,5 @@ challenges:
     change: >
       In book_at() in lessons/11-notes-and-scratchpads/run.py, set
       `book.problem_with = lambda *a, **k: None` before returning the book.
-    target: "demo_refused == 0 and notes_refused == 0"
+    target: "demo_kept == true and demo_refused == 0 and notes_refused == 0"
     reset: git checkout lessons/11-notes-and-scratchpads/run.py

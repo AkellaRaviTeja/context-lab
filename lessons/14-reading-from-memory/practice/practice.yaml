@@ -138,7 +138,7 @@ challenges:
       In synthetic() in lessons/14-reading-from-memory/run.py, add a template such as
       `f"{c}: protector of the trust confirmed by {who} on {d} {m} 2026."` to the list. To save
       model time, set `MODEL_ARMS = ()`.
-    target: "recall_bm25_10k < 5"
+    target: "recall_bm25 == 5 and recall_bm25_10k < 5"
     reset: git checkout lessons/14-reading-from-memory/run.py
 
   - id: forget-the-gate

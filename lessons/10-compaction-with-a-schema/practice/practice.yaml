@@ -123,9 +123,12 @@ exercise:
 challenges:
   - id: your-check
     title: Your check, on every form
-    goal: Run the lesson with the check you wrote, and see the model's forms compacted under it.
+    goal: >
+      Run the lesson with the check you wrote. Step 1 tries it on seven broken forms and one right
+      one before any model call: it must refuse all seven and keep the right one, and the model's
+      forms must then be compacted under it.
     change: "Pass the exercise first, then run `make lesson N=10 ARGS=--mine`."
-    target: "mine == true and form_compactions > 0"
+    target: "mine == true and check_caught == 7 and check_kept_good == true and form_compactions > 0"
 
   - id: compact-more-often
     title: Compact more often
@@ -144,5 +147,5 @@ challenges:
     change: >
       In step 5 of lessons/10-compaction-with-a-schema/run.py, change `report_checked=True` to
       `report_checked=False`.
-    target: "both_found < 3"
+    target: "both_found < 3 and both_tokens > 0"
     reset: git checkout lessons/10-compaction-with-a-schema/run.py

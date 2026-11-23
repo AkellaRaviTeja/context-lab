@@ -107,6 +107,12 @@ def ask(arm, messages, item):
 
 
 step("1. Forty-two pages")
+PROBED = isolation.probe(CHECK)
+note(f"Before any reader is sent, the check is tried on {PROBED['probes']} reports whose fault "
+     f"is known, and on one sound report. It refused {PROBED['caught']} of the "
+     f"{PROBED['probes']}" + (f" (missed: {', '.join(PROBED['missed'])})" if PROBED["missed"]
+                             else "") + (" and accepted the sound one." if PROBED["kept_good"]
+                                         else " and refused the sound one too."))
 files = {p.file for p in PAGES}
 need = {f.payer for f in want}
 holder = {a["holder"]: a["file"] for a in trail.accounts()}
@@ -291,6 +297,9 @@ learn.record(
     follow_one_right=a_right,
     follow_readers_right=b_right,
     follow_readers_resent=b_resent,
+    report_probes=PROBED["probes"],
+    report_caught=PROBED["caught"],
+    report_kept_good=PROBED["kept_good"],
     mine=MINE is not None,
 )
 

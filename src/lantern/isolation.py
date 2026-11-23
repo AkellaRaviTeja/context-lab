@@ -244,3 +244,33 @@ def answered(text: str, item: dict[str, Any]) -> bool:
     forms = item["answer"] if isinstance(item["answer"], list) else [item["answer"]]
     return any(baseline.says(text, f) for f in forms) and \
         ("also" not in item or baseline.says(text, item["also"]))
+
+
+# ---- probes: reports whose answer is known, for a check written by hand --------------------
+
+PROBE_PAGES = ["corvane-trading.p1", "corvane-trading.p2", "corvane-trading.p3"]
+_LINE = "LINE: Corvane Trading -> Arden Logistics | 3 payments | total 84,000.00 | source: {}"
+PROBE_GOOD = (_LINE.format("corvane-trading.p1, corvane-trading.p2")
+              + "\nNOT READ: corvane-trading.p3")
+REPORT_PROBES: list[tuple[str, str]] = [
+    ("no LINE lines", "Corvane paid Arden 84,000.00 in three payments.\nNOT READ: none"),
+    ("more than five lines", "\n".join([_LINE.format("corvane-trading.p1")] * 6)
+     + "\nNOT READ: none"),
+    ("a line with no source", _LINE.format("") + "\nNOT READ: none"),
+    ("a source not given to the reader", _LINE.format("pellmar-client.p4") + "\nNOT READ: none"),
+    ("no NOT READ line", _LINE.format("corvane-trading.p1")),
+    ("a NOT READ line that says nothing", _LINE.format("corvane-trading.p1") + "\nNOT READ: "),
+    ("a NOT READ page not given to the reader", _LINE.format("corvane-trading.p1")
+     + "\nNOT READ: tidewater.p9"),
+]
+
+
+def probe(check: Callable[[str, list[str]], list[str]]) -> dict[str, Any]:
+    """Run `check` on a sound report (it must be accepted) and on REPORT_PROBES (each refused).
+
+    A check that accepts everything catches none of them; one that refuses everything accepts
+    no report, and no reader would ever reach the main context."""
+    caught = [name for name, report in REPORT_PROBES if check(report, PROBE_PAGES)]
+    return {"probes": len(REPORT_PROBES), "caught": len(caught),
+            "missed": [n for n, _ in REPORT_PROBES if n not in caught],
+            "kept_good": not check(PROBE_GOOD, PROBE_PAGES)}

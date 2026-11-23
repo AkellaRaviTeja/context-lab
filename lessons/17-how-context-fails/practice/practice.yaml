@@ -133,5 +133,5 @@ challenges:
     change: >
       In lessons/17-how-context-fails/run.py, write the planted figure as "269,400" (no pence) in
       PLANTED.
-    target: "clash_planted == 0"
+    target: "clash_planted == 0 and long_sizes == 4"
     reset: git checkout lessons/17-how-context-fails/run.py
