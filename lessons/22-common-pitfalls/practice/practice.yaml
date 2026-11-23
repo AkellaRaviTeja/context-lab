@@ -9,7 +9,7 @@ objectives:
   - Say what no check in the lab can see, and leave it to a person in writing.
 
 quiz:
-  - q: The loop's best revision passes more training questions than the standing orders. What does that show?
+  - q: Suppose the loop's best revision passes more training questions than the standing orders. What does that show?
     options:
       - That it is better.
       - "That it fits the questions it was scored on. Only the held-out split says whether it is better on questions it was not shown."
@@ -31,7 +31,7 @@ quiz:
       A challenge shows it to the proposer on purpose and counts it. Shown once, the held-out
       split stops being a baseline.
 
-  - q: The best revision no longer says "not in evidence". Which questions does that put at risk?
+  - q: Suppose a revision no longer says "not in evidence" and is kept. Which questions does that put at risk?
     options:
       - "The questions LANTERN was not told the answer to: they pass only when it says it was not told, and nothing in the training failures speaks for that rule."
       - The evidence questions.
@@ -64,17 +64,17 @@ quiz:
       The chapter reads the numbers from .progress/results/. A line with no recorded run is
       shown as "not recorded" with the command that would record it.
 
-  - q: Chapter 04's hand rewrite and the loop's best are both scored on the same held-out questions. What makes that comparison fair?
+  - q: In the recorded run all three revisions were the standing orders without their title and with trailing spaces, and each was scored and scored 6 of 10 against 7. What went wrong?
     options:
-      - The same model, the same seed, the same context but the standing orders, and questions neither was written from.
-      - The same number of rules.
-      - The same author.
-      - Nothing; one was written by a person.
-    answer: a
+      - The proposer overfitted the training questions.
+      - "The loop's \"same as the best\" check compared the exact text, so a copy that differed only in its title and spaces was scored as a revision. The check should compare the numbered rules."
+      - The held-out questions leaked into the prompt.
+      - The scorer graded the copy more strictly.
+    answer: b
     why: >
-      Chapter 04's rewrite was written from the baseline's failures over all 26 questions, so
-      it has seen the held-out questions in a sense the loop has not. The chapter says so
-      beside the number.
+      A loop that scores a copy spends model time and invites noise: the copy lost Q-22, where
+      LANTERN invented a private note, on a change with no content. The three prompts were
+      also identical, because nothing was kept between rounds, so three seeds gave one reply.
 
   - q: "Who else can write to this machine at night: why does this line stay with a question mark?"
     options:
@@ -141,3 +141,15 @@ challenges:
     change: "In lessons/22-common-pitfalls/run.py, set MUST_KEEP = (\"not in evidence\",)."
     target: "must_keep >= 1 and keeps_not_in_evidence == true and kept >= 1"
     reset: git checkout lessons/22-common-pitfalls/run.py
+
+  - id: no-copies
+    title: Do not score a copy
+    goal: >
+      Make your loop refuse a revision whose numbered rules are the same as the best's, even
+      when its title or spacing differ, so the recorded run's three copies are not scored.
+    change: >
+      In optimise() in your passing practice/exercise.py, compare the numbered rules of the
+      candidate and the best, each stripped of spaces, instead of the whole text; then run
+      `make lesson N=22 ARGS=--mine`.
+    target: "mine == true and candidates_scored < 3"
+    reset: git checkout lessons/22-common-pitfalls/practice/exercise.py
