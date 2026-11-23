@@ -207,6 +207,7 @@ for n in (0, *SIZES):
             embed([e.text for e in s.all()], "document")  # the index: built once, not timed
         times, hits = [], 0
         for qid, want in needs.items():
+            vectors.pop(("query", asks[qid]), None)  # the question is embedded inside the time
             start = time.perf_counter()
             got = RETRIEVE(Store(path).all(), INQ, query=asks[qid], k=K, by=by, embed=embed)
             times.append(time.perf_counter() - start)

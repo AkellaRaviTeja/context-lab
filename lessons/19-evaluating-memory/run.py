@@ -95,7 +95,7 @@ for col in ("case", "kind", *runs):
 for i, c in enumerate(CASES):
     t.add_row(c["id"], c["kind"], *("pass" if rs[i]["passed"] else
                                     "fail: " + ", ".join(k for k, v in rs[i].items()
-                                                         if v is False)
+                                                         if v is False and k != "passed")
                                     for rs in runs.values()))
 console.print(t)
 caught = [r["id"] for r, n in zip(new, regressed, strict=True) if r["passed"] and not n["passed"]]

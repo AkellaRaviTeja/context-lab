@@ -2,10 +2,12 @@
 
 import json
 import os
+import re
 import statistics
 import subprocess
 import time
 from dataclasses import replace
+from pathlib import Path
 
 from lantern import baseline, context, layout, learn
 from lantern.config import ROOT, load_config
@@ -43,11 +45,17 @@ prices = cfg["hosted"]["prices"]
 def others() -> int:
     """Other lessons running on this machine now, from any lab: they share the model server."""
     try:
-        out = subprocess.run(["pgrep", "-f", r"lessons/[0-9][0-9]-.*/run\.py"],
-                             capture_output=True, text=True, timeout=5).stdout.split()
+        out = subprocess.run(["pgrep", "-fl", r"lessons/[0-9][0-9]-.*/run\.py"],
+                             capture_output=True, text=True, timeout=5).stdout.splitlines()
     except (OSError, subprocess.SubprocessError):
         return -1
-    return len([p for p in out if int(p) not in (os.getpid(), os.getppid())])
+    mine = {os.getpid(), os.getppid()}
+    # a queued lesson shows as its wrapper, its uv and its python: count lesson paths, once each
+    paths = {m.group(0) for line in out if line.split(" ", 1)[0].isdigit()
+             and int(line.split(" ", 1)[0]) not in mine
+             and (m := re.search(r"\S*lessons/[0-9][0-9]-[^/ ]+/run\.py", line))}
+    here = str(Path(__file__).resolve())
+    return len({p for p in paths if not here.endswith(p.lstrip("./"))})
 
 
 def send(parts, ordered=None):
