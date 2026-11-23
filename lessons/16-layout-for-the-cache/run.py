@@ -124,10 +124,11 @@ for k, rs in rows.items():
     table.add_row(k, where[k], f"{rs[0]['tokens']:,}", *[f"{r['seconds']:.2f}" for r in rs],
                   f"{med[k]:.2f}")
 console.print(table)
-same_count = all(r["tokens"] == rows["first time"][0]["tokens"] for rs in rows.values()
-                 for r in rs)
+# the same prompt twice: the second request reuses everything, so compare those two counts
+same_count = all(a["tokens"] == b["tokens"]
+                 for a, b in zip(rows["first time"], rows["the same again"], strict=True))
 note(f"The first time, {med['first time']:.2f} s. The same again, {med['the same again']:.2f} s. "
-     f"Prompt tokens reported were the same on every request: {same_count}.")
+     f"Prompt tokens reported for the same prompt twice were equal: {same_count}.")
 learn.reveal(p_count, answer=0 if same_count else 1,
              why="Ollama reports the whole prompt in prompt_eval_count whatever it reused. The "
              "saving shows only in the time, prompt_eval_duration.")
@@ -139,7 +140,6 @@ learn.reveal(p_mid, answer=0 if ratio_mid > 0.85 else (2 if ratio_mid < 0.15 els
 
 step("2. The morning after the sync")
 SYNC_OLD = "# LANTERN case memory: inquiry EOW/2026/0412\n"
-SYNC_NEW = SYNC_OLD + "Rewritten by the nightly sync, 31 July 2026 01:58.\n"
 changes = {s.name: layout.how_often(s.name) for s in base}
 p_save = learn.predict_number(
     "Put what changes least first: standing orders and tool schemas, then the weekly "
@@ -147,8 +147,11 @@ p_save = learn.predict_number(
     "of the morning's first-question reading time does that save?", unit="%")
 morning = {"today's order": [], "stable first": []}
 yesterday = baseline.asking(base, questions[0]["question"])
-overnight = changed_line(base, "case memory", SYNC_OLD, SYNC_NEW)
-for _ in range(REPEATS):
+for rep in range(REPEATS):
+    # a new rewrite each morning, so no run finds the last run's rewritten memory still held
+    sync_new = SYNC_OLD + f"Rewritten by the nightly sync, 31 July 2026 01:58 (run {rep + 1}, " \
+        f"{time.time_ns() % 10**6:06d}).\n"
+    overnight = changed_line(base, "case memory", SYNC_OLD, sync_new)
     for name in morning:
         def order(parts, name=name):
             return parts if name == "today's order" else LAYOUT(parts, changes)[0]
