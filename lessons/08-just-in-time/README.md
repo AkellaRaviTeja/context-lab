@@ -117,7 +117,9 @@ About twelve minutes. Five traces, the last of fourteen requests.
 
 ![Chapter 08 terminal output](../../docs/screenshots/08-just-in-time.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:57, code at commit c410d04; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 12 November, before the grading
+change of 21 November, gave the same numbers:
 
 | Given | Hops found | Totals right | Requests | Tokens, all requests | Statements opened |
 |---|---|---|---|---|---|
