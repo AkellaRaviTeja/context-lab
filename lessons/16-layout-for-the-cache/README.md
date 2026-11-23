@@ -89,26 +89,30 @@ travels as a user turn of its own (`lantern.layout.request`).
 
 ## The nuances
 
-- **The cost of a change is where it is.** Reading the context took 29.71 s the first time and
-  0.06 s the same again. A changed question cost 0.40 s, a change 2,562 tokens in 15.36 s,
-  about half, and a changed first line 29.65 s, the same as reading it cold.
+- **The cost of a change is where it is.** Reading the context took 23.59 s the first time and
+  0.05 s the same again. A changed question cost 0.34 s, a change 2,562 tokens in 12.56 s, a
+  little over half, and a changed first line 23.45 s, the same as reading it cold.
 - **Ollama counts the whole prompt whatever it reused.** The repeat reported 5,141 prompt
-  tokens, as the first request did, and took 0.06 s. The saving shows in the time, never in
-  the count. The run's own check printed `False` for "the same on every request" because the
-  changed prompts are slightly different lengths (5,104 to 5,144 tokens), not because the
-  count fell.
-- **The first morning question is the one the layout is for.** On the first run, today's order
-  read 4,576 tokens again from the rewritten case memory, in 23.28 s. Stable first, 1,150
-  tokens, in 6.73 s.
-- **Only that first run measured the morning.** Runs 2 and 3 of today's order took 0.34 s
-  each: Ollama still held the rewritten beginning from run 1, through four other requests in
-  between. So the median for today's order, 0.34 s, and the saving the run prints from it,
-  -1909%, do not measure the sync's cost. The stable first runs did not get that reuse (6.73,
-  6.83 and 7.38 s). Which beginnings a server keeps, and for how long, is its own business; a
-  measurement of the cache has to clear it or show that it did.
-- **The machine was shared.** Other lessons were running when the run started (4) and when it
-  ended (7). Every timing is a median of three for that reason, and the seconds here belong to
-  this machine on this morning.
+  tokens, as the first request did, and took 0.05 s. The run's check, the same prompt sent
+  twice, printed `True`: the counts were equal. The saving shows in the time, never in the
+  count. (The changed prompts are slightly different lengths, 5,104 to 5,144 tokens, because
+  their text is different, which is why the check compares a prompt only with itself.)
+- **The first morning question is the one the layout is for.** Today's order read 4,576 tokens
+  again from the rewritten case memory, in 19.96 s (median of 20.00, 19.96 and 19.95). Stable
+  first, 1,150 tokens, in 6.01 s (6.01, 6.01 and 6.00): the run printed 70% less time. The
+  second question, straight after, took 0.34 s in either order.
+- **A cache measurement has to start cold.** Each morning run writes its own rewrite of the
+  case memory, so no run can find the last run's rewrite still held by the server. A first
+  version of this lesson rewrote it once: runs 2 and 3 of today's order were then served from
+  a beginning Ollama had kept through four other requests, and the median measured the
+  server's memory, not the sync. With a fresh rewrite each run, the three runs of each layout
+  agree with each other.
+- **The machine was shared.** The run waited in the shared Ollama queue behind two other labs'
+  runs and took the lock at 12:42. Its own count of other lesson processes was 1 at the start
+  and 1 at the end. That count is of processes, not lessons (a queued lesson's wrapper, its
+  `uv` and its Python each match), so it says only that something else was running or
+  waiting. Every timing is a median of three, and the seconds belong to this machine on this
+    morning.
 - **Moving a section moves answers.** Stable first, LANTERN scored 16 of 26 against the
   baseline's 17. Q-10 broke: with the case memory now a user turn after the tools, LANTERN
   called `lookup_company`, which is not connected, for an answer the memory holds. Only 8 of
@@ -126,40 +130,42 @@ make lesson N=16
 ```
 
 Fifteen timed requests and their primers, the morning in two orders, then the 26 questions. In
-the recorded run the 73 model calls took 510.34 seconds of model time on the shared machine.
+the recorded run the 73 model calls took 465.04 seconds of model time on the shared machine.
 
 ## What you should see
 
 ![Chapter 16 terminal output](../../docs/screenshots/16-layout-for-the-cache.png)
 
 What the recorded run showed (qwen3:8b, local Ollama, the 16 GB Apple silicon Mac, 23 November
-2026; 73 calls, 398,905 prompt tokens and 1,659 output tokens in all):
+2026, 12:42 to 12:50; 73 calls, 399,049 prompt tokens and 1,659 output tokens in all):
 
 | Request | Change | Prompt tokens | Run 1, s | Run 2, s | Run 3, s | Median, s |
 |---|---|---|---|---|---|---|
-| first time | nothing read before | 5,141 | 30.87 | 29.71 | 28.45 | 29.71 |
-| the same again | none | 5,141 | 0.06 | 0.06 | 0.06 | 0.06 |
-| end changed | the question, after 5,339 | 5,104 | 0.40 | 0.41 | 0.40 | 0.40 |
-| middle changed | after 2,562 | 5,144 | 16.02 | 15.36 | 14.74 | 15.36 |
-| start changed | the first line | 5,142 | 32.22 | 29.65 | 27.50 | 29.65 |
+| first time | nothing read before | 5,141 | 23.59 | 23.45 | 23.75 | 23.59 |
+| the same again | none | 5,141 | 0.05 | 0.05 | 0.05 | 0.05 |
+| end changed | the question, after 5,339 | 5,104 | 0.34 | 0.34 | 0.34 | 0.34 |
+| middle changed | after 2,562 | 5,144 | 12.55 | 12.56 | 12.69 | 12.56 |
+| start changed | the first line | 5,142 | 23.45 | 23.45 | 23.48 | 23.45 |
 
 The morning after the sync, reading the prompt in seconds:
 
-| Layout | Tokens from the change on | First question, run 1 | Run 2 | Run 3 | Second question, median |
-|---|---|---|---|---|---|
-| today's order | 4,576 | 23.28 | 0.34 | 0.34 | 0.34 |
-| stable first | 1,150 | 6.73 | 6.83 | 7.38 | 0.40 |
+| Layout | Tokens from the change on | First question, run 1 | Run 2 | Run 3 | First, median | Second question, median |
+|---|---|---|---|---|---|---|
+| today's order | 4,576 | 20.00 | 19.96 | 19.95 | 19.96 | 0.34 |
+| stable first | 1,150 | 6.01 | 6.01 | 6.00 | 6.01 | 0.34 |
+
+The run printed the saving on the first question as 70%.
 
 - Stable first order: standing orders, tool schemas, standing notes, the five summaries, case
   memory, session so far, the question. Breakpoints at indexes 1, 7, 8 and 9.
 - The 26 questions stable first: 16 of 26 against 17 of 26; fixed none, broken Q-10; 8 of 26
-  answers word for word the same; 120 s. The answers are in `.scratch/16/stable-first.json`.
+  answers word for word the same; 104 s. The answers are in `.scratch/16/stable-first.json`.
 
-What did not happen: the plan had the morning measured as a saving in time for the stable first
-layout. On the first run it was, 23.28 s against 6.73 s, but the repeats of today's order were
-served from a beginning Ollama had kept, so the run's median and its printed saving of -1909%
-measure the server's memory, not the layout. The plan also expected the cache to hold one
-beginning and lose it to the next conversation; here it kept one across four requests.
+What did not happen: every planned measurement was taken. A layout made only for speed did not
+leave the answers alone: Q-10 broke, and only 8 of the 26 answers were word for word the same.
+A first version of this run rewrote the case memory once for all three mornings, and the
+server kept that beginning across four requests; each morning run now starts from its own
+rewrite, and this is the run after that change.
 
 ## On a hosted model
 
@@ -198,8 +204,8 @@ provider counts the tokens of the same text.
 Expectations, not measurements: that a change costs what follows it is how prefix caching works
 on any server, so the layout's ordering and its breakpoints should hold on the hosted model;
 there the saving would show as `cache_read_input_tokens` in the usage, not as seconds. Which
-beginnings a server keeps between requests differs by server, and is why the morning repeats
-here were not a measurement. The broken Q-10 is probably a small-model effect of the memory
+beginnings a server keeps between requests differs by server, and is why each morning run
+here starts from its own rewrite. The broken Q-10 is probably a small-model effect of the memory
 moving after the tools; whether a larger model answers the same from either order has to be
 scored again, as step 3 does.
 
@@ -207,8 +213,8 @@ scored again, as step 3 does.
 
 1. Put the date at the top of the standing orders and send the same request twice. What does
    the second one cost?
-2. Make step 2 send an unrelated long request before each morning question, and see whether
-   today's order then takes the first run's time on every run.
+2. Mark the case memory `"per question"` in step 2's `changes`, so it goes after the session,
+   and see what the morning costs and what the 26 questions score.
 3. Pass `"case memory": "per turn"` to `layout.layout` and look at where the breakpoints go.
 
 ## Master it
@@ -231,20 +237,19 @@ make lesson N=16 ARGS=--mine
 
 **Check yourself.** `make quiz N=16`: six questions.
 
-**Break it.** `make challenge N=16`: your layout on the morning; a morning measured from a
-cleared cache; and a timestamp at the top of the context.
+**Break it.** `make challenge N=16`: your layout on the morning; the case memory moved after
+the session; and a timestamp at the top of the context.
 
 `make progress` shows every chapter.
 
 ## What the evidence now shows
 
-On qwen3:8b on local Ollama, reading LANTERN's 5,410-token context took 29.71 s cold and 0.06 s
-the same again. A change cost what followed it: 0.40 s at the end, 15.36 s in the middle,
-29.65 s at the start. The nightly sync rewrites the second section, so on the first measured
-morning the first question read 4,576 tokens again in 23.28 s; with what changes least first
-it read 1,150 in 6.73 s. The repeats of that morning were served from a beginning the server
-had kept, so the run's median saving is not a measurement, and the chapter says so. The new
-order scored 16 of 26 against 17 and broke Q-10, so it is not adopted on speed alone. Priced
+On qwen3:8b on local Ollama, reading LANTERN's 5,410-token context took 23.59 s cold and 0.05 s
+the same again. A change cost what followed it: 0.34 s at the end, 12.56 s in the middle,
+23.45 s at the start. The nightly sync rewrites the second section, so the morning's first
+question read 4,576 tokens again in 19.96 s; with what changes least first it read 1,150 in
+6.01 s, 70% less time, each a median of three runs that each started from a fresh rewrite.
+The new order scored 16 of 26 against 17 and broke Q-10, so it is not adopted on speed alone. Priced
 for the hosted model, the same layout makes a ten-question session $0.0353 with a five-minute
 cache against $0.1144 without, as a calculation. The sync's 01:58 write now has a cost in
 seconds as well as in what it wrote.

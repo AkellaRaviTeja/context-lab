@@ -9,7 +9,7 @@ objectives:
   - Score a new layout on the signed questions before keeping it.
 
 quiz:
-  - q: A 5,410-token context is sent twice. Ollama reports the same prompt token count both times, yet the second takes 0.06 s against 29.71 s. What happened?
+  - q: A 5,410-token context is sent twice. Ollama reports the same prompt token count both times, yet the second takes 0.05 s against 23.59 s. What happened?
     options:
       - The second request was not sent.
       - "The server reused its work on the unchanged beginning and read nothing again. Ollama reports the whole prompt in the count whatever it reused; the saving shows only in the time."
@@ -21,7 +21,7 @@ quiz:
       reports cached tokens separately (cache_read_input_tokens), and they are billed at a
       fraction of the input price.
 
-  - q: A line 2,562 tokens into the context is changed and reading takes 15.36 s, about half the cold time. Why half?
+  - q: A line 2,562 tokens into the context is changed and reading takes 12.56 s, a little over half the cold time. Why about half?
     options:
       - The server reads every other token.
       - "The server reuses the prompt up to the first token that differs and reads the rest again. About half of this prompt comes after the change."
@@ -29,7 +29,7 @@ quiz:
       - The model was busy with another lesson.
     answer: b
     why: >
-      A change at the end cost 0.40 s and a change in the first line 29.65 s. What a change costs
+      A change at the end cost 0.34 s and a change in the first line 23.45 s. What a change costs
       is what follows it, which is why the order of the sections matters.
 
   - q: The nightly sync rewrites the case memory. Why does moving the case memory later save the morning's first question time?
@@ -43,16 +43,18 @@ quiz:
       The sync's change is the same either way. The layout decides how much of the prompt lies
       after it, and so how much has to be read again.
 
-  - q: Runs 2 and 3 of today's order took 0.34 s, the time of a fully reused prompt, after a different request had been sent in between. What does that mean for the measurement?
+  - q: Each of the three morning runs writes its own rewrite of the case memory before it asks. What would go wrong if the memory were rewritten once and the three runs shared it?
     options:
-      - Today's order is as fast as stable first.
-      - "The server had kept the rewritten beginning from run 1, so those runs measured its memory, not the cost of the sync. A cache measurement has to clear the cache, or show that it did."
-      - The sync did not run.
-      - The median is the right number to report.
+      - Nothing; the median of three hides any one odd run.
+      - "Runs 2 and 3 could find run 1's rewritten beginning still held by the server and read almost nothing again, so the median would measure the server's memory, not the cost of the sync."
+      - The token counts would be wrong.
+      - The stable first layout would place its breakpoints differently.
     answer: b
     why: >
-      Only run 1 compared like with like: 23.28 s against 6.73 s. The run printed a saving of
-      -1909% from the medians, and the chapter reports why that number is not a measurement.
+      A first version of this lesson did exactly that, and runs 2 and 3 of today's order took
+      the time of a fully reused prompt. With a fresh rewrite each run, today's order took 20.00,
+      19.96 and 19.95 s and stable first 6.01, 6.01 and 6.00 s. A cache measurement has to start
+      cold, or show that it did.
 
   - q: Stable first, LANTERN scored 16 of 26 against 17, and Q-10 broke. Why score a change made only for speed?
     options:
@@ -112,15 +114,15 @@ challenges:
     change: "Pass the exercise first, then run `make lesson N=16 ARGS=--mine`."
     target: "mine == true and breakpoints == 4"
 
-  - id: clear-the-cache
-    title: Measure the morning from a cleared cache
+  - id: memory-last
+    title: The case memory after the session
     goal: >
-      Make every run of the morning start from a cache that holds neither layout, so the median
-      for today's order is the cost of the sync and the saving the run prints is positive.
+      Make the sync's change cost less than the layout's 1,150 tokens on the morning, by
+      putting the case memory after the session, and see what the 26 questions say about it.
     change: >
-      In step 2 of lessons/16-layout-for-the-cache/run.py, before each `send(yesterday, ...)`,
-      send a long unrelated request (for example `send(stamped(base, str(time.time_ns())))`).
-    target: "morning_saved_pct > 0"
+      In step 2 of lessons/16-layout-for-the-cache/run.py, straight after `changes = {...}`, add
+      `changes["case memory"] = "per question"`.
+    target: "stable_reread_tokens < 1150"
     reset: git checkout lessons/16-layout-for-the-cache/run.py
 
   - id: timestamp-first
