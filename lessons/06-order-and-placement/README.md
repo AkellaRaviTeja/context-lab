@@ -117,7 +117,9 @@ afresh.
 
 ![Chapter 06 terminal output](../../docs/screenshots/06-order-and-placement.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:21, code at commit e969665; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 12 November, before the grading change
+of 21 November, gave the same numbers:
 
 | Question | 1-20 | 21-40 | 41-60 | 61-80 | 81-100 | 101-120 | 121-140 | All |
 |---|---|---|---|---|---|---|---|---|
@@ -126,7 +128,8 @@ What the recorded run showed:
 | before and after | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 21 of 21 |
 
 - The register is 4,382 tokens and passed the budget with 2,556 to spare.
-- Standing orders moved last: 15 of 26. Fixed Q-26. Broken Q-03, Q-07 and Q-18.
+- Standing orders moved last: all 26 scored, 15 of 26 passed, 4 answers changed. Fixed Q-26.
+  Broken Q-03, Q-07 and Q-18.
 
 What did not happen: the planned beat had a fact in the middle missed and the same fact at the
 end found. The misses were not in the middle, and moving the question did more than moving the

@@ -149,7 +149,7 @@
   }
  },
  "06": {
-  "at": "2026-11-12T00:01:12",
+  "at": "2026-11-23T17:21:33",
   "metrics": {
    "asked": 21,
    "baseline_passed": 17,
@@ -164,8 +164,10 @@
    "moved_last": "standing orders",
    "register_tokens": 4382,
    "reordered_broken": 3,
+   "reordered_changed": 4,
    "reordered_fixed": 1,
    "reordered_passed": 15,
+   "reordered_scored": 26,
    "wrong_after": 7,
    "wrong_another_line": 2,
    "wrong_right_digits_wrong_bank": 4
