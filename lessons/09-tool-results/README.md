@@ -103,7 +103,9 @@ About twenty-five minutes: four long traces, three of them carrying whole statem
 
 ![Chapter 09 terminal output](../../docs/screenshots/09-tool-results.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 18:09, code at commit a753a4b; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 12 November, before the grading
+change of 21 November, gave the same numbers:
 
 | Treatment | Hops found | Totals right | Requests | Largest request | Opened | Stopped |
 |---|---|---|---|---|---|---|
