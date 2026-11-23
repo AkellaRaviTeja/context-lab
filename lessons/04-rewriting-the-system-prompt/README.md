@@ -105,7 +105,9 @@ About four minutes: 18 calls on the clashing pairs, then the 26 questions once.
 
 ![Chapter 04 terminal output](../../docs/screenshots/04-rewriting-the-system-prompt.png)
 
-What the recorded run showed:
+What the recorded run showed (23 November 2026, 17:41, code at commit 9a8f6f5; qwen3:8b on
+local Ollama, the 16 GB Apple silicon Mac). The run of 11 November, before the grading
+change of 21 November, gave the same numbers:
 
 - 31 versions, 35 rules, 97 tokens grown to 834. Added by a.varma (18), d.okafor (11) and
   l.mensah (6). No rule was ever removed.
