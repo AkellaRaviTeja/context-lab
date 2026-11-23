@@ -542,6 +542,10 @@ ABSTAIN = ("not in evidence", "not in the case memory", "no record", "was not to
            "does not record", "not stated")
 
 
+ENTRY_ID = re.compile(r"(?<![\w-])[A-Z]{1,2}-\d{1,4}(?![\w-])")
+NOT_A_NEGATION = re.compile(r"\b(no doubt|not only|no question)\b")
+
+
 def _plain(text: str) -> str:
     return re.sub(r"(?<=\d),(?=\d)", "", text.lower().replace("’", "'"))
 
@@ -569,23 +573,29 @@ def abstains(answer: str, question: str = "") -> bool:
     if not any(p in head for p in ABSTAIN):
         return False
     asked = set(re.findall(r"\d+", _plain(question)))
-    return all(n in asked for n in re.findall(r"\d+", _plain(answer)))
+    said = ENTRY_ID.sub(" ", answer)  # [E-01] names an entry; it is not a figure
+    return all(n in asked for n in re.findall(r"\d+", _plain(said)))
 
 
 def denies(answer: str, claim: str) -> bool:
     """The answer does not affirm a retracted claim (`claim` is its key word, "cleared").
-    A first word of "no" passes and "yes" fails; otherwise every use of the word must have a
-    negation in the six words before it (and after any earlier use), and an answer that
-    abstains passes. "Not cleared" is not "cleared"."""
-    words = re.findall(r"[a-z']+", _plain(answer))
+    An answer opening "No." or "No," passes and "Yes," fails; otherwise every use of the
+    word must have a negation before it in the same clause, at most ten words back and
+    after any earlier use ("no doubt" and "not only" do not count), and an answer that
+    never uses the word passes only if it abstains. "Not cleared" is not "cleared"."""
+    words: list[str] = []
+    clause: list[int] = []  # for each word, the index of the word its clause starts at
+    for part in re.split(r"[.;:!?]", NOT_A_NEGATION.sub(" ", _plain(answer))):
+        found = re.findall(r"[a-z']+", part)
+        clause.extend([len(words)] * len(found))
+        words.extend(found)
     if not words:
         return False
-    if words[0] == "no":
-        return True
-    if words[0] == "yes":
-        return False
+    opening = re.match(r"\s*(no|yes)\b\s*[.,;:!]", _plain(answer))
+    if opening:  # "No." or "Yes," as an answer, not "No escalation was needed"
+        return opening.group(1) == "no"
     uses = [i for i, w in enumerate(words) if w.startswith(claim.lower())]
     if not uses:
         return abstains(answer)
-    starts = [max(0, i - 6, prev + 1) for prev, i in zip([-1, *uses], uses, strict=False)]
+    starts = [max(clause[i], i - 10, prev + 1) for prev, i in zip([-1, *uses], uses, strict=False)]
     return all(NEGATION.search(" ".join(words[s:i])) for s, i in zip(starts, uses, strict=True))

@@ -262,3 +262,23 @@ def test_the_write_gate_sees_documents_read_after_it_was_made():
     read["ICB-77-10458"] = "HDB-5-120771"
     assert s.write(entry("L-1", "Paid HDB-5-120771.", author="lantern",
                          source="ICB-77-10458")).status == "kept"
+
+
+def test_an_entry_id_is_not_a_figure_but_an_account_number_still_is():
+    # Recorded in chapter 19's first run: "Not in evidence. [E-01]" was graded as stating 01.
+    assert memory.abstains("Not in evidence. [E-01]"), "[E-01] names an entry"
+    assert memory.abstains("Not in evidence [M-08, Q-02].", "Is Pellmar cleared?")
+    assert not memory.abstains("Not in evidence; HDB-5-118205 held it.", "What is HDB-5-118204?")
+    assert not memory.abstains("Not in evidence. [E-01] says 40,000.00.", "")
+
+
+def test_denies_reads_a_negation_at_the_start_of_the_clause():
+    # Recorded in chapter 19's first run: the negation was seven words before "licensing".
+    ok = ("Not in evidence. No mention of Ostrander Marine Finance SA's licensing status is "
+          "found in the case memory.")
+    assert memory.denies(ok, "licen"), ok
+    for bad in ("There is no doubt Pellmar was cleared.",
+                "Not only was Pellmar cleared, it was praised.",
+                "It was not cleared in May; it was cleared in June.",
+                "No escalation was needed. Pellmar was cleared on 2 June."):
+        assert not memory.denies(bad, "clear"), bad

@@ -50,3 +50,18 @@ def test_abstaining_passes_and_silence_fails(impl):
     assert not impl.denies("", "clear"), "an empty answer is not a denial"
     assert not impl.denies("Pellmar is a nominee company.", "clear"), \
         "an answer that neither uses the word nor abstains has not denied anything"
+
+
+def test_a_negation_at_the_start_of_a_long_clause_counts(impl):
+    """A "No mention of" seven words back still negates the word in its own clause."""
+    assert impl.denies("Not in evidence. No mention of Ostrander Marine Finance SA's licensing "
+                       "status is found.", "licen"), \
+        "the negation opens the same clause; count back to the clause start, up to ten words"
+
+
+def test_no_doubt_and_a_leading_no_word_do_not_deny(impl):
+    """"No doubt" affirms, and "No escalation" is not the answer "No."."""
+    assert not impl.denies("There is no doubt Pellmar was cleared.", "clear"), \
+        "no doubt is not a negation"
+    assert not impl.denies("No escalation was needed. Pellmar was cleared on 2 June.", "clear"), \
+        "only an opening 'No.' or 'No,' is an answer of no"
