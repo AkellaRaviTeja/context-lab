@@ -2,7 +2,7 @@
 
 Grade it with `make exercise N=14`. The tests use plain entries and a fake embedding function,
 so no model is needed. When it passes, `make lesson N=14 ARGS=--mine` loads every session in
-the chapter with yours, at sixteen entries and at ten thousand.
+the chapter with yours, on the case store and at ten thousand entries.
 """
 
 from __future__ import annotations
