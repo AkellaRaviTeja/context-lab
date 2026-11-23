@@ -152,7 +152,7 @@ Not run: no hosted key was available when this section was written, so there are
 ## Master it
 
 After this chapter you can test a claim about distraction on your own model in place of
-repeating it, say what unneeded material certainly costs, and build a cut-off that records
+repeating it, say what unneeded material is shown to cost, and build a cut-off that records
 every page it leaves out.
 
 **Predict, then see.** `make lesson N=07` stops three times: when the first answer goes wrong,
