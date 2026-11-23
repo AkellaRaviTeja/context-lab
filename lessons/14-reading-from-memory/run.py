@@ -6,9 +6,7 @@ import re
 import time
 from dataclasses import replace
 
-import httpx
-
-from lantern import baseline, context, learn, memory
+from lantern import baseline, context, learn, memory, retry
 from lantern.config import ROOT, load_config
 from lantern.llm import chat
 from lantern.memory import Entry, Store
@@ -57,10 +55,13 @@ def embed(texts: list[str], kind: str) -> list[list[float]]:
     for i in range(0, len(todo), 500):
         batch = todo[i:i + 500]
         start = time.perf_counter()
-        r = httpx.post(f"{host}/api/embed", json={"model": EMBED_MODEL,
-                                                  "input": [prefix + t for t in batch]},
-                       timeout=600)
-        r.raise_for_status()
+        body = {"model": EMBED_MODEL, "input": [prefix + t for t in batch]}
+        r = retry.post(f"{host}/api/embed", json=body, timeout=600)
+        if r.status_code == 400:  # seen once while another lab's model was loading: once more
+            time.sleep(30)
+            r = retry.post(f"{host}/api/embed", json=body, timeout=600)
+        if r.status_code != 200:
+            raise SystemExit(f"Ollama /api/embed answered {r.status_code}: {r.text[:300]}")
         embed_seconds += time.perf_counter() - start
         for t, v in zip(batch, r.json()["embeddings"], strict=True):
             vectors[(kind, t)] = v
