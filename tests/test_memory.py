@@ -254,3 +254,11 @@ def test_denies_is_not_fooled_by_not_cleared_or_by_a_yes():
     for bad in ("Yes, cleared on 2 June.", "Pellmar Nominees was cleared by the FIU.",
                 "It is cleared, not escalated.", "Cleared. Do not escalate.", ""):
         assert not memory.denies(bad, "clear"), bad
+
+
+def test_the_write_gate_sees_documents_read_after_it_was_made():
+    read = {}
+    s = Store(policy=memory.write_gate(read))
+    read["ICB-77-10458"] = "HDB-5-120771"
+    assert s.write(entry("L-1", "Paid HDB-5-120771.", author="lantern",
+                         source="ICB-77-10458")).status == "kept"

@@ -386,7 +386,7 @@ def write_gate(read: dict[str, str] | None = None, *,
     passes a judgement on a party (cleared, licensed, routine, ordinary, need no, do not) is
     held for a person whoever wrote it. A word list is crude: it holds, it does not decide."""
     base = default_policy(machine_accounts, inactive)
-    docs = dict(read or {})
+    docs = read if read is not None else {}  # the session adds to it as it reads
     model_authors = set(models)
 
     def policy(entry: Entry, store: Store) -> list[str]:
